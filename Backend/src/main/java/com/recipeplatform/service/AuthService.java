@@ -1,6 +1,5 @@
 package com.recipeplatform.service;
 
-
 import com.recipeplatform.domain.User;
 import com.recipeplatform.dto.auth.LoginRequest;
 import com.recipeplatform.dto.auth.LoginResponse;
@@ -11,5 +10,8 @@ public interface AuthService {
     LoginResponse login(LoginRequest loginRequest);
 
     User register(RegisterRequest registerRequest);
+
     String reminderDismissed();
+
+    String completeProfile(com.recipeplatform.dto.auth.ProfileCompletionRequest request);
 }
