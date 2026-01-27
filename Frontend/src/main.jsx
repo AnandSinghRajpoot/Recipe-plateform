@@ -15,6 +15,7 @@ import Contact from './pages/product/Contact.jsx';
 import LoginPage from './pages/Homes/LoginPage.jsx'
 import Signup from './pages/Homes/Signup.jsx'
 import AddRecipe from "./pages/AddRecipe";
+import ProfileComplete from "./pages/ProfileComplete.jsx";
 
 
 const router = createBrowserRouter([
@@ -69,6 +70,10 @@ const router = createBrowserRouter([
         {
           path : "/signup",
           element : <Signup/>
+        },
+        {
+          path : "/profile/complete",
+          element : <ProfileComplete/>
         }
 
 
