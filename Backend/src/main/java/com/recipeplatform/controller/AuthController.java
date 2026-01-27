@@ -22,27 +22,29 @@ public class AuthController {
     private final UserMapper userMapper;
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody @Valid LoginRequest loginRequest){
-        return  authService.login(loginRequest);
+    public LoginResponse login(@RequestBody @Valid LoginRequest loginRequest) {
+        return authService.login(loginRequest);
     }
 
     @PostMapping("/register")
-    public RegisterResponse register(@RequestBody @Valid RegisterRequest registerRequest){
-        User registeredUser=authService.register(registerRequest);
+    public RegisterResponse register(@RequestBody @Valid RegisterRequest registerRequest) {
+        User registeredUser = authService.register(registerRequest);
         return userMapper.toDto(registeredUser);
     }
 
     @GetMapping("/test")
-    public String test(){
+    public String test() {
         return "the endpoint is public and you accessed it by giving token.";
     }
 
-
     @PostMapping("/reminder-dismiss")
-    public String reminderDismiss(){
+    public String reminderDismiss() {
         return authService.reminderDismissed();
     }
 
-
+    @PostMapping("/complete-profile")
+    public String completeProfile(@RequestBody com.recipeplatform.dto.auth.ProfileCompletionRequest request) {
+        return authService.completeProfile(request);
+    }
 
 }
