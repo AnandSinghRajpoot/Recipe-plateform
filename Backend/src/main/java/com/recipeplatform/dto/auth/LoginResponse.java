@@ -1,4 +1,4 @@
-package com.recipeplatform.dto;
+package com.recipeplatform.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,4 +12,6 @@ public class LoginResponse {
     private String token;
     private long issuedAt;
     private long expireAt;
+    private Boolean isProfileCompleted;
+    private Boolean showReminder;
 }
