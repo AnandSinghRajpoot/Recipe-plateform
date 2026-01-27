@@ -1,32 +1,23 @@
-package com.recipeplatform.dto;
+package com.recipeplatform.dto.auth;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.recipeplatform.domain.enums.DietType;
 import com.recipeplatform.domain.enums.SkillLevel;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import com.recipeplatform.domain.enums.UserRole;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@All
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RegisterResponse {
 
-
-    @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
-    @NotBlank(message = "Name is required")
+    private Long id;
     private String name;
-
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
     private String email;
-
-
-    @Size(min = 6, message = "Password must be at least 6 characters long")
-    @NotBlank(message = "Password is required")
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$", message = "Password must contain at least one digit, one lowercase letter, one uppercase letter, one special character, and no whitespace")
-    private String password;
-
     private DietType dietType;
-
     private SkillLevel skillLevel;
-
+    private UserRole role;
 }
