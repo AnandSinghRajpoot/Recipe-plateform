@@ -6,7 +6,7 @@ spring:
     name: recipe-platform-backend
 
   datasource:
-    url: jdbc:mysql://localhost:3306/test2?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/test2
     username: root
     password: ahmad1234
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -31,3 +31,7 @@ logging:
     com.recipeplatform: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+jwt:
+  secret: hello-this-is-my-secrect-key-for-generating-jwt-token-and-it-help-in-jwt
+  expiration: 14400000
