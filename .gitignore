@@ -74,3 +74,21 @@ Desktop.ini
 # Test files
 **/test-results/
 **/.nyc_output/
+
+# Temporary Session Files
+git_status_output.txt
+remaining_files.txt
+status.txt
+final_status.txt
+full_status.txt
+current_git_status.txt
+
+# Additional common ignores
+**/Thumbs.db
+**/ehcache.xml
+**/log/
+**/target/
+**/*.class
+**/*.pyc
+**/*.pyo
+**/__pycache__/
