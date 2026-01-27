@@ -1,4 +1,4 @@
-package com.recipeplatform.dto;
+package com.recipeplatform.dto.auth;
 
 import com.recipeplatform.domain.enums.DietType;
 import com.recipeplatform.domain.enums.SkillLevel;
@@ -28,11 +28,12 @@ public class RegisterRequest {
 
     @Size(min = 6, message = "Password must be at least 6 characters long")
     @NotBlank(message = "Password is required")
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$", message = "Password must contain at least one digit, one lowercase letter, one uppercase letter, one special character, and no whitespace")
+    @Pattern(
+            regexp = "^(?=.*[0-9])(?=.*[a-zA-Z]).+$",
+            message = "Must contain at least one digit and one letter"
+    )
     private String password;
-
     private DietType dietType;
-
     private SkillLevel skillLevel;
 
 }
