@@ -7,6 +7,7 @@ const DesktopNav = ({ menuItems, Logo }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("showReminder");
     alert("Logged out successfully!");
     navigate("/login");
   };
@@ -55,12 +56,20 @@ const DesktopNav = ({ menuItems, Logo }) => {
             </Link>
           </>
         ) : (
-          <button
-            onClick={handleLogout}
-            className="text-secondary px-4 py-2 rounded border hover:bg-gray-100"
-          >
-            Logout
-          </button>
+          <>
+            <Link
+              to="/profile/complete"
+              className="text-secondary px-4 py-2 rounded border hover:bg-gray-100"
+            >
+              Profile
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition"
+            >
+              Logout
+            </button>
+          </>
         )}
       </ul>
     </div>

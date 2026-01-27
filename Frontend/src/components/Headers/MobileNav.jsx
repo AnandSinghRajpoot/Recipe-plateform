@@ -8,7 +8,8 @@ export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
   const token = localStorage.getItem("token"); // 
 
   const handleLogout = () => {
-    localStorage.removeItem("token"); // 
+    localStorage.removeItem("token");
+    localStorage.removeItem("showReminder");
     alert("Logged out successfully!");
     navigate("/login");
     onClose();
@@ -73,12 +74,21 @@ export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
                 </Link>
               </>
             ) : (
-              <button
-                onClick={handleLogout}
-                className="text-secondary px-4 py-2 rounded border hover:bg-gray-200"
-              >
-                Logout
-              </button>
+              <div className="flex flex-col items-center gap-4">
+                <Link
+                  to="/profile/complete"
+                  onClick={onClose}
+                  className="text-secondary px-8 py-2 rounded border hover:bg-gray-200"
+                >
+                  Profile
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="bg-orange-500 text-white px-8 py-2 rounded hover:bg-orange-600 transition"
+                >
+                  Logout
+                </button>
+              </div>
             )}
           </ul>
         </div>

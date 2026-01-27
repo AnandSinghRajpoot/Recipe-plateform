@@ -16,7 +16,7 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/signup", user, {
+      const response = await axios.post("http://localhost:8080/api/v1/auth/register", user, {
         headers: { "Content-Type": "application/json" },
       });
 
