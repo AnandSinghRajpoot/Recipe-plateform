@@ -1,45 +1,77 @@
 package com.recipeplatform.service.impl;
 
-import com.recipeplatform.dto.LoginRequest;
-import com.recipeplatform.dto.LoginResponse;
-import com.recipeplatform.dto.RegisterRequest;
+import com.recipeplatform.domain.User;
+import com.recipeplatform.domain.enums.UserRole;
+import com.recipeplatform.dto.auth.LoginRequest;
+import com.recipeplatform.dto.auth.LoginResponse;
+import com.recipeplatform.dto.auth.RegisterRequest;
+import com.recipeplatform.mapper.UserMapper;
+import com.recipeplatform.repository.UserRepository;
 import com.recipeplatform.security.JwtUtill;
+import com.recipeplatform.service.AuthService;
+import com.recipeplatform.util.CurrentUser;
+import com.recipeplatform.util.ProfileCompletionHelper;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-
 @Service
-public class AuthService {
+public class AuthServiceImpl implements AuthService {
 
     private final JwtUtill jwtUtill;
+    private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
+    private final AuthenticationManager authenticationManager;
+    private CurrentUser currentUser;
 
-    public AuthService(JwtUtill jwtUtill) {
+
+    public AuthServiceImpl(JwtUtill jwtUtill, PasswordEncoder passwordEncoder, UserRepository userRepository, UserMapper userMapper, AuthenticationManager authenticationManager, CurrentUser currentUser) {
         this.jwtUtill = jwtUtill;
+        this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
+        this.userMapper = userMapper;
+        this.authenticationManager = authenticationManager;
+        this.currentUser = currentUser;
     }
 
     public LoginResponse login(LoginRequest loginRequest) {
-        //TO Do:authenticate cred
 
-        Authentication authToken = new UsernamePasswordAuthenticationToken(
-                loginRequest.getEmail(), loginRequest.getPassword()
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
         );
 
-        SecurityContextHolder.getContext().setAuthentication(authToken);
-
-        String accessToken = jwtUtill.generateToken(authToken.getName());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String accessToken = jwtUtill.generateToken(authentication.getName());
+        User user = (User) authentication.getPrincipal();
         return new LoginResponse(
                 accessToken
                 , jwtUtill.extractClaims(accessToken).getIssuedAt().getTime()
                 , jwtUtill.extractClaims(accessToken).getExpiration().getTime()
+                , user.getIsProfileCompleted()
+                , ProfileCompletionHelper.shouldShowReminder(user)
         );
+
     }
 
-    public RegisterResponse register(RegisterRequest registerRequest) {
+    public User register(RegisterRequest registerRequest) {
+        User user = userMapper.toEntity(registerRequest);
+        user.setRole(UserRole.USER);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        ProfileCompletionHelper.initialize(user);
+        return userRepository.save(user);
+    }
 
+    @Override
+    public String reminderDismissed() {
+        User user=currentUser.getCurrentUser();
+        ProfileCompletionHelper.reminderDismissed(user);
+        userRepository.save(user);
+        return "reminder dismissed set to true";
     }
 
 
