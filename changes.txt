@@ -1,0 +1,22 @@
+ M Backend/src/main/java/com/recipeplatform/domain/Ingredient.java
+ M Backend/src/main/java/com/recipeplatform/domain/Recipe.java
+ M Backend/src/main/java/com/recipeplatform/domain/RecipeIngredient.java
+ M Backend/src/main/java/com/recipeplatform/domain/User.java
+ M Backend/src/main/java/com/recipeplatform/domain/enums/DietType.java
+ M Backend/src/main/java/com/recipeplatform/domain/enums/Difficulty.java
+ M Backend/src/main/java/com/recipeplatform/domain/enums/MeasureUnit.java
+ M Backend/src/main/java/com/recipeplatform/dto/AuthorDto.java
+ D Backend/src/main/java/com/recipeplatform/dto/IngredientDTO.java
+ D Backend/src/main/java/com/recipeplatform/dto/RecipeRequestDTO.java
+ M Backend/src/main/java/com/recipeplatform/dto/auth/LoginResponse.java
+ M Backend/src/main/java/com/recipeplatform/dto/recipe/RecipeRequestDto.java
+ M Backend/src/main/java/com/recipeplatform/dto/recipe/RecipeResponseDTO.java
+ M Backend/src/main/java/com/recipeplatform/dto/recipeIngredient/RecipeIngredientRequest.java
+ M Backend/src/main/java/com/recipeplatform/exception/GlobalExceptionHandler.java
+ M Backend/src/main/java/com/recipeplatform/mapper/IngredientMapper.java
+ M Backend/src/main/java/com/recipeplatform/repository/IngredientRepository.java
+ M Backend/src/main/java/com/recipeplatform/repository/RecipeRepository.java
+ M Backend/src/main/java/com/recipeplatform/repository/UserRepository.java
+ M Backend/src/main/java/com/recipeplatform/service/IngredientService.java
+ M Backend/src/main/java/com/recipeplatform/service/impl/IngredientServiceImpl.java
+?? changes.txt
