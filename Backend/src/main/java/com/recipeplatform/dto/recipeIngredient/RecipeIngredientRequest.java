@@ -1,5 +1,6 @@
-package com.recipeplatform.dto;
+package com.recipeplatform.dto.recipeIngredient;
 
+import com.recipeplatform.domain.enums.MeasureUnit;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -19,6 +20,6 @@ public class RecipeIngredientRequest {
     @Positive(message = "Quantity must be positive")
     private Double quantity;
 
-    @NotBlank(message = "Measure unit is required")
-    private String unit;
+    @NotNull(message = "Measure unit is required")
+    private MeasureUnit unit;
 }
