@@ -15,16 +15,14 @@ import java.util.List;
 public class RecipeResponseDTO {
 
     private Long id;
-    private String name;
+    private String title;
     private String description;
-    private String thumbnailImage;
+    private String coverImageUrl;
     private String instructions;
-    private List<IngredientDTO> ingredients;
-    private CategoryDTO category;
+    private List<RecipeIngredientResponseDto> ingredients;
     private Integer prepTime;
     private Integer cookTime;
-    private Integer servings;
-    private String author;
+    private AuthorDto author;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
