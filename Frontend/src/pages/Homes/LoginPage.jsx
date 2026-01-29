@@ -15,7 +15,6 @@ const Login = () => {
     try {
       const res = await axios.post("http://localhost:8080/api/v1/auth/login", user);
       localStorage.setItem("token", res.data.token);
-      localStorage.setItem("showReminder", res.data.showReminder);
       alert("Login successful!");
       navigate("/");
     } catch (err) {
