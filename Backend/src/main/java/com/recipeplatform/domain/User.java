@@ -9,12 +9,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -36,19 +35,14 @@ public class User {
     @Email(message = "Invalid email format")
     private String email;
 
-
     @Column(nullable = false)
     @Size(min = 6, message = "Password must be at least 6 characters long")
     @NotBlank(message = "Password is required")
-    @Pattern(
-            regexp = "^(?=.*[0-9])(?=.*[a-zA-Z]).+$",
-            message = "Must contain at least one digit and one letter"
-    )
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z]).+$", message = "Must contain at least one digit and one letter")
     private String password;
 
     @Enumerated(EnumType.STRING)
     private DietType dietType;
-
 
     @Enumerated(EnumType.STRING)
     private SkillLevel skillLevel;
@@ -58,12 +52,10 @@ public class User {
 
     private Boolean isProfileCompleted;
 
-    private Boolean showReminder;
-
-    private Boolean isReminderDismissed;
-
     private LocalDateTime createdAt;
 
+    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
+    private List<Recipe> recipes;
 
     @PrePersist
     void setCreatedAt() {
