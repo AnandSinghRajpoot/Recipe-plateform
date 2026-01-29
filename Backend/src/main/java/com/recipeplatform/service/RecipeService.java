@@ -1,15 +1,15 @@
 package com.recipeplatform.service;
 
-import com.recipeplatform.dto.RecipeRequestDTO;
-import com.recipeplatform.dto.RecipeResponseDTO;
+import com.recipeplatform.dto.recipe.RecipeRequestDto;
+import com.recipeplatform.dto.recipe.RecipeResponseDTO;
 
 import java.util.List;
 
 public interface RecipeService {
 
-    RecipeResponseDTO createRecipe(RecipeRequestDTO recipeDTO);
+    RecipeResponseDTO createRecipe(RecipeRequestDto recipeDTO);
 
-    RecipeResponseDTO updateRecipe(Long id, RecipeRequestDTO recipeDTO);
+    RecipeResponseDTO updateRecipe(Long id, RecipeRequestDto recipeDTO);
 
     void deleteRecipe(Long id);
 
