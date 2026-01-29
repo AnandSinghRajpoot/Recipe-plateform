@@ -7,7 +7,6 @@ const DesktopNav = ({ menuItems, Logo }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("showReminder");
     alert("Logged out successfully!");
     navigate("/login");
   };
