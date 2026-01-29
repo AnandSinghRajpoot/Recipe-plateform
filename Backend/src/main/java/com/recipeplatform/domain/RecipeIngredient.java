@@ -30,7 +30,7 @@ public class RecipeIngredient {
     @Positive(message = "Quantity must be positive")
     private double quantity;
 
-    
+
     @NotNull(message = "Measure unit is required")
     @Enumerated(EnumType.STRING)
     private MeasureUnit unit;
