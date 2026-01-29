@@ -21,13 +21,7 @@ public class Ingredient {
     private Long id;
 
     @NotBlank(message = "Ingredient name is required")
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String name;
 
-    private String quantity;
-
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipe_id", nullable = false)
-    private Recipe recipe;
 }
