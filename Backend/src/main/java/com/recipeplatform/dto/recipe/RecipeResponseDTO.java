@@ -1,5 +1,7 @@
-package com.recipeplatform.dto;
+package com.recipeplatform.dto.recipe;
 
+import com.recipeplatform.dto.AuthorDto;
+import com.recipeplatform.dto.recipeIngredient.RecipeIngredientResponseDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
