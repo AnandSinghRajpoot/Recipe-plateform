@@ -6,7 +6,7 @@ spring:
     name: recipe-platform-backend
 
   datasource:
-    url: jdbc:mysql://localhost:3306/test2
+    url: jdbc:mysql://localhost:3306/recipe
     username: root
     password: ahmad1234
     driver-class-name: com.mysql.cj.jdbc.Driver
