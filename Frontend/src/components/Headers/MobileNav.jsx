@@ -9,7 +9,6 @@ export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("showReminder");
     alert("Logged out successfully!");
     navigate("/login");
     onClose();
