@@ -3,6 +3,7 @@ package com.recipeplatform.config;
 import com.recipeplatform.security.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -30,6 +31,7 @@ public class SecurityConfig {
                 auth.
                          requestMatchers("/api/v1/auth/test","/api/v1/auth/reminder-dismiss").authenticated()
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/v1/recipes").authenticated()
                         .anyRequest().permitAll()
         );
 
