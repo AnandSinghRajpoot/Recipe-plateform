@@ -30,8 +30,7 @@ public class IngredientServiceImpl implements IngredientService {
         Ingredient ingredient = ingredientMapper.toEntity(ingredientDto);
         if (ingredientRepository.existsByNameIgnoreCase(ingredient.getName())) {
             throw new DuplicateResourceException(
-                    "Ingredient already exists with name: " + ingredient.getName()
-            );
+                    "Ingredient already exists with name: " + ingredient.getName());
         }
         return ingredientMapper.toDto(ingredientRepository.save(ingredient));
     }
@@ -39,9 +38,7 @@ public class IngredientServiceImpl implements IngredientService {
     @Override
     public Ingredient getIngredientById(Long id) {
         return ingredientRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Ingredient not found with id: " + id)
-                );
+                .orElseThrow(() -> new ResourceNotFoundException("Ingredient not found with id: " + id));
     }
 
     @Override
@@ -55,5 +52,14 @@ public class IngredientServiceImpl implements IngredientService {
         Ingredient ingredient = getIngredientById(id);
         ingredientRepository.delete(ingredient);
     }
-}
 
+    @Override
+    public Ingredient getOrCreateIngredientByName(String name) {
+        return ingredientRepository.findByNameIgnoreCase(name)
+                .orElseGet(() -> {
+                    Ingredient newIngredient = new Ingredient();
+                    newIngredient.setName(name);
+                    return ingredientRepository.save(newIngredient);
+                });
+    }
+}
