@@ -5,6 +5,7 @@ import com.recipeplatform.domain.enums.UserRole;
 import com.recipeplatform.dto.auth.LoginRequest;
 import com.recipeplatform.dto.auth.LoginResponse;
 import com.recipeplatform.dto.auth.RegisterRequest;
+import com.recipeplatform.exception.UserAlreadyExistException;
 import com.recipeplatform.mapper.UserMapper;
 import com.recipeplatform.repository.UserRepository;
 import com.recipeplatform.security.JwtUtill;
@@ -59,6 +60,10 @@ public class AuthServiceImpl implements AuthService {
         user.setRole(UserRole.USER);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         ProfileCompletionHelper.initialize(user);
+
+        if(userRepository.existsByEmail(user.getEmail())){
+            throw new UserAlreadyExistException("user already exist with following email.");
+        }
         return userRepository.save(user);
     }
 
