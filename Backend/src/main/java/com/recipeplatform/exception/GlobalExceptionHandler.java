@@ -102,6 +102,33 @@ public class GlobalExceptionHandler {
     }
 
 
+    // user already exist
+    @ExceptionHandler(UserAlreadyExistException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExist(
+            UserAlreadyExistException exception) {
+
+        ErrorResponse response = new ErrorResponse(
+                exception.getMessage(),
+                null,
+                HttpStatus.BAD_REQUEST.value()
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    //handle not allowed operation exception
+    @ExceptionHandler(NotAllowedOperation.class)
+    public ResponseEntity<ErrorResponse> handleNotAllowed(
+            NotAllowedOperation exception) {
+
+        ErrorResponse response = new ErrorResponse(
+                exception.getMessage(),
+                null,
+                HttpStatus.BAD_REQUEST.value()
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralExceptions(
