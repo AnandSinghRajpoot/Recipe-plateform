@@ -1,6 +1,6 @@
 package com.recipeplatform.controller;
 
-
+import com.recipeplatform.dto.ApiResponse;
 import com.recipeplatform.dto.recipe.*;
 import com.recipeplatform.dto.recipe.RecipeResponseDTO;
 import com.recipeplatform.service.RecipeService;
@@ -22,17 +22,26 @@ public class RecipeController {
     }
 
     @PostMapping
-    public ResponseEntity<RecipeResponseDTO> createRecipe(@Valid @RequestBody RecipeRequestDto recipeDTO) {
+    public ResponseEntity<ApiResponse<RecipeResponseDTO>> createRecipe(@Valid @RequestBody RecipeRequestDto recipeDTO) {
         RecipeResponseDTO createdRecipe = recipeService.createRecipe(recipeDTO);
-        return new ResponseEntity<>(createdRecipe, HttpStatus.CREATED);
+
+        ApiResponse<RecipeResponseDTO> response = new ApiResponse<>(
+                "recipe added successfully",
+                createdRecipe,
+                HttpStatus.CREATED.value());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RecipeResponseDTO> updateRecipe(
+    public ResponseEntity<ApiResponse<RecipeResponseDTO>> updateRecipe(
             @PathVariable Long id,
             @Valid @RequestBody RecipeRequestDto recipeDTO) {
         RecipeResponseDTO updatedRecipe = recipeService.updateRecipe(id, recipeDTO);
-        return ResponseEntity.ok(updatedRecipe);
+        ApiResponse<RecipeResponseDTO> response = new ApiResponse<>(
+                "recipe updated successfully",
+                updatedRecipe,
+                HttpStatus.OK.value());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
@@ -48,9 +57,13 @@ public class RecipeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<RecipeResponseDTO>> getAllRecipes() {
+    public ResponseEntity<ApiResponse<List<RecipeResponseDTO>>> getAllRecipes() {
         List<RecipeResponseDTO> recipes = recipeService.getAllRecipes();
-        return ResponseEntity.ok(recipes);
+        ApiResponse<List<RecipeResponseDTO>> response = new ApiResponse<>(
+                "recipe fetched successfully",
+                recipes,
+                HttpStatus.OK.value());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping("/search")
@@ -62,6 +75,12 @@ public class RecipeController {
     @GetMapping("/latest")
     public ResponseEntity<List<RecipeResponseDTO>> getLatestRecipes() {
         List<RecipeResponseDTO> recipes = recipeService.getLatestRecipes();
+        return ResponseEntity.ok(recipes);
+    }
+
+    @GetMapping("/category/{category}")
+    public ResponseEntity<List<RecipeResponseDTO>> getRecipesByCategory(@PathVariable String category) {
+        List<RecipeResponseDTO> recipes = recipeService.getRecipesByCategory(category);
         return ResponseEntity.ok(recipes);
     }
 }
