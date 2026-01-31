@@ -7,7 +7,7 @@ const Header = () => {
     const [hideLeft, setHideLeft] = useState("-left-[1000px]");
     const navigate = useNavigate();
 
-    const menuItems = ["recipes","resources","addRecipe","about","contact"]
+    const menuItems = ["home","recipe","resource","about","contact"]
     const onOpen = () => {
         setHideLeft ("left-0");
     }
