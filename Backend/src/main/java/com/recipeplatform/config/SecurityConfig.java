@@ -32,6 +32,7 @@ public class SecurityConfig {
                          requestMatchers("/api/v1/auth/test","/api/v1/auth/reminder-dismiss").authenticated()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/v1/recipes").authenticated()
+                        .requestMatchers(HttpMethod.PUT,"/api/v1/recipes").authenticated()
                         .anyRequest().permitAll()
         );
 
