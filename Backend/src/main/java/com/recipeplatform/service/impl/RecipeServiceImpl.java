@@ -6,6 +6,7 @@ import com.recipeplatform.domain.RecipeIngredient;
 import com.recipeplatform.domain.User;
 import com.recipeplatform.dto.recipe.RecipeRequestDto;
 import com.recipeplatform.dto.recipe.RecipeResponseDTO;
+import com.recipeplatform.exception.NotAllowedOperation;
 import com.recipeplatform.exception.ResourceNotFoundException;
 import com.recipeplatform.mapper.RecipeMapper;
 import com.recipeplatform.repository.RecipeRepository;
@@ -60,17 +61,17 @@ public class RecipeServiceImpl implements RecipeService {
         return recipeMapper.toResponseDTO(savedRecipe);
     }
 
+
     @Override
     public RecipeResponseDTO updateRecipe(Long id, RecipeRequestDto recipeDTO) {
 
         Recipe existingRecipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe", "id", id));
 
-        // Check if current user is the author (optional but recommended)
+        // Check if current user is the author
         User user = currentUser.getCurrentUser();
         if (!java.util.Objects.equals(existingRecipe.getUser().getId(), user.getId())) {
-            throw new RuntimeException("Unauthorized to update this recipe"); // Replace with proper exception if
-                                                                              // available
+            throw new NotAllowedOperation("Unauthorized to update this recipe");
         }
 
         recipeMapper.updateEntityFromDTO(recipeDTO, existingRecipe);
@@ -88,7 +89,7 @@ public class RecipeServiceImpl implements RecipeService {
                         ri.setUnit(dto.getUnit());
                         return ri;
                     })
-                    .collect(Collectors.toList());
+                    .toList();
             existingRecipe.getIngredients().addAll(recipeIngredients);
         }
 
