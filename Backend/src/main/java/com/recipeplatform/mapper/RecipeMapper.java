@@ -20,11 +20,6 @@ public interface RecipeMapper {
 
     List<RecipeResponseDTO> toResponseDTOList(List<Recipe> recipes);
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "user", ignore = true)
-    @Mapping(target = "ingredients", ignore = true)
     void updateEntityFromDTO(RecipeRequestDto dto, @MappingTarget Recipe recipe);
 
 
