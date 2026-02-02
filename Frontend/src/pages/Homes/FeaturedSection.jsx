@@ -34,4 +34,4 @@ const FeaturedSection = () => {
   )
 }
 
-export default FeaturedSection
+export default FeaturedSection;
