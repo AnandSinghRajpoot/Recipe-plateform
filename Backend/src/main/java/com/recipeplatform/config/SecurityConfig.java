@@ -1,6 +1,7 @@
 package com.recipeplatform.config;
 
 import com.recipeplatform.security.JwtFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,12 +28,12 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf(AbstractHttpConfigurer::disable);
 
-        httpSecurity.authorizeHttpRequests(auth->
+        httpSecurity.authorizeHttpRequests(auth ->
                 auth.
-                         requestMatchers("/api/v1/auth/test","/api/v1/auth/reminder-dismiss").authenticated()
+                        requestMatchers("/api/v1/auth/test", "/api/v1/auth/reminder-dismiss").authenticated()
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/v1/recipes").authenticated()
-                        .requestMatchers(HttpMethod.PUT,"/api/v1/recipes").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/recipes").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/recipes").authenticated()
                         .anyRequest().permitAll()
         );
 
@@ -40,6 +41,32 @@ public class SecurityConfig {
 
         httpSecurity.formLogin(AbstractHttpConfigurer::disable);
         httpSecurity.httpBasic(AbstractHttpConfigurer::disable);
+
+        httpSecurity.
+                exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("""
+                                        {
+                                          "error": "UNAUTHORIZED",
+                                          "message": "Invalid or expired JWT token"
+                                        }
+                                    """);
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json");
+                            response.getWriter().write("""
+                                        {
+                                          "error": "FORBIDDEN",
+                                          "message": "You do not have permission to access this resource"
+                                        }
+                                    """);
+                        })
+                );
+
+
         return httpSecurity.build();
     }
 

@@ -82,6 +82,13 @@ export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
                   Add Recipe
                 </Link>
                 <Link
+                  to="/my-recipes"
+                  onClick={onClose}
+                  className="text-secondary px-8 py-2 rounded border hover:bg-gray-200 w-full text-center"
+                >
+                  My Recipes
+                </Link>
+                <Link
                   to="/profile/complete"
                   onClick={onClose}
                   className="text-secondary px-8 py-2 rounded border hover:bg-gray-200"

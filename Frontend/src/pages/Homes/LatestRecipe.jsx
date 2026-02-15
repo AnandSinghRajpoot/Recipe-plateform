@@ -8,7 +8,8 @@ const LatestRecipe = () => {
         const getLatestItems = async ()=> {
             try {
                 const response = await axios.get('http://localhost:8080/api/v1/recipes/latest')
-                setItems(response.data)
+                const data = response.data.data || response.data;
+                setItems(Array.isArray(data) ? data : []);
             } catch (error) {
                 console.error("Error fetching latest recipes:", error);
             }

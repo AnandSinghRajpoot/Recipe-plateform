@@ -1,14 +1,16 @@
 import React from 'react'
 import { useLoaderData } from 'react-router-dom'
+import { resolveImageUrl } from '../../utils/imageUtils'
 
 const SingleProduct = () => {
-  const item = useLoaderData()
+  const loaderData = useLoaderData()
+  const item = loaderData?.data || loaderData;
   
   // Property mapping from DTO or legacy data
   const title = item?.title || item?.name || "Untitled Recipe";
   const description = item?.description || "A delicious recipe.";
   const instructions = item?.instructions || "";
-  const imageUrl = item?.coverImageUrl || item?.thumbnail_image || "https://images.unsplash.com/photo-1495521821757-a1efb6729352?q=80&w=2000&auto=format&fit=crop";
+  const imageUrl = resolveImageUrl(item?.coverImageUrl || item?.thumbnail_image);
   const difficulty = item?.difficulty || (Array.isArray(item?.more) ? item.more[0]?.difficulty : item?.more?.difficulty) || "N/A";
   
   // Time handling (new numeric fields vs old strings)

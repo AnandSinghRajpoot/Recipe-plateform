@@ -1,5 +1,6 @@
 import React from 'react'
 import {Link} from 'react-router-dom'
+import { resolveImageUrl } from "../../utils/imageUtils";
 import { GoClock } from "react-icons/go";
 
 const Card = ({item}) => {
@@ -26,7 +27,7 @@ const Card = ({item}) => {
         <div className="container mx-auto flex justify-center md:justify-start">
             <div className="max-w-sm">
                 <div className='bg-white relative shadow-lg hover:shadow-xl transition duration-500 rounded-lg'>
-                <img src={item?.coverImageUrl || item?.thumbnail_image || "https://images.unsplash.com/photo-1495521821757-a1efb6729352?q=80&w=2000&auto=format&fit=crop"} alt={title || "Recipe"}  className="w-full h-48 object-cover rounded-t-xl"/>
+                <img src={resolveImageUrl(item?.coverImageUrl || item?.thumbnail_image)} alt={title || "Recipe"}  className="w-full h-48 object-cover rounded-t-xl"/>
                 
                 <div className="absolute top-2 right-2 py-1 px-2 bg-white rounded-lg shadow">
               <span className="font-medium text-gray-700 text-sm">

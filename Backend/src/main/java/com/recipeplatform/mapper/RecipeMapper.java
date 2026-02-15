@@ -17,15 +17,22 @@ public interface RecipeMapper {
 
     Recipe toEntity(RecipeRequestDto dto);
 
-
     List<RecipeResponseDTO> toResponseDTOList(List<Recipe> recipes);
 
     void updateEntityFromDTO(RecipeRequestDto dto, @MappingTarget Recipe recipe);
 
-
     @Mapping(target = "author", source = "user", qualifiedByName = "getAuthor")
     @Mapping(target = "ingredients", qualifiedByName = "getDto")
+    @Mapping(target = "coverImageUrl", source = "coverImageUrl", qualifiedByName = "resolveUrl")
     RecipeResponseDTO toResponseDTO(Recipe recipe);
+
+    @Named("resolveUrl")
+    default String resolveUrl(String coverImageUrl) {
+        if (coverImageUrl == null || coverImageUrl.startsWith("http")) {
+            return coverImageUrl;
+        }
+        return "http://localhost:8080/images/" + coverImageUrl;
+    }
 
     @Named("getDto")
     default List<RecipeIngredientResponseDto> getDto(List<RecipeIngredient> ingredients) {

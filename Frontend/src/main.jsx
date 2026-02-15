@@ -15,6 +15,8 @@ import Contact from './pages/product/Contact.jsx';
 import LoginPage from './pages/Homes/LoginPage.jsx'
 import Signup from './pages/Homes/Signup.jsx'
 import AddRecipe from "./pages/AddRecipe";
+import MyRecipes from "./pages/MyRecipes.jsx";
+import EditRecipe from "./pages/EditRecipe.jsx";
 import ProfileComplete from "./pages/ProfileComplete.jsx";
 
 
@@ -50,6 +52,14 @@ const router = createBrowserRouter([
           path : "/addRecipe",
           element : <AddRecipe/>
         
+        },
+        {
+          path : "/my-recipes",
+          element : <MyRecipes/>
+        },
+        {
+          path : "/edit-recipe/:id",
+          element : <EditRecipe/>
         },
         {
           path : "/resources",

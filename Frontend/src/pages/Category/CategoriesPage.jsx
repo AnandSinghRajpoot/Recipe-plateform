@@ -16,7 +16,8 @@ const CategoriesPage = () => {
 
             try{
                 const response = await axios.get(`http://localhost:8080/api/v1/recipes/category/${category}`)
-                setItems(response.data)
+                const data = response.data.data || response.data;
+                setItems(Array.isArray(data) ? data : []);
             }
             catch(error){
                 setError(error.message || "Error Loading category")

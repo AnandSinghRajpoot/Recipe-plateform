@@ -63,6 +63,12 @@ const DesktopNav = ({ menuItems, Logo }) => {
               Add Recipe
             </Link>
             <Link
+              to="/my-recipes"
+              className="text-secondary px-4 py-2 rounded border hover:bg-gray-100"
+            >
+              My Recipes
+            </Link>
+            <Link
               to="/profile/complete"
               className="text-secondary px-4 py-2 rounded border hover:bg-gray-100"
             >

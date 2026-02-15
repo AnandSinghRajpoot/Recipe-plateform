@@ -1,6 +1,7 @@
 package com.recipeplatform.exception;
 
 import com.recipeplatform.dto.ErrorResponse;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -127,6 +128,19 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
+
+
+
+        @ExceptionHandler(ExpiredJwtException.class)
+        public ResponseEntity<?> handleExpiredJwt(ExpiredJwtException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of(
+                            "error", "JWT_EXPIRED",
+                            "message", "Token expired"
+                    ));
+        }
+
+
 
 
 

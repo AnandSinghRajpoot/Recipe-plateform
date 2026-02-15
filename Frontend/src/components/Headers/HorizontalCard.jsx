@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { GoClock } from "react-icons/go";
 import { HiOutlineChartBar } from "react-icons/hi";
+import { resolveImageUrl } from "../../utils/imageUtils";
 
 const HorizontalCard = ({ item }) => {
     const title = item?.title || item?.name || "Untitled Recipe";
@@ -9,7 +10,7 @@ const HorizontalCard = ({ item }) => {
     const difficulty = item?.difficulty || "Medium";
     const prepTime = item?.prepTime !== undefined ? item?.prepTime : (item?.more?.[0]?.prep_time || "N/A");
     const id = item?.id || item?._id;
-    const imageUrl = item?.coverImageUrl || item?.thumbnail_image || "https://images.unsplash.com/photo-1495521821757-a1efb6729352?q=80&w=2000&auto=format&fit=crop";
+    const imageUrl = resolveImageUrl(item?.coverImageUrl || item?.thumbnail_image);
 
     const getDifficultyColor = (diff) => {
         switch (diff?.toUpperCase()) {

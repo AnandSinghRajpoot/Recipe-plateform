@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-const AddRecipe = () => {
+const EditRecipe = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
     const [recipe, setRecipe] = useState({
         title: "",
@@ -14,18 +15,46 @@ const AddRecipe = () => {
         ingredients: [{ name: "", quantity: "", unit: "GRAM" }]
     });
 
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
 
+    useEffect(() => {
+        fetchRecipeDetails();
+    }, [id]);
+
+    const fetchRecipeDetails = async () => {
+        try {
+            const res = await axios.get(`http://localhost:8080/api/v1/recipes/${id}`);
+            const data = res.data.data || res.data;
+            setRecipe({
+                title: data.title || "",
+                description: data.description || "",
+                instructions: data.instructions || "",
+                difficulty: data.difficulty || "EASY",
+                prepTime: data.prepTime || 0,
+                cookTime: data.cookTime || 0,
+                ingredients: data.ingredients || [{ name: "", quantity: "", unit: "GRAM" }]
+            });
+            if (data.coverImageUrl) {
+                // If the backend returns a full URL, use it for preview
+                setImagePreview(data.coverImageUrl.startsWith('http') ? data.coverImageUrl : `http://localhost:8080/images/${data.coverImageUrl}`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Failed to load recipe details");
+            navigate("/my-recipes");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setRecipe({ ...recipe, [name]: value });
-        // Clear error when user starts typing
-        if (errors[name]) {
-            setErrors({ ...errors, [name]: "" });
-        }
+        if (errors[name]) setErrors({ ...errors, [name]: "" });
     };
 
     const handleFileChange = (e) => {
@@ -41,10 +70,7 @@ const AddRecipe = () => {
         const newIngredients = [...recipe.ingredients];
         newIngredients[index][name] = value;
         setRecipe({ ...recipe, ingredients: newIngredients });
-        
-        if (errors.ingredients) {
-            setErrors({ ...errors, ingredients: "" });
-        }
+        if (errors.ingredients) setErrors({ ...errors, ingredients: "" });
     };
 
     const addIngredient = () => {
@@ -61,25 +87,12 @@ const AddRecipe = () => {
 
     const validate = () => {
         const newErrors = {};
-        if (!recipe.title || recipe.title.length < 3 || recipe.title.length > 100) {
-            newErrors.title = "Recipe title must be between 3 and 100 characters";
-        }
-        if (!recipe.description || recipe.description.length < 20 || recipe.description.length > 500) {
-            newErrors.description = "Description must be between 20 and 500 characters";
-        }
-        if (!recipe.instructions || recipe.instructions.length < 30 || recipe.instructions.length > 2000) {
-            newErrors.instructions = "Instructions must be between 30 and 2000 characters";
-        }
-        if (recipe.prepTime < 0 || recipe.prepTime > 180) {
-            newErrors.prepTime = "Prep time must be between 0 and 180 minutes";
-        }
-        if (recipe.cookTime < 1 || recipe.cookTime > 240) {
-            newErrors.cookTime = "Cook time must be between 1 and 240 minutes";
-        }
+        if (!recipe.title || recipe.title.length < 3) newErrors.title = "Title too short";
+        if (!recipe.description || recipe.description.length < 20) newErrors.description = "Description too short";
+        if (!recipe.instructions || recipe.instructions.length < 30) newErrors.instructions = "Instructions too short";
         
         recipe.ingredients.forEach((ing, index) => {
-            if (!ing.name) newErrors.ingredients = "All ingredients must have a name";
-            if (ing.quantity < 0.1) newErrors.ingredients = "Ingredient quantity must be at least 0.1";
+            if (!ing.name) newErrors.ingredients = "Ingredients must have names";
         });
 
         setErrors(newErrors);
@@ -88,17 +101,11 @@ const AddRecipe = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
         if (!validate()) return;
 
         const token = localStorage.getItem("token");
-        if (!token) {
-            alert("Please login first to add a recipe!");
-            navigate("/login");
-            return;
-        }
+        setSubmitting(true);
 
-        setLoading(true);
         try {
             const payload = {
                 ...recipe,
@@ -112,39 +119,39 @@ const AddRecipe = () => {
 
             const formData = new FormData();
             formData.append("recipe", new Blob([JSON.stringify(payload)], { type: "application/json" }));
-            
             if (imageFile) {
                 formData.append("file", imageFile);
             }
 
-            await axios.post("http://localhost:8080/api/v1/recipes", formData, {
+            await axios.put(`http://localhost:8080/api/v1/recipes/${id}`, formData, {
                 headers: { 
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data" 
                 }
             });
 
-            alert("Recipe added successfully! 🍲");
-            navigate("/"); // Or to recipe detail page
+            alert("Recipe updated successfully! ✨");
+            navigate("/my-recipes");
         } catch (err) {
-            console.error(err);
-            alert("Failed to add recipe: " + (err.response?.data?.message || err.message));
+            alert("Update failed: " + (err.response?.data?.message || err.message));
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
+
+    if (loading) return (
+        <div className="min-h-screen flex justify-center items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        </div>
+    );
 
     return (
         <div className="bg-[#FFFDF7] min-h-screen py-10 px-5">
             <h1 className="text-3xl font-bold text-center text-orange-500 mb-8">
-                Share Your Secret Recipe 🍲
+                Edit Your Recipe ✍️
             </h1>
 
-            <form
-                onSubmit={handleSubmit}
-                noValidate
-                className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-xl space-y-6"
-            >
+            <form onSubmit={handleSubmit} noValidate className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-xl space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block font-semibold mb-2 text-gray-700">Recipe Title</label>
@@ -153,8 +160,7 @@ const AddRecipe = () => {
                             name="title"
                             value={recipe.title}
                             onChange={handleChange}
-                            placeholder="e.g. Grandma's Pasta"
-                            className={`w-full border-2 rounded-xl p-3 focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none transition ${errors.title ? 'border-red-500' : 'border-gray-200'}`}
+                            className={`w-full border-2 rounded-xl p-3 focus:ring-2 focus:ring-orange-400 outline-none transition ${errors.title ? 'border-red-500' : 'border-gray-200'}`}
                         />
                         {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
                     </div>
@@ -175,24 +181,21 @@ const AddRecipe = () => {
                 </div>
 
                 <div>
-                    <label className="block font-semibold mb-2 text-gray-700">Cover Image</label>
+                    <label className="block font-semibold mb-2 text-gray-700">Update Cover Image</label>
                     <div className="flex flex-col md:flex-row gap-4 items-center">
                         <div className="w-full md:w-48 h-32 border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center overflow-hidden bg-gray-50">
                             {imagePreview ? (
                                 <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                             ) : (
-                                <span className="text-gray-400 text-sm italic">No image selected</span>
+                                <span className="text-gray-400 text-sm italic">No image</span>
                             )}
                         </div>
-                        <div className="flex-grow">
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 transition-all border-2 border-gray-100 p-2 rounded-xl"
-                            />
-                            <p className="text-xs text-gray-400 mt-2 italic">Select a beautiful cover image for your recipe (Optional)</p>
-                        </div>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 transition-all border-2 border-gray-100 p-2 rounded-xl"
+                        />
                     </div>
                 </div>
 
@@ -202,10 +205,8 @@ const AddRecipe = () => {
                         name="description"
                         value={recipe.description}
                         onChange={handleChange}
-                        placeholder="Tell us about your recipe..."
                         className={`w-full border-2 rounded-xl p-3 focus:ring-2 focus:ring-orange-400 outline-none transition h-24 ${errors.description ? 'border-red-500' : 'border-gray-200'}`}
                     />
-                    {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -216,9 +217,8 @@ const AddRecipe = () => {
                             name="prepTime"
                             value={recipe.prepTime}
                             onChange={handleChange}
-                            className={`w-full border-2 rounded-xl p-3 focus:ring-2 focus:ring-orange-400 outline-none transition ${errors.prepTime ? 'border-red-500' : 'border-gray-200'}`}
+                            className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-orange-400 outline-none transition"
                         />
-                        {errors.prepTime && <p className="text-red-500 text-xs mt-1">{errors.prepTime}</p>}
                     </div>
                     <div>
                         <label className="block font-semibold mb-2 text-gray-700">Cook Time (mins)</label>
@@ -227,9 +227,8 @@ const AddRecipe = () => {
                             name="cookTime"
                             value={recipe.cookTime}
                             onChange={handleChange}
-                            className={`w-full border-2 rounded-xl p-3 focus:ring-2 focus:ring-orange-400 outline-none transition ${errors.cookTime ? 'border-red-500' : 'border-gray-200'}`}
+                            className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-orange-400 outline-none transition"
                         />
-                        {errors.cookTime && <p className="text-red-500 text-xs mt-1">{errors.cookTime}</p>}
                     </div>
                 </div>
 
@@ -237,15 +236,14 @@ const AddRecipe = () => {
                     <label className="block font-semibold mb-2 text-gray-700">Ingredients</label>
                     <div className="space-y-3">
                         {recipe.ingredients.map((ing, index) => (
-                            <div key={index} className="flex gap-2 items-start">
+                            <div key={index} className="flex gap-2">
                                 <input
                                     type="text"
                                     name="name"
                                     value={ing.name}
                                     onChange={(e) => handleIngredientChange(index, e)}
-                                    placeholder="Ingredient name"
-                                    className="flex-grow border-gray-200 border-2 rounded-xl p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none transition"
-                                    required
+                                    placeholder="Name"
+                                    className="flex-grow border-gray-200 border-2 rounded-xl p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none outline-none transition"
                                 />
                                 <input
                                     type="number"
@@ -253,17 +251,13 @@ const AddRecipe = () => {
                                     value={ing.quantity}
                                     onChange={(e) => handleIngredientChange(index, e)}
                                     placeholder="Qty"
-                                    className="w-20 border-gray-200 border-2 rounded-xl p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none transition"
-                                    required
-                                    step="0.1"
-                                    min="0.1"
+                                    className="w-20 border-gray-200 border-2 rounded-xl p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none outline-none transition"
                                 />
                                 <select
                                     name="unit"
                                     value={ing.unit}
                                     onChange={(e) => handleIngredientChange(index, e)}
-                                    className="w-32 border-gray-200 border-2 rounded-xl p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none transition"
-                                    required
+                                    className="w-32 border-gray-200 border-2 rounded-xl p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none outline-none transition"
                                 >
                                     <option value="GRAM">GRAM</option>
                                     <option value="KILOGRAM">KILOGRAM</option>
@@ -274,26 +268,11 @@ const AddRecipe = () => {
                                     <option value="TEASPOON">TEASPOON</option>
                                     <option value="PIECE">PIECE</option>
                                 </select>
-                                {recipe.ingredients.length > 1 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => removeIngredient(index)}
-                                        className="bg-red-50 text-red-500 p-2 rounded-xl hover:bg-red-100 transition"
-                                    >
-                                        ✕
-                                    </button>
-                                )}
+                                <button type="button" onClick={() => removeIngredient(index)} className="text-red-500">✕</button>
                             </div>
                         ))}
                     </div>
-                    {errors.ingredients && <p className="text-red-500 text-xs mt-1">{errors.ingredients}</p>}
-                    <button
-                        type="button"
-                        onClick={addIngredient}
-                        className="mt-3 text-sm font-semibold text-orange-500 hover:text-orange-600 transition"
-                    >
-                        + Add Another Ingredient
-                    </button>
+                    <button type="button" onClick={addIngredient} className="mt-3 text-sm font-semibold text-orange-500">+ Add Ingredient</button>
                 </div>
 
                 <div>
@@ -302,26 +281,22 @@ const AddRecipe = () => {
                         name="instructions"
                         value={recipe.instructions}
                         onChange={handleChange}
-                        placeholder="Step-by-step instructions..."
                         className={`w-full border-2 rounded-xl p-3 focus:ring-2 focus:ring-orange-400 outline-none transition h-40 ${errors.instructions ? 'border-red-500' : 'border-gray-200'}`}
                     />
-                    {errors.instructions && <p className="text-red-500 text-xs mt-1">{errors.instructions}</p>}
                 </div>
-
-
 
                 <button
                     type="submit"
-                    disabled={loading}
+                    disabled={submitting}
                     className={`w-full py-4 rounded-xl font-bold text-white shadow-lg transition transform active:scale-[0.98] ${
-                        loading ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-600 shadow-orange-100"
+                        submitting ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-600 shadow-orange-100"
                     }`}
                 >
-                    {loading ? "Adding Recipe..." : "Publish Recipe"}
+                    {submitting ? "Updating..." : "Save Changes"}
                 </button>
             </form>
         </div>
     );
 };
 
-export default AddRecipe;
+export default EditRecipe;

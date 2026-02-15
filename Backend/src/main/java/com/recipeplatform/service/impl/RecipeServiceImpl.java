@@ -10,11 +10,13 @@ import com.recipeplatform.exception.NotAllowedOperation;
 import com.recipeplatform.exception.ResourceNotFoundException;
 import com.recipeplatform.mapper.RecipeMapper;
 import com.recipeplatform.repository.RecipeRepository;
+import com.recipeplatform.service.ImageService;
 import com.recipeplatform.service.IngredientService;
 import com.recipeplatform.service.RecipeService;
 import com.recipeplatform.util.CurrentUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,16 +29,19 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeMapper recipeMapper;
     private final IngredientService ingredientService;
     private final CurrentUser currentUser;
+    private final ImageService imageService;
 
-    public RecipeServiceImpl(RecipeRepository recipeRepository, RecipeMapper recipeMapper, IngredientService ingredientService, CurrentUser currentUser) {
+    public RecipeServiceImpl(RecipeRepository recipeRepository, RecipeMapper recipeMapper,
+            IngredientService ingredientService, CurrentUser currentUser, ImageService imageService) {
         this.recipeRepository = recipeRepository;
         this.recipeMapper = recipeMapper;
         this.ingredientService = ingredientService;
         this.currentUser = currentUser;
+        this.imageService = imageService;
     }
 
     @Override
-    public RecipeResponseDTO createRecipe(RecipeRequestDto recipeDTO) {
+    public RecipeResponseDTO createRecipe(RecipeRequestDto recipeDTO, MultipartFile file) {
 
         User user = currentUser.getCurrentUser();
         Recipe recipe = recipeMapper.toEntity(recipeDTO);
@@ -46,7 +51,8 @@ public class RecipeServiceImpl implements RecipeService {
         if (recipeDTO.getIngredients() != null && !recipeDTO.getIngredients().isEmpty()) {
             List<RecipeIngredient> recipeIngredients = recipeDTO.getIngredients().stream()
                     .map(dto -> {
-                        Ingredient ingredient = ingredientService.getOrCreateIngredientByName(dto.getName().trim().toLowerCase());
+                        Ingredient ingredient = ingredientService
+                                .getOrCreateIngredientByName(dto.getName().trim().toLowerCase());
                         RecipeIngredient ri = new RecipeIngredient();
                         ri.setRecipe(recipe);
                         ri.setIngredient(ingredient);
@@ -57,13 +63,18 @@ public class RecipeServiceImpl implements RecipeService {
                     .collect(Collectors.toList());
             recipe.setIngredients(recipeIngredients);
         }
+
+        String coverImageUrl = null;
+        if (file != null) {
+            coverImageUrl = imageService.saveImage(file);
+        }
+        recipe.setCoverImageUrl(coverImageUrl);
         Recipe savedRecipe = recipeRepository.save(recipe);
         return recipeMapper.toResponseDTO(savedRecipe);
     }
 
-
     @Override
-    public RecipeResponseDTO updateRecipe(Long id, RecipeRequestDto recipeDTO) {
+    public RecipeResponseDTO updateRecipe(Long id, RecipeRequestDto recipeDTO, MultipartFile file) {
 
         Recipe existingRecipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe", "id", id));
@@ -75,6 +86,12 @@ public class RecipeServiceImpl implements RecipeService {
         }
 
         recipeMapper.updateEntityFromDTO(recipeDTO, existingRecipe);
+
+        // Update image if provided
+        if (file != null && !file.isEmpty()) {
+            String newImageUrl = imageService.saveImage(file);
+            existingRecipe.setCoverImageUrl(newImageUrl);
+        }
 
         // Update ingredients
         if (recipeDTO.getIngredients() != null) {
@@ -149,6 +166,14 @@ public class RecipeServiceImpl implements RecipeService {
     public List<RecipeResponseDTO> getLatestRecipes() {
 
         List<Recipe> recipes = recipeRepository.findAllOrderByCreatedAtDesc();
+        return recipeMapper.toResponseDTOList(recipes);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RecipeResponseDTO> getMyRecipes() {
+        User user = currentUser.getCurrentUser();
+        List<Recipe> recipes = recipeRepository.findByUser(user);
         return recipeMapper.toResponseDTOList(recipes);
     }
 }
