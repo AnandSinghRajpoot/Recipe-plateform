@@ -18,6 +18,7 @@ import AddRecipe from "./pages/AddRecipe";
 import MyRecipes from "./pages/MyRecipes.jsx";
 import EditRecipe from "./pages/EditRecipe.jsx";
 import ProfileComplete from "./pages/ProfileComplete.jsx";
+import Profile from './pages/Homes/profile.jsx';
 
 
 const router = createBrowserRouter([
@@ -84,7 +85,11 @@ const router = createBrowserRouter([
         {
           path : "/profile/complete",
           element : <ProfileComplete/>
-        }
+        },
+        {
+          path : "/profile",
+          element : <Profile/>
+        },
 
 
 

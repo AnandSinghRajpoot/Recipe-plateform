@@ -1,55 +1,79 @@
-import React from 'react'
+
+import React from "react";
+
+const companies = [
+  {
+    name: "Veg Delight",
+    icon: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png",
+  },
+  {
+    name: "Spice Route",
+    icon: "https://cdn-icons-png.flaticon.com/512/857/857681.png",
+  },
+  {
+    name: "Healthy Bowl",
+    icon: "https://cdn-icons-png.flaticon.com/512/2921/2921822.png",
+  },
+  {
+    name: "Quick Bites",
+    icon: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
+  },
+  {
+    name: "Home Kitchen",
+    icon: "https://cdn-icons-png.flaticon.com/512/135/135620.png",
+  },
+];
 
 const CompanyLogo = () => {
   return (
-    <div className=" py-24 sm:py-32">
+    <div className="py-24 sm:py-32 overflow-hidden">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <h2 className="text-center text-lg/8 font-semibold leading-8 text-gray-900">Trusted by the world’s most innovative teams</h2>
-        <div className="mx-auto mt-10 grid max-w-lg grid-cols-4 items-center gap-x-8 gap-y-10 sm:max-w-xl sm:grid-cols-6 sm:gap-x-10 lg:mx-0 lg:max-w-none lg:grid-cols-5">
-          <img
-            alt="Transistor"
-            src="https://tailwindcss.com/plus-assets/img/logos/158x48/transistor-logo-gray-900.svg"
-            width={158}
-            height={48}
-            className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-          />
+        <h2 className="text-center text-lg font-semibold text-gray-900 mb-10">
+          Trusted by top recipe creators & home chefs
+        </h2>
 
-          <img
-            alt="Reform"
-            src="https://tailwindcss.com/plus-assets/img/logos/158x48/reform-logo-gray-900.svg"
-            width={158}
-            height={48}
-            className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-          />
-
-          <img
-            alt="Tuple"
-            src="https://tailwindcss.com/plus-assets/img/logos/158x48/tuple-logo-gray-900.svg"
-            width={158}
-            height={48}
-            className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-          />
-
-          <img
-            alt="SavvyCal"
-            src="https://tailwindcss.com/plus-assets/img/logos/158x48/savvycal-logo-gray-900.svg"
-            width={158}
-            height={48}
-            className="col-span-2 max-h-12 w-full object-contain sm:col-start-2 lg:col-span-1"
-          />
-
-          <img
-            alt="Statamic"
-            src="https://tailwindcss.com/plus-assets/img/logos/158x48/statamic-logo-gray-900.svg"
-            width={158}
-            height={48}
-            className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
-          />
+        {/* SLIDER */}
+        <div className="relative w-full overflow-hidden">
+          <div className="flex gap-16 animate-slide">
+            {[...companies, ...companies].map((company, index) => (
+              <div
+                key={index}
+                className="flex flex-col items-center min-w-[160px]"
+              >
+                <img
+                  src={company.icon}
+                  alt={company.name}
+                  className="h-12 object-contain"
+                />
+                <span className="mt-2 text-sm font-semibold text-gray-700">
+                  {company.name}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
+
       </div>
+
+      {/* CSS Animation */}
+      <style>
+        {`
+          @keyframes slide {
+            0% {
+              transform: translateX(0);
+            }
+            100% {
+              transform: translateX(-50%);
+            }
+          }
+
+          .animate-slide {
+            animation: slide 20s linear infinite;
+          }
+        `}
+      </style>
     </div>
-  )
-}
+  );
+};
 
-export default CompanyLogo
-
+export default CompanyLogo;
