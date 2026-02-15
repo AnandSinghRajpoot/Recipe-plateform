@@ -1,5 +1,6 @@
 package com.recipeplatform.dto.auth;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,5 +14,4 @@ public class LoginResponse {
     private long issuedAt;
     private long expireAt;
     private Boolean isProfileCompleted;
-    private Boolean showReminder;
 }

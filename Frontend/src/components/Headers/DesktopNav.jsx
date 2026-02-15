@@ -7,7 +7,6 @@ const DesktopNav = ({ menuItems, Logo }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("showReminder");
     alert("Logged out successfully!");
     navigate("/login");
   };
@@ -29,7 +28,7 @@ const DesktopNav = ({ menuItems, Logo }) => {
         {menuItems?.map((menu, index) => (
           <li key={index}>
             <Link
-              to={`/${menu}`}
+              to={menu === "home" ? "/" : menu === "recipe" ? "/recipes" : menu === "resource" ? "/resources" : `/${menu}`}
               className="font-medium capitalize text-secondary hover:text-orange-600 transition"
             >
               {menu}
@@ -46,17 +45,29 @@ const DesktopNav = ({ menuItems, Logo }) => {
               to="/login"
               className="text-secondary px-4 py-2 rounded border"
             >
-              Log In
+              Sign in
             </Link>
             <Link
               to="/signup"
               className="text-secondary px-4 py-2 rounded border"
             >
-              Sign Up
+              Sign up
             </Link>
           </>
         ) : (
           <>
+            <Link
+              to="/addRecipe"
+              className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition"
+            >
+              Add Recipe
+            </Link>
+            <Link
+              to="/my-recipes"
+              className="text-secondary px-4 py-2 rounded border hover:bg-gray-100"
+            >
+              My Recipes
+            </Link>
             <Link
               to="/profile/complete"
               className="text-secondary px-4 py-2 rounded border hover:bg-gray-100"

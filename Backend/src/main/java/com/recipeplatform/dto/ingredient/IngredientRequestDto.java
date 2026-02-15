@@ -1,4 +1,4 @@
-package com.recipeplatform.dto;
+package com.recipeplatform.dto.ingredient;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -10,12 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class IngredientDTO {
-
-    private Long id;
+public class IngredientRequestDto {
 
     @NotBlank(message = "Ingredient name is required")
     private String name;
 
-    private String quantity;
 }

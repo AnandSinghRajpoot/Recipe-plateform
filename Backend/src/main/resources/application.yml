@@ -4,9 +4,14 @@ server:
 spring:
   application:
     name: recipe-platform-backend
+  servlet:
+    multipart:
+      enabled: true
+      max-request-size: 3MB
+      max-file-size: 2MB
 
   datasource:
-    url: jdbc:mysql://localhost:3306/test2
+    url: jdbc:mysql://localhost:3306/recipe
     username: root
     password: ahmad1234
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -32,6 +37,11 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
-jwt:
-  secret: hello-this-is-my-secrect-key-for-generating-jwt-token-and-it-help-in-jwt
-  expiration: 14400000
+app:
+  jwt:
+   secret: hello-this-is-my-secrect-key-for-generating-jwt-token-and-it-help-in-jwt
+   expiration: 14400000
+
+  file-upload:
+    dir:  upload/images
+

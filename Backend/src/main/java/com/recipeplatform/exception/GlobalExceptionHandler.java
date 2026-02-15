@@ -1,8 +1,10 @@
 package com.recipeplatform.exception;
 
 import com.recipeplatform.dto.ErrorResponse;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -62,6 +64,85 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
+
+    // Duplicate Resource insertion
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateIngredient(
+            DuplicateResourceException exception) {
+
+        ErrorResponse response = new ErrorResponse(
+                exception.getMessage(),
+                null,
+                HttpStatus.CONFLICT.value()
+        );
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    }
+
+
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleJsonParseError(
+            HttpMessageNotReadableException exception) {
+
+        Throwable rootCause = exception.getMostSpecificCause();
+
+        if (rootCause instanceof IllegalArgumentException) {
+            ErrorResponse response = new ErrorResponse(
+                    rootCause.getMessage(),
+                    null,
+                    HttpStatus.BAD_REQUEST.value()
+            );
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+        ErrorResponse response = new ErrorResponse(
+                "Invalid request payload",
+                null,
+                HttpStatus.BAD_REQUEST.value()
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+
+    // user already exist
+    @ExceptionHandler(UserAlreadyExistException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExist(
+            UserAlreadyExistException exception) {
+
+        ErrorResponse response = new ErrorResponse(
+                exception.getMessage(),
+                null,
+                HttpStatus.BAD_REQUEST.value()
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    //handle not allowed operation exception
+    @ExceptionHandler(NotAllowedOperation.class)
+    public ResponseEntity<ErrorResponse> handleNotAllowed(
+            NotAllowedOperation exception) {
+
+        ErrorResponse response = new ErrorResponse(
+                exception.getMessage(),
+                null,
+                HttpStatus.BAD_REQUEST.value()
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+
+
+        @ExceptionHandler(ExpiredJwtException.class)
+        public ResponseEntity<?> handleExpiredJwt(ExpiredJwtException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of(
+                            "error", "JWT_EXPIRED",
+                            "message", "Token expired"
+                    ));
+        }
+
+
+
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralExceptions(

@@ -15,6 +15,8 @@ import Contact from './pages/product/Contact.jsx';
 import LoginPage from './pages/Homes/LoginPage.jsx'
 import Signup from './pages/Homes/Signup.jsx'
 import AddRecipe from "./pages/AddRecipe";
+import MyRecipes from "./pages/MyRecipes.jsx";
+import EditRecipe from "./pages/EditRecipe.jsx";
 import ProfileComplete from "./pages/ProfileComplete.jsx";
 import Profile from './pages/Homes/profile.jsx';
 
@@ -40,7 +42,7 @@ const router = createBrowserRouter([
         {
           path: "/items/:id",
           element : <SingleProduct/>,
-          loader : ({params}) => fetch(`http://localhost:5000/api/items/${params.id}`)
+          loader : ({params}) => fetch(`http://localhost:8080/api/v1/recipes/${params.id}`)
         },
         
         {
@@ -51,6 +53,14 @@ const router = createBrowserRouter([
           path : "/addRecipe",
           element : <AddRecipe/>
         
+        },
+        {
+          path : "/my-recipes",
+          element : <MyRecipes/>
+        },
+        {
+          path : "/edit-recipe/:id",
+          element : <EditRecipe/>
         },
         {
           path : "/resources",

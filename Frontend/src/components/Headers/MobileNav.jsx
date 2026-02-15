@@ -9,7 +9,6 @@ export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("showReminder");
     alert("Logged out successfully!");
     navigate("/login");
     onClose();
@@ -44,7 +43,7 @@ export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
             {menuItems?.map((menu, index) => (
               <li key={index}>
                 <Link
-                  to={`/${menu}`}
+                  to={menu === "home" ? "/" : menu === "recipe" ? "/recipes" : menu === "resource" ? "/resources" : `/${menu}`}
                   onClick={onClose}
                   className="font-medium capitalize text-secondary text-2xl"
                 >
@@ -63,18 +62,32 @@ export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
                   onClick={onClose}
                   className="text-secondary px-4 py-2 rounded border hover:bg-gray-200"
                 >
-                  Log In
+                  Sign in
                 </Link>
                 <Link
                   to="/signup"
                   onClick={onClose}
                   className="text-secondary px-4 py-2 rounded border hover:bg-gray-200"
                 >
-                  Sign Up
+                  Sign up
                 </Link>
               </>
             ) : (
               <div className="flex flex-col items-center gap-4">
+                <Link
+                  to="/addRecipe"
+                  onClick={onClose}
+                  className="bg-orange-500 text-white px-8 py-2 rounded hover:bg-orange-600 transition"
+                >
+                  Add Recipe
+                </Link>
+                <Link
+                  to="/my-recipes"
+                  onClick={onClose}
+                  className="text-secondary px-8 py-2 rounded border hover:bg-gray-200 w-full text-center"
+                >
+                  My Recipes
+                </Link>
                 <Link
                   to="/profile/complete"
                   onClick={onClose}

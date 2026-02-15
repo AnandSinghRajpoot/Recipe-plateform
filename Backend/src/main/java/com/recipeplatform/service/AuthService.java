@@ -11,7 +11,5 @@ public interface AuthService {
 
     User register(RegisterRequest registerRequest);
 
-    String reminderDismissed();
-
     String completeProfile(com.recipeplatform.dto.auth.ProfileCompletionRequest request);
 }

@@ -26,7 +26,6 @@ const ProfileComplete = () => {
             await axios.post("http://localhost:8080/api/v1/auth/complete-profile", preferences, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            localStorage.setItem("showReminder", "false");
             alert("Profile completed successfully!");
             navigate("/");
         } catch (err) {

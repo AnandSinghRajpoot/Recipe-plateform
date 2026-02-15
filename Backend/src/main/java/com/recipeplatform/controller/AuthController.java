@@ -37,11 +37,6 @@ public class AuthController {
         return "the endpoint is public and you accessed it by giving token.";
     }
 
-    @PostMapping("/reminder-dismiss")
-    public String reminderDismiss() {
-        return authService.reminderDismissed();
-    }
-
     @PostMapping("/complete-profile")
     public String completeProfile(@RequestBody com.recipeplatform.dto.auth.ProfileCompletionRequest request) {
         return authService.completeProfile(request);
