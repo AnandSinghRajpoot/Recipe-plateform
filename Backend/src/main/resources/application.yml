@@ -1,0 +1,81 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: recipe-platform-backend
+  servlet:
+    multipart:
+      enabled: true
+      max-request-size: 3MB
+      max-file-size: 2MB
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/recipe
+    username: root
+    password: ahmad1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  # Email Configuration (Gmail SMTP)
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: kuckkuch364@gmail.com
+    password: xwfo klre trpn cqlp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+    default-encoding: UTF-8
+
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
+logging:
+  level:
+    com.recipeplatform: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+app:
+  jwt:
+   secret: hello-this-is-my-secrect-key-for-generating-jwt-token-and-it-help-in-jwt
+   expiration: 14400000
+
+  file-upload:
+    dir:  upload/images
+
+  recommendation:
+    # Scoring weights
+    diet-match-score: 20
+    low-sugar-score: 10
+    low-sodium-score: 10
+    high-fiber-score: 5
+    high-protein-score: 8
+    # Soft restriction penalties
+    avoid-penalty: -5
+    limit-penalty: -10
+    eliminate-penalty: -15
+    # Nutritional thresholds
+    low-sugar-threshold: 10.0
+    low-sodium-threshold: 500.0
+    high-fiber-threshold: 5.0
+    high-protein-threshold: 15.0
+

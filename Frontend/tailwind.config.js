@@ -1,0 +1,78 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        // Redesign colors
+        "error-container": "#ffdad6",
+        "on-secondary-container": "#653900",
+        "on-primary": "#ffffff",
+        "on-tertiary-fixed": "#201c00",
+        "error": "#ba1a1a",
+        "secondary-fixed-dim": "#ffb870",
+        "surface-dim": "#d8dad9",
+        "surface-variant": "#e1e3e1",
+        "on-error-container": "#93000a",
+        "on-surface": "#191c1b",
+        "on-error": "#ffffff",
+        "surface-bright": "#f8faf8",
+        "surface-container-lowest": "#ffffff",
+        "surface": "#f8faf8",
+        "on-secondary": "#ffffff",
+        "on-surface-variant": "#3f4a3c",
+        "surface-container-high": "#e6e9e7",
+        "on-primary-fixed-variant": "#005313",
+        "on-tertiary-container": "#474000",
+        "surface-tint": "#006e1c",
+        "on-background": "#191c1b",
+        "on-secondary-fixed": "#2c1600",
+        "surface-container-low": "#f2f4f2",
+        "primary": "#006e1c",
+        "secondary-container": "#ff9800",
+        "outline-variant": "#becab9",
+        "inverse-primary": "#78dc77",
+        "on-secondary-fixed-variant": "#693c00",
+        "on-tertiary-fixed-variant": "#4f4800",
+        "on-tertiary": "#ffffff",
+        "tertiary": "#695f00",
+        "primary-fixed-dim": "#78dc77",
+        "on-primary-container": "#003c0b",
+        "primary-fixed": "#94f990",
+        "secondary": "#8b5000",
+        "on-primary-fixed": "#002204",
+        "tertiary-fixed-dim": "#dbc90a",
+        "primary-container": "#4caf50",
+        "surface-container": "#eceeec",
+        "surface-container-highest": "#e1e3e1",
+        "background": "#f8faf8",
+        "outline": "#6f7a6b",
+        "inverse-on-surface": "#eff1ef",
+        "secondary-fixed": "#ffdcbe",
+        "inverse-surface": "#2e3130",
+        "tertiary-fixed": "#f9e534",
+        "tertiary-container": "#bdad00",
+        // Keeping legacy ones just in case
+        'legacy-primary':'#f9f7f3',
+        'legacy-secondary': '#1b2629',
+        'btnColor':'#9c702a',
+      },
+      borderRadius: {
+        "DEFAULT": "1rem",
+        "lg": "2rem",
+        "xl": "3rem",
+        "full": "9999px"
+      },
+      fontFamily: {
+        "headline": ["Manrope"],
+        "body": ["Inter"],
+        "label": ["Plus Jakarta Sans"]
+      }
+    },
+  },
+  plugins: [],
+}
