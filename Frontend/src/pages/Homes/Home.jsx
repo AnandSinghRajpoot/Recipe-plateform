@@ -6,6 +6,7 @@ import AboutSection from './AboutSection';
 import TestimonialsSection from './TestimonialsSection';
 import NewsLetter from './NewsLetter';
 import CTASection from './CTASection';
+import ScrollReveal from '../../components/common/ScrollReveal';
 
 const Home = () => {
     const [profileData, setProfileData] = useState(null);
@@ -16,22 +17,17 @@ const Home = () => {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        // Check if recently dismissed
         const saved = localStorage.getItem("profileReminderDismissed");
         if (saved) {
             const hoursSince = (new Date() - new Date(saved)) / (1000 * 60 * 60);
-            if (hoursSince < 24) {
-                return; // Don't show if dismissed within 24 hours
-            }
+            if (hoursSince < 24) return;
         }
 
-        // Fetch profile and show reminder after 2 seconds
         axios.get("http://localhost:8080/api/v1/auth/profile", {
             headers: { Authorization: `Bearer ${token}` }
         })
         .then(res => {
             const data = res.data;
-            // Show if profile not complete OR regular user
             if (!data.isProfileCompleted || data.role === "USER") {
                 setProfileData(data);
                 setTimeout(() => setShowReminder(true), 2000);
@@ -52,7 +48,6 @@ const Home = () => {
 
     return (
         <div className="bg-surface font-body text-on-surface selection:bg-secondary-fixed selection:text-on-secondary-fixed scroll-smooth">
-            {/* Profile Completion Reminder - Below Header */}
             {showReminder && profileData && (
                 <div className="w-full vitality-gradient border-b border-primary/20">
                     <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
@@ -77,17 +72,15 @@ const Home = () => {
                 </div>
             )}
 
-            {/* Dynamic Landing Experience */}
             <main className="min-h-screen">
-                <HomeHero />
-                <FeaturesGrid />
-                <AboutSection />
-                <TestimonialsSection />
-                <NewsLetter />
-                <CTASection />
+                <ScrollReveal><HomeHero /></ScrollReveal>
+                <ScrollReveal delay={0.2}><FeaturesGrid /></ScrollReveal>
+                <ScrollReveal delay={0.2}><AboutSection /></ScrollReveal>
+                <ScrollReveal delay={0.2}><TestimonialsSection /></ScrollReveal>
+                <ScrollReveal delay={0.2}><NewsLetter /></ScrollReveal>
+                <ScrollReveal delay={0.2}><CTASection /></ScrollReveal>
             </main>
 
-            {/* Custom Global Styles - Botanical Layer */}
             <style dangerouslySetInnerHTML={{ __html: `
                 @keyframes pulse-ring {
                   0% { transform: scale(0.95); opacity: 0.5; }
@@ -95,7 +88,6 @@ const Home = () => {
                   100% { transform: scale(0.95); opacity: 0.5; }
                 }
                 .animate-pulse-ring { animation: pulse-ring 4s ease-in-out infinite; }
-                
                 .font-headline { font-family: 'Manrope', sans-serif; }
                 .font-body { font-family: 'Plus Jakarta Sans', sans-serif; }
             `}} />
