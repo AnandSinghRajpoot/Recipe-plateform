@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import apiClient from "../../utils/apiClient";
+import { extractErrorMessage } from "../../utils/errorHandler";
+import toast from "react-hot-toast";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -10,7 +12,6 @@ const ResetPassword = () => {
   const [passwords, setPasswords] = useState({ newPassword: "", confirmPassword: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [tokenValid, setTokenValid] = useState(true);
 
@@ -19,7 +20,7 @@ const ResetPassword = () => {
       setTokenValid(false);
       setError("Invalid reset link");
     } else {
-      axios.get(`http://localhost:8080/api/v1/auth/validate-token?token=${token}`)
+      apiClient.get(`/auth/validate-token?token=${token}`)
         .catch(() => {
           setTokenValid(false);
           setError("This reset link has expired or is invalid");
@@ -75,7 +76,9 @@ const ResetPassword = () => {
     e.preventDefault();
     const errors = validatePassword();
     if (Object.keys(errors).length > 0) {
-      setError(Object.values(errors)[0]);
+      const firstError = Object.values(errors)[0];
+      setError(firstError);
+      toast.error(firstError);
       return;
     }
 
@@ -83,14 +86,16 @@ const ResetPassword = () => {
     setError("");
 
     try {
-      await axios.post("http://localhost:8080/api/v1/auth/reset-password", {
+      await apiClient.post("/auth/reset-password", {
         token,
         newPassword: passwords.newPassword
       });
-      setSuccess(true);
+      toast.success("Password reset successfully!");
       setTimeout(() => navigate("/password-reset-success"), 2000);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to reset password. Please try again.");
+      const msg = extractErrorMessage(err);
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -132,14 +137,7 @@ const ResetPassword = () => {
             <p className="text-on-surface-variant font-medium">Enter your new password below.</p>
           </div>
 
-          {success && (
-            <div className="mb-8 p-5 bg-primary/10 border border-primary/20 text-primary rounded-2xl text-center animate-fade-in">
-              <span className="material-symbols-outlined text-2xl mb-2 block">check_circle</span>
-              <p className="font-black">Password reset!</p>
-            </div>
-          )}
-
-          {error && !success && (
+          {error && (
             <div className="mb-8 p-5 bg-error-container text-on-error-container rounded-2xl text-center font-black animate-shake">
               <span className="material-symbols-outlined text-xl mr-2">error</span>
               {error}

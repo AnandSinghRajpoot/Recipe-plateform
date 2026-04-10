@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import apiClient from "../../utils/apiClient";
+import { extractErrorMessage } from "../../utils/errorHandler";
+import toast from "react-hot-toast";
 
 const ForgotPassword = () => {
   const [identifier, setIdentifier] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -19,13 +20,15 @@ const ForgotPassword = () => {
     setError("");
 
     try {
-      await axios.post("http://localhost:8080/api/v1/auth/forgot-password", { 
+      await apiClient.post("/auth/forgot-password", { 
         identifier: identifier.trim() 
       });
-      setSuccess(true);
+      toast.success("Reset instructions sent to your email!");
       setTimeout(() => navigate(`/reset-password-sent?email=${encodeURIComponent(identifier.trim())}`), 2000);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to send reset link. Please try again.");
+      const msg = extractErrorMessage(err);
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -53,13 +56,6 @@ const ForgotPassword = () => {
               No worries, we'll send you reset instructions.
             </p>
           </div>
-
-          {success && (
-            <div className="mb-8 p-5 bg-primary/10 border border-primary/20 text-primary rounded-2xl text-center animate-fade-in">
-              <span className="material-symbols-outlined text-2xl mb-2 block">check_circle</span>
-              <p className="font-black">Reset link sent!</p>
-            </div>
-          )}
 
           {error && (
             <div className="mb-8 p-5 bg-error-container text-on-error-container rounded-2xl text-center font-black animate-shake">

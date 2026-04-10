@@ -1,13 +1,16 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import apiClient from "../../utils/apiClient";
+import { extractErrorMessage } from "../../utils/errorHandler";
+import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
+import MagneticWrapper from "../../components/common/MagneticWrapper";
 
 const Login = () => {
   const [user, setUser] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const [success, setSuccess] = useState("");
   const [activeTab, setActiveTab] = useState("USER");
   const navigate = useNavigate();
 
@@ -37,11 +40,11 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:8080/api/v1/auth/login", user);
+      const res = await apiClient.post("/auth/login", user);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
-      setSuccess("Login successful! Redirecting...");
-      setErrors({});
+      toast.success("Login successful! Redirecting...");
+      
       setTimeout(() => {
         if (res.data.role === "CHEF" || res.data.role === "ADMIN") {
           navigate("/chef-dashboard");
@@ -50,7 +53,11 @@ const Login = () => {
         }
       }, 1500);
     } catch (err) {
-      setErrors({ form: err.response?.data?.message || err.message });
+      const errorMsg = extractErrorMessage(err);
+      setErrors({ form: errorMsg });
+      if (err.response?.status === 400) {
+        toast.error(errorMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -59,124 +66,110 @@ const Login = () => {
   return (
     <div className="bg-surface font-body text-on-surface min-h-[calc(100vh-136px)] flex items-center justify-center p-6 relative overflow-hidden">
       
-      {/* Botanical Background Layer */}
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
-        <div className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full bg-primary/20 blur-[150px]"></div>
-        <div className="absolute top-[60%] -right-[10%] w-[50%] h-[50%] rounded-full bg-secondary-container/20 blur-[120px]"></div>
+      {/* Simplified Botanical Background Layer for Performance */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-30">
+        <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/15 blur-[100px]" />
+        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[40%] rounded-full bg-secondary-container/15 blur-[80px]" />
       </div>
       
-      <main className="relative z-10 w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-0 overflow-hidden rounded-[4rem] shadow-[0_48px_96px_rgba(0,110,28,0.12)] bg-white/80 backdrop-blur-2xl border border-white my-12">
+      <main className="relative z-10 w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-0 overflow-hidden rounded-[3rem] shadow-[0_32px_64px_rgba(0,110,28,0.08)] bg-white/90 backdrop-blur-xl border border-white my-12">
         
+        {/* Back Button */}
+        <Link 
+          to="/" 
+          className="absolute top-8 left-8 z-50 flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-black uppercase tracking-widest text-[10px] bg-white/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/50"
+        >
+          <span className="material-symbols-outlined text-sm">arrow_back</span>
+          Back to Home
+        </Link>
+
         {/* Left Visual Column */}
         <div className="hidden md:block relative overflow-hidden group">
-          {/* Enthusiast Image Layer */}
-          <div className="absolute inset-0 transition-opacity duration-700 ease-in-out" style={{ opacity: activeTab === 'USER' ? 1 : 0, zIndex: activeTab === 'USER' ? 1 : 0 }}>
-            <img 
-              alt="Enthusiast kitchen" 
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
-              src="https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&q=80&w=1200" 
-            />
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"></div>
-          </div>
+          <AnimatePresence mode="wait">
+             <motion.div 
+               key={activeTab}
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               exit={{ opacity: 0 }}
+               transition={{ duration: 0.5 }}
+               className="absolute inset-0"
+             >
+                <img 
+                  alt={activeTab === 'USER' ? "Enthusiast kitchen" : "Chef kitchen"} 
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
+                  src={activeTab === 'USER' 
+                    ? "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&q=80&w=1200"
+                    : "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&q=80&w=1200"
+                  } 
+                />
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-[0.5px]"></div>
+             </motion.div>
+          </AnimatePresence>
           
-          {/* Chef Image Layer */}
-          <div className="absolute inset-0 transition-opacity duration-700 ease-in-out" style={{ opacity: activeTab === 'CHEF' ? 1 : 0, zIndex: activeTab === 'CHEF' ? 1 : 0 }}>
-            <img 
-              alt="Chef kitchen" 
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
-              src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&q=80&w=1200" 
-            />
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px]"></div>
-          </div>
-          
-          {/* Dynamic Content Overlay */}
-          <div className="absolute bottom-16 left-16 right-16 text-white space-y-6">
-            <div className="w-16 h-1 bg-white/40 rounded-full"></div>
-            <h1 
-              key={activeTab + "-title"}
-              className="font-headline font-black text-6xl tracking-tighter leading-none text-white animate-fade-in"
+          <div className="absolute bottom-12 left-12 right-12 text-white space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              key={activeTab + "text"}
             >
-              {activeTab === 'CHEF' ? <>Cultivate <br/>Influence.</> : <>Cultivate <br/>Vitality.</>}
-            </h1>
-            <p 
-              key={activeTab + "-desc"}
-              className="font-body text-xl opacity-90 leading-relaxed font-medium animate-fade-in"
-            >
-              {activeTab === 'CHEF' 
-                ? "Unlock your culinary expertise. Share your recipes with thousands of food enthusiasts." 
-                : "Experience the synergy of culinary art and health science in our digital greenhouse."}
-            </p>
+              <h2 className="text-3xl font-headline font-black leading-tight tracking-tighter">
+                {activeTab === 'USER' ? 'Discover Healthy Adventures.' : 'Share Your Culinary Genius.'}
+              </h2>
+              <p className="text-base opacity-80 font-medium">
+                {activeTab === 'USER' 
+                  ? 'Access thousands of balanced recipes tailored to your lifestyle.' 
+                  : 'Join 500+ professionals and reach thousands of healthy eaters.'}
+              </p>
+            </motion.div>
           </div>
         </div>
-        
+
         {/* Right Form Column */}
-        <div className="p-12 md:p-20 flex flex-col justify-center">
-          <div className="mb-12 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl vitality-gradient flex items-center justify-center text-white shadow-lg">
-                <span className="material-symbols-outlined text-xl">restaurant</span>
-              </div>
-              <span className="font-headline font-black text-3xl tracking-tighter text-on-surface">RecipeHub</span>
+        <div className="p-8 md:p-14 md:py-20 flex flex-col justify-center bg-white/40">
+          <div className="mb-8 text-center md:text-left">
+            <div className="w-14 h-14 rounded-2xl vitality-gradient flex items-center justify-center text-white shadow-lg mb-6 mx-auto md:mx-0">
+              <span className="material-symbols-outlined text-2xl">restaurant</span>
             </div>
-            <button 
-              onClick={() => navigate("/")} 
-              className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-all group px-3 py-1.5 hover:bg-surface-container-low rounded-full border border-outline-variant/10 shadow-sm"
-            >
-              <span className="material-symbols-outlined text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
-              <span className="text-[10px] font-black uppercase tracking-widest">Back</span>
-            </button>
+            <h1 className="font-headline font-black text-3xl text-on-surface tracking-tighter mb-1">Welcome Back</h1>
+            <p className="text-on-surface-variant font-medium text-sm">Continue your wellness journey.</p>
           </div>
           
-          <div className="mb-10">
-            <h2 
-              key={activeTab + "-header"}
-              className="font-headline font-black text-4xl text-on-surface mb-3 tracking-tight animate-fade-in"
-            >
-              {activeTab === 'CHEF' ? 'Chef Login' : 'Welcome back'}
-            </h2>
-            <p className="text-on-surface-variant font-medium opacity-60">
-              {activeTab === 'CHEF' 
-                ? 'Access your professional kitchen dashboard.' 
-                : 'Enter your credentials to continue your journey.'}
-            </p>
-          </div>
-          
-          {/* Workspace Toggle */}
-          <div className="mb-10">
-            <div className="inline-flex p-1.5 bg-surface-container-high rounded-full border border-outline-variant/10 shadow-inner items-center">
+          <div className="mb-8">
+            <div className="inline-flex p-1 bg-surface-container-high rounded-full border border-outline-variant/10 shadow-inner items-center relative overflow-hidden">
+              <div 
+                className="absolute top-1 bottom-1 bg-primary rounded-full transition-all duration-500 ease-[0.16, 1, 0.3, 1] shadow-lg shadow-primary/20"
+                style={{ 
+                  left: activeTab === 'USER' ? '4px' : 'calc(50% + 2px)',
+                  width: 'calc(50% - 6px)'
+                }}
+              />
               <button 
-                className={`px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'USER' ? 'vitality-gradient text-white shadow-xl scale-105' : 'bg-transparent text-on-surface-variant hover:text-primary'}`} 
+                className={`relative z-10 px-8 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors duration-500 flex items-center justify-center gap-2 w-32 ${activeTab === 'USER' ? 'text-white' : 'text-on-surface-variant hover:text-primary'}`} 
                 onClick={() => setActiveTab('USER')}
               >
-                <span className="material-symbols-outlined text-sm">home</span>
                 Enthusiast
               </button>
               <button 
-                className={`px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'CHEF' ? 'vitality-gradient text-white shadow-xl scale-105' : 'bg-transparent text-on-surface-variant hover:text-primary'}`} 
+                className={`relative z-10 px-8 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors duration-500 flex items-center justify-center gap-2 w-32 ${activeTab === 'CHEF' ? 'text-white' : 'text-on-surface-variant hover:text-primary'}`} 
                 onClick={() => setActiveTab('CHEF')}
               >
-                <span className="material-symbols-outlined text-sm">restaurant</span>
                 Chef
               </button>
             </div>
-            {activeTab === 'USER' && (
-              <p className="mt-3 text-xs text-on-surface-variant flex items-center gap-2">
-                <span>Want to share recipes as a Chef?</span>
-                <Link to="/signup?role=chef" className="text-primary font-black hover:underline">Upgrade</Link>
-              </p>
-            )}
           </div>
           
-          {success && (
-            <div className="mb-8 p-5 bg-primary/10 border border-primary/20 text-primary rounded-2xl text-center font-black animate-fade-in">
-              {success}
-            </div>
-          )}
-          {errors.form && (
-            <div className="mb-8 p-5 bg-error-container text-on-error-container rounded-2xl text-center font-black animate-shake border border-error/10 text-sm">
-              {errors.form}
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            {errors.form && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="mb-8 p-4 bg-error-container text-on-error-container rounded-2xl text-center font-black border border-error/10 text-xs"
+              >
+                {errors.form}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <form className="space-y-8" onSubmit={handleSubmit} noValidate>
             <div className="space-y-3">
@@ -196,7 +189,7 @@ const Login = () => {
             <div className="space-y-3">
               <div className="flex justify-between items-center px-4">
                 <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Security Protocol</label>
-                <Link className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline" to="#">Forgot?</Link>
+                <Link className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline" to="/forgot-password">Forgot?</Link>
               </div>
               <div className="relative group">
                 <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">lock</span>
@@ -218,14 +211,16 @@ const Login = () => {
               </div>
             </div>
             
-            <button 
-              className={`w-full vitality-gradient text-white py-5 px-8 rounded-3xl font-black text-xl shadow-[0_24px_48px_rgba(0,110,28,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 ${loading ? 'opacity-70' : ''}`} 
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : "Unlock Kitchen"}
-              {!loading && <span className="material-symbols-outlined font-black">arrow_forward</span>}
-            </button>
+            <MagneticWrapper>
+              <button 
+                className={`w-full vitality-gradient text-white py-5 px-8 rounded-3xl font-black text-xl shadow-[0_24px_48px_rgba(0,110,28,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 ${loading ? 'opacity-70' : ''}`} 
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : "Unlock Kitchen"}
+                {!loading && <span className="material-symbols-outlined font-black">arrow_forward</span>}
+              </button>
+            </MagneticWrapper>
           </form>
           
           <div className="mt-12 text-center">
@@ -233,13 +228,6 @@ const Login = () => {
           </div>
         </div>
       </main>
-      
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        .animate-shake { animation: shake 0.2s ease-in-out 0s 2; }
-      `}} />
     </div>
   );
 };
