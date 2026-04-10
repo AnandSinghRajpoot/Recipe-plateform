@@ -91,4 +91,7 @@ current_git_status.txt
 **/*.class
 **/*.pyc
 **/*.pyo
-**/__pycache__/
+
+# Additional project specific ignores
+**/.factorypath
+**/upload/
