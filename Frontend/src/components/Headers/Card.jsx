@@ -1,16 +1,33 @@
-import React from 'react'
-import {Link} from 'react-router-dom'
+import React, { useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { resolveImageUrl } from "../../utils/imageUtils";
+import VanillaTilt from 'vanilla-tilt';
 
-const Card = ({item}) => {
+const Card = ({ item }) => {
+    const cardRef = useRef(null);
     const title = item?.title || item?.name || "Untitled Recipe";
     const difficulty = item?.difficulty || "Medium";
     const prepTime = item?.prepTime !== undefined ? item?.prepTime : (item?.more?.[0]?.prep_time || "N/A");
     const id = item?.id || item?._id;
     const imageUrl = resolveImageUrl(item?.coverImageUrl || item?.thumbnail_image);
 
+    useEffect(() => {
+        if (cardRef.current) {
+            VanillaTilt.init(cardRef.current, {
+                max: 10,
+                speed: 400,
+                glare: true,
+                "max-glare": 0.2,
+                scale: 1.02
+            });
+        }
+    }, []);
+
     return (
-        <div className="group bg-white/60 backdrop-blur-xl rounded-[2.5rem] botanical-shadow border border-white hover:shadow-[0_32px_64px_rgba(0,110,28,0.08)] transition-all duration-700 hover:-translate-y-2 overflow-hidden flex flex-col h-full">
+        <div 
+            ref={cardRef}
+            className="group bg-white/60 backdrop-blur-xl rounded-[2.5rem] botanical-shadow border border-white hover:shadow-[0_32px_64px_rgba(0,110,28,0.08)] transition-all duration-700 overflow-hidden flex flex-col h-full"
+        >
             {/* Image Container */}
             <div className="relative aspect-[4/3] overflow-hidden">
                 <img 

@@ -1,4 +1,5 @@
-import React from 'react'
+import { motion } from 'framer-motion'
+import MagneticWrapper from '../../components/common/MagneticWrapper'
 
 const AboutSection = () => {
   return (
@@ -7,7 +8,13 @@ const AboutSection = () => {
       {/* Visual Ambience */}
       <div className="absolute top-1/2 left-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 -z-10"></div>
       
-      <div className='text-start md:w-1/2 space-y-8 relative z-10'>
+      <motion.div 
+        initial={{ opacity: 0, x: -50 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className='text-start md:w-1/2 space-y-8 relative z-10'
+      >
         <div className="space-y-4">
             <span className="text-primary font-black uppercase tracking-widest text-[10px] px-5 py-2 bg-white/60 backdrop-blur-md rounded-full border border-primary/10 shadow-sm inline-block">
                 Our Philosophy
@@ -24,11 +31,13 @@ const AboutSection = () => {
         </p>
         
         <div className='pt-6 flex flex-wrap gap-6'>
-            <button className="vitality-gradient text-white px-10 py-5 rounded-[2rem] font-black text-lg shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-4">
-                Explore the Compendium
-                <span className="material-symbols-outlined">arrow_forward</span>
-            </button>
-            <div className="flex -space-x-4 items-center">
+            <MagneticWrapper>
+                <button className="vitality-gradient text-white px-10 py-5 rounded-[2rem] font-black text-lg shadow-xl shadow-primary/20 transition-all flex items-center gap-4">
+                    Explore the Compendium
+                    <span className="material-symbols-outlined">arrow_forward</span>
+                </button>
+            </MagneticWrapper>
+            <div className="flex -space-x-4 items-center pl-4">
                 {[1, 2, 3, 4].map(i => (
                     <div key={i} className="w-12 h-12 rounded-full border-4 border-white bg-surface-container-high overflow-hidden shadow-sm">
                         <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=chef${i}`} alt="Chef" className="w-full h-full object-cover" />
@@ -40,11 +49,17 @@ const AboutSection = () => {
                 </div>
             </div>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="md:w-1/2 relative group">
+      <motion.div 
+        initial={{ opacity: 0, x: 50, rotate: -5 }}
+        whileInView={{ opacity: 1, x: 0, rotate: -3 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+        className="md:w-1/2 relative group"
+      >
         <div className="absolute inset-0 vitality-gradient rounded-[4rem] blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-700"></div>
-        <div className="relative rounded-[4rem] overflow-hidden border-8 border-white botanical-shadow aspect-square md:aspect-auto md:h-[600px] transform -rotate-3 group-hover:rotate-0 transition-transform duration-1000">
+        <div className="relative rounded-[4rem] overflow-hidden border-8 border-white botanical-shadow aspect-square md:aspect-auto md:h-[600px] transition-all duration-1000 group-hover:rotate-0">
             <img 
                 src="https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&q=80&w=1200" 
                 alt="Botanical Culinary Art"  
@@ -56,7 +71,7 @@ const AboutSection = () => {
                 <h4 className="text-xl font-headline font-black leading-tight">"The synergy of fresh components is the foundation of high-metabolic living."</h4>
             </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

@@ -1,9 +1,22 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { resolveImageUrl } from "../../utils/imageUtils";
+import VanillaTilt from 'vanilla-tilt';
 
 const HorizontalCard = ({ item }) => {
+    const cardRef = useRef(null);
     const title = item?.title || item?.name || "Untitled Recipe";
+
+    useEffect(() => {
+        if (cardRef.current) {
+            VanillaTilt.init(cardRef.current, {
+                max: 5,
+                speed: 400,
+                glare: true,
+                "max-glare": 0.1,
+            });
+        }
+    }, []);
     const description = item?.description || "No description available.";
     const difficulty = item?.difficulty || "Medium";
     const prepTime = item?.prepTime !== undefined ? item?.prepTime : (item?.more?.[0]?.prep_time || "N/A");
@@ -20,7 +33,10 @@ const HorizontalCard = ({ item }) => {
     };
 
     return (
-        <div className="group bg-white/60 backdrop-blur-xl rounded-[2.5rem] botanical-shadow hover:shadow-[0_32px_64px_rgba(0,110,28,0.12)] transition-all duration-700 border border-white hover:scale-[1.02] active:scale-[0.98] overflow-hidden flex flex-col md:flex-row h-full md:h-72">
+        <div 
+            ref={cardRef}
+            className="group bg-white/60 backdrop-blur-xl rounded-[2.5rem] botanical-shadow hover:shadow-[0_32px_64px_rgba(0,110,28,0.12)] transition-all duration-700 border border-white overflow-hidden flex flex-col md:flex-row h-full md:h-72"
+        >
             
             {/* Image Section - Botanical Presentation */}
             <div className="relative w-full md:w-96 flex-shrink-0 overflow-hidden">

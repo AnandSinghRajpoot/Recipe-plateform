@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import MagneticWrapper from '../common/MagneticWrapper';
 
 const HomeHero = () => {
     const navigate = useNavigate();
@@ -41,7 +43,12 @@ const HomeHero = () => {
 
     return (
         <section className="max-w-7xl mx-auto px-6 py-12 md:py-24 grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
+            <motion.div 
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="space-y-8"
+            >
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold uppercase tracking-wider">
                     <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
                     Scientifically Backed Nutrition
@@ -56,19 +63,23 @@ const HomeHero = () => {
                 <p className="text-xl text-on-surface-variant max-w-lg leading-relaxed font-medium">
                     Personalized nutrition planning for your unique goals. We combine AI intelligence with culinary wisdom to fuel your journey.
                 </p>
-                <div className="flex flex-wrap gap-4">
-                    <button 
-                      onClick={() => navigate("/signup")}
-                      className="vitality-gradient text-white px-8 py-4 rounded-xl font-bold text-lg botanical-shadow hover:opacity-90 transition-all hover:scale-105 active:scale-[0.98]"
-                    >
-                        Get Started
-                    </button>
-                    <button 
-                      onClick={() => navigate("/recipes")}
-                      className="bg-secondary-container text-on-secondary-container px-8 py-4 rounded-xl font-bold text-lg hover:bg-surface-container-highest transition-all hover:scale-105 active:scale-[0.98]"
-                    >
-                        Explore Recipes
-                    </button>
+                <div className="flex flex-wrap gap-6">
+                    <MagneticWrapper>
+                        <button 
+                          onClick={() => navigate("/signup")}
+                          className="vitality-gradient text-white px-8 py-4 rounded-xl font-bold text-lg botanical-shadow hover:opacity-90 transition-all active:scale-[0.98]"
+                        >
+                            Get Started
+                        </button>
+                    </MagneticWrapper>
+                    <MagneticWrapper strength={0.3}>
+                        <button 
+                          onClick={() => navigate("/recipes")}
+                          className="bg-secondary-container text-on-secondary-container px-8 py-4 rounded-xl font-bold text-lg hover:bg-surface-container-highest transition-all active:scale-[0.98]"
+                        >
+                            Explore Recipes
+                        </button>
+                    </MagneticWrapper>
                 </div>
                 <div className="flex items-center gap-4 pt-4">
                     <div className="flex -space-x-3">
@@ -78,10 +89,21 @@ const HomeHero = () => {
                     </div>
                     <p className="text-sm text-on-surface-variant font-bold opacity-80">Joined by 12,000+ healthy eaters</p>
                 </div>
-            </div>
-            <div className="relative group">
+            </motion.div>
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.9, rotate: 5 }}
+                animate={{ opacity: 1, scale: 1, rotate: 2 }}
+                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                className="relative group"
+            >
                 <div className="absolute -top-12 -left-12 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 group-hover:bg-primary/20 transition-all duration-700"></div>
-                <div className="relative rounded-[2rem] overflow-hidden botanical-shadow rotate-2 hover:rotate-0 transition-all duration-700 hover:scale-[1.02]">
+                
+                {/* Floating Animation for the Card */}
+                <motion.div 
+                    animate={{ y: [0, -15, 0] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                    className="relative rounded-[2rem] overflow-hidden botanical-shadow transition-all duration-700 hover:scale-[1.02]"
+                >
                     <img className="w-full aspect-[4/5] object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBM6J1PPtTHLR0f8iqcpHxvf-h2miMDp9FfOHPO-vPPPKx0Vt1Uc5gpEm-OxyZ-a8RE9VQRe42gt6_E8J8hxHOGxdTihxKCy7fMYmEk7qDA9J9lNbnmYU3HWxHuMfFboaIdYUxh8j5G-ReXKwZczk73Lv-6eRHN1HejgU-_-2Csldk9vAAgOndOMj1XYlM7_sX_65lE1oXQnHq5A9lf9lQqtkEQWzBtC-CbYmnVqD79cwcY2vT1ji9mtOJS8nb2VUPn-KHzkVMgbA" alt="Healthy Vitality Bowl"/>
                     <div className="absolute bottom-6 left-6 right-6 p-6 bg-white/70 backdrop-blur-xl rounded-2xl border border-white/40">
                         <div className="flex justify-between items-end">
@@ -95,8 +117,8 @@ const HomeHero = () => {
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
         </section>
     );
 };
