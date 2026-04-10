@@ -1,7 +1,9 @@
 package com.recipeplatform.exception;
 
-public class FileValidationException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class FileValidationException extends BaseException {
     public FileValidationException(String message) {
-        super(message);
+        super(message, HttpStatus.BAD_REQUEST, "FILE_VALIDATION_FAILED");
     }
 }

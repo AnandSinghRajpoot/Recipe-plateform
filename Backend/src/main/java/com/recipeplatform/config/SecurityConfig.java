@@ -47,22 +47,30 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json");
-                            response.getWriter().write("""
+                            response.getWriter().write(String.format("""
                                         {
-                                          "error": "UNAUTHORIZED",
-                                          "message": "Invalid or expired JWT token"
+                                          "timestamp": "%s",
+                                          "status": 401,
+                                          "error": "Unauthorized",
+                                          "message": "Authentication failed: Invalid or expired token",
+                                          "path": "%s",
+                                          "errorCode": "UNAUTHORIZED"
                                         }
-                                    """);
+                                    """, java.time.LocalDateTime.now(), request.getRequestURI()));
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json");
-                            response.getWriter().write("""
+                            response.getWriter().write(String.format("""
                                         {
-                                          "error": "FORBIDDEN",
-                                          "message": "You do not have permission to access this resource"
+                                          "timestamp": "%s",
+                                          "status": 403,
+                                          "error": "Forbidden",
+                                          "message": "Access denied: You do not have permission to access this resource",
+                                          "path": "%s",
+                                          "errorCode": "ACCESS_DENIED"
                                         }
-                                    """);
+                                    """, java.time.LocalDateTime.now(), request.getRequestURI()));
                         })
                 );
 

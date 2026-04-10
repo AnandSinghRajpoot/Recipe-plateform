@@ -1,7 +1,9 @@
 package com.recipeplatform.exception;
 
-public class UserAlreadyExistException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class UserAlreadyExistException extends BaseException {
     public UserAlreadyExistException(String message) {
-        super(message);
+        super(message, HttpStatus.BAD_REQUEST, "USER_ALREADY_EXISTS");
     }
 }

@@ -1,7 +1,9 @@
 package com.recipeplatform.exception;
 
-public class NotAllowedOperation extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class NotAllowedOperation extends BaseException {
     public NotAllowedOperation(String message) {
-        super(message);
+        super(message, HttpStatus.FORBIDDEN, "OPERATION_NOT_ALLOWED");
     }
 }

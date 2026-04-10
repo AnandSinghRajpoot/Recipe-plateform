@@ -1,159 +1,115 @@
 package com.recipeplatform.exception;
 
 import com.recipeplatform.dto.ErrorResponse;
-import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
-            ResourceNotFoundException exception) {
-
+    @ExceptionHandler(BaseException.class)
+    public ResponseEntity<ErrorResponse> handleBaseException(BaseException ex, HttpServletRequest request) {
+        log.error("Business Exception [{}]: {}", ex.getErrorCode(), ex.getMessage());
         ErrorResponse response = new ErrorResponse(
-                exception.getMessage(),
-                null,
-                HttpStatus.NOT_FOUND.value()
+                ex.getStatus().value(),
+                ex.getStatus().getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                ex.getErrorCode()
         );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(response, ex.getStatus());
     }
-
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(
-            MethodArgumentNotValidException exception) {
-
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+        log.warn("Validation failed for request: {}", request.getRequestURI());
+        
         Map<String, String> errors = new HashMap<>();
-        exception.getBindingResult().getAllErrors().forEach((error) -> {
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
 
         ErrorResponse response = new ErrorResponse(
-                "validation error!"
-                , errors
-                , HttpStatus.BAD_REQUEST.value());
-
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                "Validation failed",
+                request.getRequestURI(),
+                "VALIDATION_FAILED"
+        );
+        response.setErrors(errors);
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleBadCredException(
-            BadCredentialsException exception) {
-
+    public ResponseEntity<ErrorResponse> handleBadCredentials(
+            BadCredentialsException ex, HttpServletRequest request) {
+        log.warn("Authentication failed: {}", ex.getMessage());
         ErrorResponse response = new ErrorResponse(
-                exception.getMessage(),
-                null,
-                HttpStatus.UNAUTHORIZED.value()
+                HttpStatus.UNAUTHORIZED.value(),
+                "Unauthorized",
+                "Invalid email or password",
+                request.getRequestURI(),
+                "INVALID_CREDENTIALS"
         );
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
-    // Duplicate Resource insertion
-    @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateIngredient(
-            DuplicateResourceException exception) {
-
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException ex, HttpServletRequest request) {
+        log.warn("Access denied for URI {}: {}", request.getRequestURI(), ex.getMessage());
         ErrorResponse response = new ErrorResponse(
-                exception.getMessage(),
-                null,
-                HttpStatus.CONFLICT.value()
+                HttpStatus.FORBIDDEN.value(),
+                "Forbidden",
+                "You do not have permission to perform this action",
+                request.getRequestURI(),
+                "ACCESS_DENIED"
         );
-        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
-
-
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleJsonParseError(
-            HttpMessageNotReadableException exception) {
-
-        Throwable rootCause = exception.getMostSpecificCause();
-
-        if (rootCause instanceof IllegalArgumentException) {
-            ErrorResponse response = new ErrorResponse(
-                    rootCause.getMessage(),
-                    null,
-                    HttpStatus.BAD_REQUEST.value()
-            );
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+        log.warn("Malformed JSON request: {}", ex.getMessage());
         ErrorResponse response = new ErrorResponse(
-                "Invalid request payload",
-                null,
-                HttpStatus.BAD_REQUEST.value()
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                "Malformed JSON request or invalid data format",
+                request.getRequestURI(),
+                "MALFORMED_REQUEST"
         );
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
-
-
-    // user already exist
-    @ExceptionHandler(UserAlreadyExistException.class)
-    public ResponseEntity<ErrorResponse> handleUserAlreadyExist(
-            UserAlreadyExistException exception) {
-
-        ErrorResponse response = new ErrorResponse(
-                exception.getMessage(),
-                null,
-                HttpStatus.BAD_REQUEST.value()
-        );
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    }
-
-    //handle not allowed operation exception
-    @ExceptionHandler(NotAllowedOperation.class)
-    public ResponseEntity<ErrorResponse> handleNotAllowed(
-            NotAllowedOperation exception) {
-
-        ErrorResponse response = new ErrorResponse(
-                exception.getMessage(),
-                null,
-                HttpStatus.BAD_REQUEST.value()
-        );
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    }
-
-
-
-        @ExceptionHandler(ExpiredJwtException.class)
-        public ResponseEntity<?> handleExpiredJwt(ExpiredJwtException ex) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of(
-                            "error", "JWT_EXPIRED",
-                            "message", "Token expired"
-                    ));
-        }
-
-
-
-
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneralExceptions(
-            Exception exception) {
-
+    public ResponseEntity<ErrorResponse> handleGeneralException(
+            Exception ex, HttpServletRequest request) {
+        log.error("System Error at {}: ", request.getRequestURI(), ex);
         ErrorResponse response = new ErrorResponse(
-                exception.getMessage(),
-                null,
-                HttpStatus.INTERNAL_SERVER_ERROR.value()
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Internal Server Error",
+                "An unexpected error occurred. Please try again later.",
+                request.getRequestURI(),
+                "INTERNAL_SERVER_ERROR"
         );
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
 }

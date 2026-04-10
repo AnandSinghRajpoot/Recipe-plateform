@@ -2,6 +2,8 @@ package com.recipeplatform.service;
 
 import com.recipeplatform.domain.PasswordResetToken;
 import com.recipeplatform.domain.User;
+import com.recipeplatform.exception.BadRequestException;
+import com.recipeplatform.exception.ResourceNotFoundException;
 import com.recipeplatform.repository.PasswordResetTokenRepository;
 import com.recipeplatform.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,8 +30,8 @@ public class PasswordResetService {
     private EmailService emailService;
 
     public void initiatePasswordReset(String identifier) {
-        User user = userRepository.findByEmail(identifier)
-            .orElseThrow(() -> new RuntimeException("User not found with this email"));
+        User user = userRepository.findByEmailOrPhoneNumber(identifier, identifier)
+            .orElseThrow(() -> new ResourceNotFoundException("User", "email or phone", identifier));
 
         // Invalidate any existing tokens
         tokenRepository.findByUserAndUsedFalseAndExpiryDateAfter(user, LocalDateTime.now())
@@ -59,10 +61,10 @@ public class PasswordResetService {
     @Transactional
     public void resetPassword(String token, String newPassword) {
         PasswordResetToken resetToken = tokenRepository.findByToken(token)
-            .orElseThrow(() -> new RuntimeException("Invalid token"));
+            .orElseThrow(() -> new BadRequestException("Invalid or expired reset token", "INVALID_TOKEN"));
 
         if (resetToken.isUsed() || resetToken.isExpired()) {
-            throw new RuntimeException("Token expired or already used");
+            throw new BadRequestException("Token has already been used or has expired", "TOKEN_EXPIRED");
         }
 
         User user = resetToken.getUser();
@@ -76,7 +78,7 @@ public class PasswordResetService {
     @Transactional
     public void changePassword(User user, String currentPassword, String newPassword) {
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-            throw new RuntimeException("Current password is incorrect");
+            throw new BadRequestException("The current password you entered is incorrect", "INVALID_CURRENT_PASSWORD");
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
