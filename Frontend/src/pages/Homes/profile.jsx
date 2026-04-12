@@ -3,11 +3,15 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { SkeletonProfile, SkeletonCard } from "../../components/Skeleton";
 import { FadeUp } from "../../hooks/useAnimations.jsx";
-
+import MealPlanner from "../product/MealPlanner.jsx";
+import SavedRecipesTab from "../product/SavedRecipesTab.jsx";
+import CollectionsTab from "../product/CollectionsTab.jsx";
 const Profile = () => {
   const [profile, setProfile] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();
 
   const handleUpgradeToChef = () => {
@@ -29,6 +33,13 @@ const Profile = () => {
     })
     .then((res) => {
       setProfile(res.data);
+      // Fetch recommendations if profile loaded successfully
+      if (res.data.isProfileCompleted) {
+         axios.get("http://localhost:8080/api/v1/recommendations?limit=4", {
+           headers: { Authorization: `Bearer ${token}` }
+         }).then(recRes => setRecommendations(recRes.data.data || []))
+           .catch(err => console.error("Rec API error:", err));
+      }
       setLoading(false);
     })
     .catch((err) => {
@@ -89,195 +100,291 @@ const Profile = () => {
 
       <div className="max-w-5xl mx-auto relative z-10">
         
+        {/* Navigation Action */}
+        <div className="flex justify-start mb-8">
+            <Link 
+                to="/" 
+                className="group flex items-center gap-3 bg-white/60 backdrop-blur-xl px-6 py-3 rounded-2xl border border-white botanical-shadow hover:bg-white transition-all transform hover:-translate-x-1"
+            >
+                <div className="w-8 h-8 rounded-lg vitality-gradient flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+                    <span className="material-symbols-outlined text-lg font-black">arrow_back</span>
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant group-hover:text-primary transition-colors">Back to Greenhouse</span>
+            </Link>
+        </div>
+        
         {/* Profile Hero Header */}
-        <div className="bg-white/60 backdrop-blur-2xl rounded-[3rem] p-10 md:p-16 border border-white botanical-shadow mb-12 flex flex-col md:flex-row items-center gap-10">
-            <div className="relative group">
+        <div className="bg-white/60 backdrop-blur-2xl rounded-[3rem] p-10 md:p-12 border border-white botanical-shadow mb-8 flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-10">
+            
+            {/* Avatar */}
+            <div className="relative group shrink-0">
                 <div className="absolute inset-0 bg-primary/20 rounded-[2.5rem] blur-2xl group-hover:bg-primary/40 transition-all duration-700"></div>
-                <div className="w-40 h-40 rounded-[2.5rem] bg-surface-container-high border-4 border-white shadow-xl relative overflow-hidden">
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] bg-surface-container-high border-4 border-white shadow-xl relative overflow-hidden">
                     <img 
                         src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`} 
                         alt="Profile" 
                         className="w-full h-full object-cover"
                     />
                 </div>
-                <div className="absolute -bottom-3 -right-3 w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center text-primary border border-outline-variant/10">
-                    <span className="material-symbols-outlined text-xl font-black">edit_note</span>
-                </div>
             </div>
             
-            <div className="flex-grow text-center md:text-left space-y-4">
-                <div className="flex flex-col md:flex-row items-center gap-4">
-                    <h1 className="text-4xl md:text-6xl font-headline font-black text-on-surface tracking-tighter capitalize">{profile.email.split('@')[0]}</h1>
-                    <span className="px-5 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-full text-[10px] font-black uppercase tracking-widest">{profile.role || 'Member'}</span>
+            {/* Details */}
+            <div className="flex-grow text-center md:text-left space-y-4 flex flex-col items-center md:items-start">
+                <div className="flex flex-col md:flex-row items-center md:items-baseline gap-3 md:gap-4">
+                    <h1 className="text-4xl md:text-5xl font-headline font-black text-on-surface tracking-tighter capitalize">{profile.name || profile.email.split('@')[0]}</h1>
+                    <span className="px-4 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-full text-[10px] font-black uppercase tracking-widest">{profile.role || 'Member'}</span>
                 </div>
                 <p className="text-on-surface-variant font-medium text-lg opacity-70 flex items-center justify-center md:justify-start gap-2">
                     <span className="material-symbols-outlined text-lg">alternate_email</span>
                     {profile.email}
                 </p>
                 
-                {/* Quick Summary Cards */}
+                {/* Health Overview Tags */}
                 <div className="flex flex-wrap justify-center md:justify-start gap-3 pt-2">
-                    <div className="bg-surface-container-low px-4 py-3 rounded-2xl border border-outline-variant/5 text-center min-w-[120px]">
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">Profile</p>
-                        <p className="text-lg font-black text-primary">{profile.isProfileCompleted ? '100%' : '30%'}</p>
+                    <div className="bg-surface-container-low px-4 py-2 rounded-xl border border-outline-variant/5 text-[10px] font-black uppercase tracking-widest text-primary">
+                        {profile.dietType || 'Omnivore'}
                     </div>
-                    <div className="bg-surface-container-low px-4 py-3 rounded-2xl border border-outline-variant/5 text-center min-w-[120px]">
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">Last Updated</p>
-                        <p className="text-sm font-black text-on-surface">{profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Just now'}</p>
-                    </div>
-                    <div className="bg-surface-container-low px-4 py-3 rounded-2xl border border-outline-variant/5 text-center min-w-[120px]">
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">Diet Focus</p>
-                        <p className="text-sm font-black text-secondary capitalize">{profile.dietType || 'Omnivore'}</p>
-                    </div>
-                </div>
-                
-                <div className="flex flex-wrap justify-center md:justify-start gap-4 pt-4">
-                    <div className="bg-surface-container-low px-6 py-4 rounded-[2rem] border border-outline-variant/5 text-center min-w-[140px]">
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">Growth Level</p>
-                        <p className="text-xl font-black text-primary capitalize">{profile.skillLevel || 'Beginner'}</p>
-                    </div>
-                    <div className="bg-surface-container-low px-6 py-4 rounded-[2rem] border border-outline-variant/5 text-center min-w-[140px]">
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">Diet Focus</p>
-                        <p className="text-xl font-black text-secondary capitalize">{profile.dietType || 'Omnivore'}</p>
+                    <div className="bg-surface-container-low px-4 py-2 rounded-xl border border-outline-variant/5 text-[10px] font-black uppercase tracking-widest text-secondary">
+                        {profile.skillLevel || 'Beginner'}
                     </div>
                 </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="flex flex-wrap gap-3 mt-6">
-                <Link to="/profile/complete" className="flex-1 min-w-[140px] bg-primary/10 hover:bg-primary/20 text-primary py-3 px-5 rounded-2xl font-bold text-center transition-colors flex items-center justify-center gap-2">
+            <div className="flex flex-col sm:flex-row md:flex-col gap-3 shrink-0 w-full sm:w-auto mt-4 md:mt-0">
+                <Link to="/profile/complete" className="w-full sm:w-auto bg-primary/10 hover:bg-primary/20 text-primary py-3 px-6 rounded-2xl font-bold text-center transition-colors flex items-center justify-center gap-2">
                     <span className="material-symbols-outlined text-sm">edit</span>
                     Edit Profile
                 </Link>
-                <Link to="/settings" className="flex-1 min-w-[140px] bg-surface-container-low hover:bg-surface-container-high text-on-surface py-3 px-5 rounded-2xl font-bold text-center transition-colors flex items-center justify-center gap-2">
+                <Link to="/settings" className="w-full sm:w-auto bg-surface-container-low hover:bg-surface-container-high text-on-surface py-3 px-6 rounded-2xl font-bold text-center transition-colors flex items-center justify-center gap-2">
                     <span className="material-symbols-outlined text-sm">settings</span>
                     Settings
                 </Link>
             </div>
         </div>
-        
-        {/* Smart Reminders Section */}
-        <div className="bg-gradient-to-r from-primary/5 to-secondary-container/20 rounded-[3rem] p-8 mt-12 border border-primary/10">
-            <h3 className="text-xl font-headline font-black text-on-surface mb-6 flex items-center gap-3">
-                <span className="material-symbols-outlined text-primary">notifications_active</span>
-                Smart Reminders
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Link to="/profile/complete" className={`p-5 rounded-2xl border transition-all flex items-center gap-4 ${
-                    profile.isProfileCompleted 
-                        ? 'bg-surface-container-low border-outline-variant/10 opacity-50' 
-                        : 'bg-white border-primary/20 hover:border-primary hover:shadow-lg'
-                }`}>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                        profile.isProfileCompleted ? 'bg-primary/10 text-primary' : 'vitality-gradient text-white'
-                    }`}>
-                        <span className="material-symbols-outlined">person</span>
-                    </div>
-                    <div>
-                        <p className="font-black text-on-surface">
-                            {profile.isProfileCompleted ? 'Profile Complete ✓' : 'Complete Your Profile'}
-                        </p>
-                        <p className="text-xs text-on-surface-variant">
-                            {profile.isProfileCompleted ? 'All information saved' : 'Add your personal details'}
-                        </p>
-                    </div>
-                </Link>
-                
-                <Link to="/profile/complete" className="p-5 rounded-2xl border bg-white border-outline-variant/10 hover:border-primary hover:shadow-lg transition-all flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-secondary-container flex items-center justify-center text-secondary">
-                        <span className="material-symbols-outlined">fitness_center</span>
-                    </div>
-                    <div>
-                        <p className="font-black text-on-surface">Update Your Lifestyle</p>
-                        <p className="text-xs text-on-surface-variant">Refresh your health & diet preferences</p>
-                    </div>
-                </Link>
-            </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            
-            <div className="md:col-span-1 space-y-8">
-                <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white botanical-shadow space-y-8">
-                    <h3 className="text-xl font-headline font-black text-on-surface flex items-center gap-3">
-                        <span className="material-symbols-outlined text-primary">analytics</span>
-                        Metrics
-                    </h3>
-                    <div className="space-y-6">
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest opacity-50">
-                                <span>Botanical Consistency</span>
-                                <span>85%</span>
-                            </div>
-                            <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
-                                <div className="h-full vitality-gradient w-[85%] rounded-full shadow-lg"></div>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest opacity-50">
-                                <span>Meal Preparation</span>
-                                <span>62%</span>
-                            </div>
-                            <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
-                                <div className="h-full bg-secondary-container w-[62%] rounded-full opacity-60"></div>
-                            </div>
-                        </div>
+        {/* Ecosystem Integrity (Completion Status Bar) */}
+        <div className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] p-8 border border-white botanical-shadow mb-12">
+            <div className="flex justify-between items-center mb-4 text-primary">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shadow-inner">
+                        <span className="material-symbols-outlined text-xl">analytics</span>
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] leading-none mb-1">Ecosystem Integrity</p>
+                        <p className="text-2xl font-headline font-black tracking-tighter">Profile Completion</p>
                     </div>
                 </div>
-                
-                <Link to="/edit-profile" className="w-full bg-on-surface text-white py-5 rounded-[2rem] font-black text-center shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 group">
-                    <span className="material-symbols-outlined text-lg group-hover:rotate-12 transition-transform">settings</span>
-                    Update Ecosystem
-                </Link>
+                <div className="text-right">
+                    <span className="text-3xl font-headline font-black">{profile.isProfileCompleted ? '100%' : '30%'}</span>
+                </div>
             </div>
-
-            <div className="md:col-span-2 space-y-12">
-                <div className="space-y-6">
-                    <h3 className="text-3xl font-headline font-black text-on-surface flex items-center gap-4">
-                        <span className="w-10 h-10 rounded-xl vitality-gradient flex items-center justify-center text-white shadow-lg">
-                            <span className="material-symbols-outlined text-xl">checked_bag</span>
-                        </span>
-                        Harvested Recipes
-                    </h3>
-
-                    {profile.completedRecipes?.length === 0 ? (
-                        <div className="text-center py-20 bg-white/20 rounded-[3rem] border border-white/40 border-dashed space-y-4">
-                            <span className="material-symbols-outlined text-5xl text-primary/30">inventory_2</span>
-                            <p className="text-on-surface-variant font-bold opacity-40 px-12">Your personal cookbook currently contains no harvested recipes. Start exploring to populate your digital garden.</p>
-                            <Link to="/recipes" className="text-primary font-black uppercase tracking-[0.2em] text-[10px] hover:underline block pt-4">Explore Recipes Compendium</Link>
+            
+            <div className="w-full h-3 bg-primary/10 rounded-full overflow-hidden shadow-inner group">
+                <div 
+                    className="h-full vitality-gradient rounded-full transition-all duration-[1500ms] ease-out shadow-[0_0_15px_rgba(56,99,79,0.3)] relative" 
+                    style={{ width: profile.isProfileCompleted ? '100%' : '30%' }}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                </div>
+            </div>
+            
+            {!profile.isProfileCompleted ? (
+                <div className="mt-6 flex flex-col sm:flex-row items-center gap-4 bg-primary/5 p-4 rounded-2xl border border-primary/10">
+                    <div className="flex items-center gap-3 flex-grow">
+                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary shadow-sm shrink-0">
+                            <span className="material-symbols-outlined text-sm">lightbulb</span>
                         </div>
-                    ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            {(profile.completedRecipes || []).map((recipe, index) => (
-                                <div key={index} className="bg-white/60 p-6 rounded-[2rem] border border-white shadow-sm flex items-center gap-4 group hover:bg-white transition-all">
-                                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                                        <span className="material-symbols-outlined text-xl">restaurant</span>
-                                    </div>
-                                    <span className="font-black text-on-surface group-hover:text-primary transition-colors">{recipe}</span>
-                                    <span className="material-symbols-outlined ml-auto text-primary opacity-0 group-hover:opacity-100 transition-opacity">verified</span>
+                        <p className="text-[11px] font-bold text-on-surface-variant opacity-80 leading-relaxed italic">
+                            "Your botanical profile requires refinement. Complete the onboarding to unlock highly personalized nutrient strategies."
+                        </p>
+                    </div>
+                    <Link to="/profile/complete" className="w-full sm:w-auto shrink-0 vitality-gradient text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                        Complete Profile
+                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    </Link>
+                </div>
+            ) : (
+                <div className="mt-6 flex justify-end">
+                    <Link to="/profile/complete" className="bg-surface-container-high hover:bg-surface-container-highest text-on-surface px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 border border-outline-variant/10 shadow-sm">
+                        <span className="material-symbols-outlined text-sm">fitness_center</span>
+                        Update Profile
+                    </Link>
+                </div>
+            )}
+        </div>
+        
+        {/* Dashboard Navigation Tabs */}
+        <div className="flex flex-wrap items-center gap-2 mb-10 border-b border-outline-variant/10 pb-4">
+            {[
+                { id: 'overview', label: 'Overview', icon: 'dashboard' },
+                { id: 'planner', label: 'Meal Plan', icon: 'calendar_month' },
+                { id: 'saved', label: 'Saved Recipes', icon: 'bookmark' },
+                { id: 'collections', label: 'Collections', icon: 'folder_special' }
+            ].map(tab => (
+                <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-6 py-3 rounded-2xl font-bold text-sm tracking-wide transition-all flex items-center gap-2 ${
+                        activeTab === tab.id 
+                        ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]' 
+                        : 'bg-transparent text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                    }`}
+                >
+                    <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+                    {tab.label}
+                </button>
+            ))}
+        </div>
+
+        {/* Tab Sub-router Content */}
+        {activeTab === 'overview' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 animate-fade-in-up">
+                
+                <div className="md:col-span-1 space-y-8">
+                    <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white botanical-shadow space-y-8">
+                        <h3 className="text-xl font-headline font-black text-on-surface flex items-center gap-3">
+                            <span className="material-symbols-outlined text-primary">analytics</span>
+                            Metrics
+                        </h3>
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest opacity-50">
+                                    <span>Botanical Consistency</span>
+                                    <span>85%</span>
                                 </div>
-                            ))}
+                                <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
+                                    <div className="h-full vitality-gradient w-[85%] rounded-full shadow-lg"></div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest opacity-50">
+                                    <span>Meal Preparation</span>
+                                    <span>62%</span>
+                                </div>
+                                <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
+                                    <div className="h-full bg-secondary-container w-[62%] rounded-full opacity-60"></div>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+                    
+                    <Link to="/edit-profile" className="w-full bg-on-surface text-white py-5 rounded-[2rem] font-black text-center shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 group">
+                        <span className="material-symbols-outlined text-lg group-hover:rotate-12 transition-transform">settings</span>
+                        Update Ecosystem
+                    </Link>
+                </div>
+
+                <div className="md:col-span-2 space-y-12">
+                    <div className="space-y-6">
+                        <h3 className="text-3xl font-headline font-black text-on-surface flex items-center gap-4">
+                            <span className="w-10 h-10 rounded-xl vitality-gradient flex items-center justify-center text-white shadow-lg">
+                                <span className="material-symbols-outlined text-xl">auto_awesome</span>
+                            </span>
+                            Curated For You
+                        </h3>
+                        
+                        {!profile.isProfileCompleted ? (
+                            <div className="text-center py-10 bg-surface-container-high rounded-3xl opacity-60">
+                                <span className="material-symbols-outlined text-4xl mb-2">lock</span>
+                                <p className="font-bold">Complete your profile to unlock recommendations.</p>
+                            </div>
+                        ) : recommendations.length === 0 ? (
+                            <div className="text-center py-10 bg-surface-container-high rounded-3xl opacity-60">
+                                <p className="font-bold">Calculating optimal nutrition plan...</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                {recommendations.map(recipe => (
+                                    <div key={recipe.id} className="bg-white p-5 rounded-[2rem] border border-outline-variant/10 shadow-sm flex flex-col group hover:-translate-y-1 transition-all cursor-pointer" onClick={() => navigate(`/items/${recipe.id}`)}>
+                                        <div className="h-32 rounded-2xl bg-surface-container-low mb-4 overflow-hidden relative">
+                                            {recipe.coverImageUrl ? (
+                                                <img src={recipe.coverImageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt="" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center"><span className="material-symbols-outlined opacity-30">restaurant</span></div>
+                                            )}
+                                        </div>
+                                        <h4 className="font-black text-on-surface text-lg leading-tight mb-1">{recipe.title}</h4>
+                                        <div className="flex flex-wrap gap-1 mb-3">
+                                            {recipe.matchReasons && recipe.matchReasons.slice(0, 2).map((reason, i) => (
+                                                <span key={i} className="text-[9px] font-black uppercase tracking-widest bg-primary/10 text-primary px-2 py-1 rounded-full">{reason}</span>
+                                            ))}
+                                        </div>
+                                        <div className="mt-auto flex justify-between items-center border-t border-outline-variant/10 pt-3">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[14px]">local_fire_department</span>
+                                                {recipe.calories} kcal
+                                            </span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest bg-secondary/10 text-secondary px-2 py-1 rounded-full">Score: {Math.round(recipe.score)}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="space-y-6">
+                        <h3 className="text-3xl font-headline font-black text-on-surface flex items-center gap-4">
+                            <span className="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-on-surface-variant shadow-sm border border-outline-variant/10">
+                                <span className="material-symbols-outlined text-xl">checked_bag</span>
+                            </span>
+                            Harvested Recipes
+                        </h3>
+
+                        {profile.completedRecipes?.length === 0 ? (
+                            <div className="text-center py-10 bg-white/20 rounded-[3rem] border border-white/40 border-dashed space-y-4">
+                                <span className="material-symbols-outlined text-5xl text-primary/30">inventory_2</span>
+                                <p className="text-on-surface-variant font-bold opacity-40 px-12">Your personal cookbook currently contains no harvested recipes. Start exploring to populate your digital garden.</p>
+                                <Link to="/recipes" className="text-primary font-black uppercase tracking-[0.2em] text-[10px] hover:underline block pt-4">Explore Recipes Compendium</Link>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                {(profile.completedRecipes || []).map((recipe, index) => (
+                                    <div key={index} className="bg-white/60 p-6 rounded-[2rem] border border-white shadow-sm flex items-center gap-4 group hover:bg-white transition-all">
+                                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                                            <span className="material-symbols-outlined text-xl">restaurant</span>
+                                        </div>
+                                        <span className="font-black text-on-surface group-hover:text-primary transition-colors">{recipe}</span>
+                                        <span className="material-symbols-outlined ml-auto text-primary opacity-0 group-hover:opacity-100 transition-opacity">verified</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {profile.role !== 'CHEF' && profile.role !== 'ADMIN' && (
+                    <div className="bg-on-surface rounded-[3rem] p-10 text-white relative overflow-hidden shadow-2xl">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                        <div className="relative z-10 space-y-6">
+                            <h4 className="text-2xl font-headline font-black tracking-tight">Become a Professional <span className="text-primary-fixed">Chef?</span></h4>
+                            <p className="text-white/60 font-medium leading-relaxed">Upgrade your account to a Chef profile to share your culinary intelligence with our global greenhouse community.</p>
+                            <button 
+                            onClick={handleUpgradeToChef}
+                            className="bg-white text-on-surface px-8 py-3 rounded-2xl font-black text-sm hover:scale-105 active:scale-95 transition-all shadow-lg"
+                            >
+                            Upgrade to Chef
+                            </button>
+                        </div>
+                    </div>
                     )}
                 </div>
-
-                {profile.role !== 'CHEF' && profile.role !== 'ADMIN' && (
-                <div className="bg-on-surface rounded-[3rem] p-10 text-white relative overflow-hidden shadow-2xl">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                    <div className="relative z-10 space-y-6">
-                        <h4 className="text-2xl font-headline font-black tracking-tight">Become a Professional <span className="text-primary-fixed">Chef?</span></h4>
-                        <p className="text-white/60 font-medium leading-relaxed">Upgrade your account to a Chef profile to share your culinary intelligence with our global greenhouse community.</p>
-                        <button 
-                          onClick={handleUpgradeToChef}
-                          className="bg-white text-on-surface px-8 py-3 rounded-2xl font-black text-sm hover:scale-105 active:scale-95 transition-all shadow-lg"
-                        >
-                          Upgrade to Chef
-                        </button>
-                    </div>
-                </div>
-                )}
             </div>
-        </div>
+        )}
+
+        {activeTab === 'planner' && (
+            <div className="animate-fade-in-up">
+                <MealPlanner />
+            </div>
+        )}
+
+        {activeTab === 'saved' && (
+            <SavedRecipesTab />
+        )}
+
+        {activeTab === 'collections' && (
+            <CollectionsTab />
+        )}
+
       </div>
     </div>
   );

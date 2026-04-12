@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const ProfileComplete = () => {
     const navigate = useNavigate();
@@ -28,6 +29,38 @@ const ProfileComplete = () => {
         allergyNames: []
     });
 
+    React.useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (token) {
+            axios.get("http://localhost:8080/api/health-profile", {
+                headers: { Authorization: `Bearer ${token}` }
+            }).then(res => {
+                const data = res.data?.data;
+                if (data) {
+                    setProfile(prev => ({
+                        ...prev,
+                        age: data.age || "",
+                        gender: data.gender || "",
+                        height: data.height || "",
+                        weight: data.weight || "",
+                        activityLevel: data.activityLevel || "MODERATELY_ACTIVE",
+                        workType: data.workType || "MIXED",
+                        travelFrequency: data.travelFrequency || "RARE",
+                        eatingPattern: data.eatingPattern || "FIXED_MEALS",
+                        sleepDuration: data.sleepDuration || "SIX_TO_EIGHT",
+                        waterIntakeGlasses: data.waterIntakeGlasses !== undefined ? data.waterIntakeGlasses : 8,
+                        smokingHabit: data.smokingHabit || "NONE",
+                        alcoholHabit: data.alcoholHabit || "NONE",
+                        diseaseNames: data.diseases?.map(d => d.diseaseName) || [],
+                        allergyNames: data.allergies?.map(a => a.allergyName) || []
+                    }));
+                }
+            }).catch(err => {
+                console.error("No previous health profile found:", err.response?.data || err.message);
+            });
+        }
+    }, []);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -45,9 +78,10 @@ const ProfileComplete = () => {
 
     const toggleMultiSelect = (field, value) => {
         setProfile(prev => {
-            const list = prev[field];
-            if (list.includes(value)) {
-                return { ...prev, [field]: list.filter(item => item !== value) };
+            const list = prev[field] || [];
+            const lowerValue = value.toLowerCase();
+            if (list.some(item => item.toLowerCase() === lowerValue)) {
+                return { ...prev, [field]: list.filter(item => item.toLowerCase() !== lowerValue) };
             } else {
                 return { ...prev, [field]: [...list, value] };
             }
@@ -63,11 +97,17 @@ const ProfileComplete = () => {
         2: { border: 'border-primary', bg: 'bg-primary', text: 'text-primary', gradient: 'vibrant-gradient', overlay: 'from-primary/80' },
         3: { border: 'border-primary', bg: 'bg-primary', text: 'text-primary', gradient: 'vibrant-gradient', overlay: 'from-primary/80' }
     };
-
-    const currentTheme = phaseColor[step];
+    const currentTheme = phaseColor[step] || phaseColor[1];
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Safety Guard: Only allow submission on the final step
+        if (step < 3) {
+            nextStep();
+            return;
+        }
+
         setError("");
         const token = localStorage.getItem("token");
         if (!token) {
@@ -81,9 +121,11 @@ const ProfileComplete = () => {
             await axios.post("http://localhost:8080/api/v1/auth/complete-profile", profile, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            toast.success("Profile successfully updated!");
             navigate("/"); // redirect on success
         } catch (err) {
             setError(err.response?.data?.message || err.message);
+            toast.error("Failed to update profile.");
         } finally {
             setLoading(false);
         }
@@ -184,16 +226,16 @@ const ProfileComplete = () => {
                     {/* Wizard Container */}
                     <div className="lg:col-span-8 bg-surface-container-lowest rounded-[2.5rem] p-8 md:p-12 shadow-[0_32px_64px_rgba(25,28,27,0.06)] border border-surface-container-high transition-all duration-500 relative overflow-hidden">
                         
-                        {/* Header Back Button for Accessibility - RELOCATED TO AVOID OVERLAP */}
-                        {step > 1 && (
-                            <button 
-                                onClick={prevStep}
-                                className="absolute top-6 left-6 w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest transition-all z-20 shadow-sm"
-                                title="Go Back"
-                            >
-                                <span className="material-symbols-outlined font-bold">arrow_back</span>
-                            </button>
-                        )}
+                        {/* Phase 1+ Back Navigation */}
+                        <button 
+                            onClick={step === 1 ? () => navigate(-1) : prevStep}
+                            className="absolute top-6 left-6 w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest transition-all z-20 shadow-sm group"
+                            title={step === 1 ? "Go Back" : "Previous Step"}
+                        >
+                            <span className="material-symbols-outlined font-bold group-hover:-translate-x-1 transition-transform">
+                                arrow_back
+                            </span>
+                        </button>
 
                         {error && (
                             <div className="mb-8 p-6 bg-error-container text-on-error-container rounded-2xl flex items-center gap-4 animate-shake">
@@ -202,7 +244,11 @@ const ProfileComplete = () => {
                             </div>
                         )}
 
-                        <form onSubmit={handleSubmit} className="space-y-12 pt-8">
+                        <form 
+                            onSubmit={handleSubmit} 
+                            onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
+                            className="space-y-12 pt-8"
+                        >
                             {/* PHASE 1: PHYSICAL FOUNDATION */}
                             {step === 1 && (
                                 <div className="space-y-10 animate-fade-in-right text-left">
@@ -380,7 +426,7 @@ const ProfileComplete = () => {
                                             <label className="block text-sm font-bold text-on-surface-variant ml-2 mb-4">Health Conditions (Select Multiple)</label>
                                             <div className="flex flex-wrap gap-3">
                                                 {["Diabetes", "Hypertension", "PCOS", "Cholesterol", "IBS", "Obesity", "Thyroid"].map(disease => {
-                                                    const isSelected = profile.diseaseNames.includes(disease);
+                                                    const isSelected = profile.diseaseNames.some(d => d.toLowerCase() === disease.toLowerCase());
                                                     return (
                                                         <button 
                                                             key={disease}
@@ -405,7 +451,7 @@ const ProfileComplete = () => {
                                             <label className="block text-sm font-bold text-on-surface-variant ml-2 mb-4">Food Allergies (Select Multiple)</label>
                                             <div className="flex flex-wrap gap-3">
                                                 {["Peanuts", "Dairy", "Gluten", "Shellfish", "Soy", "Tree Nuts", "Eggs"].map(allergy => {
-                                                    const isSelected = profile.allergyNames.includes(allergy);
+                                                    const isSelected = profile.allergyNames.some(a => a.toLowerCase() === allergy.toLowerCase());
                                                     return (
                                                         <button 
                                                             key={allergy}
@@ -456,8 +502,9 @@ const ProfileComplete = () => {
                                 <div className="flex-1 flex gap-4">
                                     {step < 3 ? (
                                         <button 
+                                            key="btn-next"
                                             type="button"
-                                            onClick={nextStep}
+                                            onClick={(e) => { e.preventDefault(); nextStep(); }}
                                             className={`flex-1 px-8 py-5 rounded-2xl font-bold text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 text-white ${currentTheme.gradient}`}
                                         >
                                             Next
@@ -465,6 +512,7 @@ const ProfileComplete = () => {
                                         </button>
                                     ) : (
                                         <button 
+                                            key="btn-submit"
                                             disabled={loading} 
                                             className={`flex-1 px-8 py-6 rounded-2xl font-extrabold text-xl shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 text-white ${currentTheme.gradient}`} 
                                             type="submit"
