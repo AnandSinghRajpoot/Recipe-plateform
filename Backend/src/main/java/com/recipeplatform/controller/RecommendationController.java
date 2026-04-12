@@ -1,5 +1,6 @@
 package com.recipeplatform.controller;
 
+import com.recipeplatform.domain.enums.MealType;
 import com.recipeplatform.dto.ApiResponse;
 import com.recipeplatform.dto.RecipeRecommendationDTO;
 import com.recipeplatform.service.RecommendationEngine;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/recommendations")
+@RequestMapping("/api/v1/recommendations")
 @RequiredArgsConstructor
 public class RecommendationController {
 
@@ -21,10 +22,21 @@ public class RecommendationController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<RecipeRecommendationDTO>>> getRecommendations(
-            @RequestParam(defaultValue = "20") int limit) {
+            @RequestParam(defaultValue = "10") int limit) {
         Long userId = currentUser.getCurrentUser().getId();
         List<RecipeRecommendationDTO> recommendations = recommendationEngine.getRecommendations(userId, limit);
         return ResponseEntity.ok(
                 new ApiResponse<>("Recommendations generated successfully", recommendations, HttpStatus.OK.value()));
+    }
+
+    @GetMapping("/by-meal-type/{mealType}")
+    public ResponseEntity<ApiResponse<List<RecipeRecommendationDTO>>> getRecommendationsByMealType(
+            @PathVariable String mealType,
+            @RequestParam(defaultValue = "10") int limit) {
+        Long userId = currentUser.getCurrentUser().getId();
+        MealType parsedMealType = MealType.valueOf(mealType.toUpperCase());
+        List<RecipeRecommendationDTO> recommendations = recommendationEngine.getByMealType(userId, parsedMealType, limit);
+        return ResponseEntity.ok(
+                new ApiResponse<>("Dietary specific recommendations generated successfully", recommendations, HttpStatus.OK.value()));
     }
 }
