@@ -1,5 +1,7 @@
 package com.recipeplatform.mapper;
 
+import com.recipeplatform.domain.Allergy;
+import com.recipeplatform.domain.Disease;
 import com.recipeplatform.domain.Recipe;
 import com.recipeplatform.domain.RecipeIngredient;
 import com.recipeplatform.domain.User;
@@ -10,20 +12,27 @@ import com.recipeplatform.dto.recipeIngredient.RecipeIngredientResponseDto;
 import org.mapstruct.*;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface RecipeMapper {
 
+    @Mapping(target = "containsAllergens", ignore = true)
+    @Mapping(target = "safeForDiseases", ignore = true)
     Recipe toEntity(RecipeRequestDto dto);
 
     List<RecipeResponseDTO> toResponseDTOList(List<Recipe> recipes);
 
+    @Mapping(target = "containsAllergens", ignore = true)
+    @Mapping(target = "safeForDiseases", ignore = true)
     void updateEntityFromDTO(RecipeRequestDto dto, @MappingTarget Recipe recipe);
 
     @Mapping(target = "author", source = "user", qualifiedByName = "getAuthor")
     @Mapping(target = "ingredients", qualifiedByName = "getDto")
     @Mapping(target = "coverImageUrl", source = "coverImageUrl", qualifiedByName = "resolveUrl")
+    @Mapping(target = "containsAllergens", qualifiedByName = "mapAllergenNames")
+    @Mapping(target = "safeForDiseases", qualifiedByName = "mapDiseaseNames")
     RecipeResponseDTO toResponseDTO(Recipe recipe);
 
     @Named("resolveUrl")
@@ -55,4 +64,15 @@ public interface RecipeMapper {
         return new AuthorDto(user.getId(), user.getRole());
     }
 
+    @Named("mapAllergenNames")
+    default Set<String> mapAllergenNames(Set<Allergy> allergens) {
+        if (allergens == null) return Set.of();
+        return allergens.stream().map(Allergy::getName).collect(Collectors.toSet());
+    }
+
+    @Named("mapDiseaseNames")
+    default Set<String> mapDiseaseNames(Set<Disease> diseases) {
+        if (diseases == null) return Set.of();
+        return diseases.stream().map(Disease::getName).collect(Collectors.toSet());
+    }
 }

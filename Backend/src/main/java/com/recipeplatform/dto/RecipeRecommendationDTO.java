@@ -1,5 +1,7 @@
 package com.recipeplatform.dto;
 
+import com.recipeplatform.domain.enums.DietType;
+import com.recipeplatform.domain.enums.MealType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,9 +20,16 @@ public class RecipeRecommendationDTO {
     private String title;
     private String description;
     private String cuisine;
+    private String coverImageUrl;
+
+    // Classification
+    private DietType dietType;
+    private MealType mealType;
+
+    // Timing
     private Integer prepTime;
     private Integer cookTime;
-    private String coverImageUrl;
+    private Integer servings;
 
     // Nutritional information
     private Double calories;
@@ -33,6 +42,8 @@ public class RecipeRecommendationDTO {
 
     // Recommendation metadata
     private Double score;
+    private Double safetyScore;
+    private String matchReason;
 
     @Builder.Default
     private List<String> matchReasons = new ArrayList<>();

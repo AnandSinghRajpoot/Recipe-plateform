@@ -1,6 +1,9 @@
 package com.recipeplatform.domain;
 
+import com.recipeplatform.domain.enums.CuisineType;
 import com.recipeplatform.domain.enums.Difficulty;
+import com.recipeplatform.domain.enums.DietType;
+import com.recipeplatform.domain.enums.MealType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -11,7 +14,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
@@ -24,7 +29,7 @@ public class Recipe {
     private Long id;
 
     @NotBlank(message = "Recipe title is required")
-    @Size(min = 3, max = 100, message = "Recipe title must be between 3 and 100 characters")
+    @Size(min = 3, max = 120, message = "Recipe title must be between 3 and 120 characters")
     @Column(nullable = false)
     private String title;
 
@@ -36,9 +41,6 @@ public class Recipe {
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
 
-    // TO:DO handle cover image for recipe
-    private String coverImageUrl;
-
     @Column(columnDefinition = "TEXT")
     @Size(min = 30, max = 2000, message = "instructions must be between 30 and 2000 characters")
     private String instructions;
@@ -49,11 +51,16 @@ public class Recipe {
     @Column(name = "prep_time", nullable = false)
     private Integer prepTime;
 
-    @Min(value = 1, message = "Cook time must be at least 1 minute")
+    @Min(value = 0, message = "Cook time cannot be negative")
     @Max(value = 240, message = "Cook time cannot exceed 240 minutes")
     @NotNull(message = "Cook time is required")
     @Column(name = "cook_time", nullable = false)
     private Integer cookTime;
+
+    @Column(name = "servings", nullable = false)
+    private Integer servings = 2;
+
+    private String coverImageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -62,7 +69,37 @@ public class Recipe {
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecipeIngredient> ingredients = new ArrayList<>();
 
-    // Nutritional Information
+    // === Dietary Classification ===
+    @Enumerated(EnumType.STRING)
+    @Column(name = "diet_type")
+    private DietType dietType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "meal_type")
+    private MealType mealType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cuisine_type")
+    private CuisineType cuisineType;
+
+    // === Health Tagging (ManyToMany) ===
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "recipe_allergens",
+        joinColumns = @JoinColumn(name = "recipe_id"),
+        inverseJoinColumns = @JoinColumn(name = "allergy_id")
+    )
+    private Set<Allergy> containsAllergens = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "recipe_safe_diseases",
+        joinColumns = @JoinColumn(name = "recipe_id"),
+        inverseJoinColumns = @JoinColumn(name = "disease_id")
+    )
+    private Set<Disease> safeForDiseases = new HashSet<>();
+
+    // === Nutritional Information ===
     @Column(name = "calories")
     private Double calories;
 
@@ -84,9 +121,17 @@ public class Recipe {
     @Column(name = "sodium")
     private Double sodium;
 
+    // Legacy cuisine text field
     @Size(max = 50, message = "Cuisine must not exceed 50 characters")
     @Column(name = "cuisine", length = 50)
     private String cuisine;
+
+    // === Publication Status ===
+    @Column(name = "is_published", nullable = false)
+    private Boolean isPublished = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
