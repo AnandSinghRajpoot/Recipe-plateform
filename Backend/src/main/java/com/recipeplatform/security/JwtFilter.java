@@ -25,6 +25,12 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.startsWith("/images/");
+    }
+
+    @Override
     protected void doFilterInternal(
             @Nonnull HttpServletRequest request,
             @Nonnull HttpServletResponse response,

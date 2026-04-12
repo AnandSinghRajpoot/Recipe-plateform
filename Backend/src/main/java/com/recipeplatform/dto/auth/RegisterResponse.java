@@ -20,4 +20,6 @@ public class RegisterResponse {
     private DietType dietType;
     private SkillLevel skillLevel;
     private UserRole role;
+    private Boolean isProfileCompleted;
+    private java.time.LocalDateTime createdAt;
 }

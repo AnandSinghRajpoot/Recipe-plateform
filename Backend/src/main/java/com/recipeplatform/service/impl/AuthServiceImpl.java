@@ -204,7 +204,7 @@ public class AuthServiceImpl implements AuthService {
         profile.getDiseases().clear();
         if (request.getDiseaseNames() != null) {
             for (String dName : request.getDiseaseNames()) {
-                diseaseRepository.findByName(dName).ifPresent(disease -> {
+                diseaseRepository.findByNameContainingIgnoreCase(dName).stream().findFirst().ifPresent(disease -> {
                     UserDisease ud = new UserDisease();
                     ud.setDisease(disease);
                     ud.setUserHealthProfile(profile);
@@ -217,7 +217,7 @@ public class AuthServiceImpl implements AuthService {
         profile.getAllergies().clear();
         if (request.getAllergyNames() != null) {
             for (String aName : request.getAllergyNames()) {
-                allergyRepository.findByName(aName).ifPresent(allergy -> {
+                allergyRepository.findByNameContainingIgnoreCase(aName).stream().findFirst().ifPresent(allergy -> {
                     UserAllergy ua = new UserAllergy();
                     ua.setAllergy(allergy);
                     ua.setUserHealthProfile(profile);
