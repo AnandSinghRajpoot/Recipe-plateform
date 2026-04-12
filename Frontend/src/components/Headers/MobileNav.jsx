@@ -6,9 +6,12 @@ import { Link, useNavigate } from "react-router-dom";
 export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+  const isChef = role === "CHEF" || role === "ADMIN";
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("role");
     alert("Logged out successfully!");
     navigate("/login");
     onClose();
@@ -52,7 +55,7 @@ export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
             {menuItems?.map((menu, index) => (
               <li key={index}>
                 <Link
-                  to={menu === "recipe" ? "/recipes" : menu === "resource" ? "/resources" : `/${menu}`}
+                  to={menu === "recipe" ? "/recipes" : menu === "plan" ? "/meal-planner" : menu === "resource" ? "/resources" : `/${menu}`}
                   onClick={onClose}
                   className="text-2xl font-black capitalize text-on-surface-variant hover:text-primary transition-all flex items-center gap-4"
                 >
@@ -83,21 +86,25 @@ export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                <Link
-                  to="/addRecipe"
-                  onClick={onClose}
-                  className="w-full py-4 bg-primary text-white font-black rounded-2xl text-center shadow-lg flex items-center justify-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-sm font-black">add</span>
-                  Add New Recipe
-                </Link>
-                <Link
-                  to="/my-recipes"
-                  onClick={onClose}
-                  className="w-full py-4 bg-surface-container-low text-on-surface-variant font-black rounded-2xl text-center border border-outline-variant/10"
-                >
-                  My Recipes
-                </Link>
+                {isChef && (
+                  <>
+                    <Link
+                      to="/addRecipe"
+                      onClick={onClose}
+                      className="w-full py-4 bg-primary text-white font-black rounded-2xl text-center shadow-lg flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm font-black">add</span>
+                      Add New Recipe
+                    </Link>
+                    <Link
+                      to="/my-recipes"
+                      onClick={onClose}
+                      className="w-full py-4 bg-surface-container-low text-on-surface-variant font-black rounded-2xl text-center border border-outline-variant/10"
+                    >
+                      My Recipes
+                    </Link>
+                  </>
+                )}
                 <Link
                   to="/profile"
                   onClick={onClose}

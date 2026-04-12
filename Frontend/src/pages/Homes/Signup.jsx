@@ -124,16 +124,11 @@ const Signup = () => {
     setLoading(true);
 
     const data = new FormData();
-    Object.keys(formData).forEach(key => {
-      if (key === 'specializations') {
-        data.append(key, formData[key].join(','));
-      } else {
-        data.append(key, formData[key]);
-      }
-    });
+    const jsonRequest = new Blob([JSON.stringify(formData)], { type: 'application/json' });
+    data.append('request', jsonRequest);
 
     if (profileImage) {
-      data.append('profileImage', profileImage);
+      data.append('profilePhoto', profileImage);
     }
 
     try {

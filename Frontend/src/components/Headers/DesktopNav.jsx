@@ -29,7 +29,7 @@ const DesktopNav = ({ menuItems, Logo }) => {
         {menuItems?.map((menu, index) => (
           <li key={index}>
             <Link
-              to={menu === "recipe" ? "/recipes" : menu === "resource" ? "/resources" : `/${menu}`}
+              to={menu === "recipe" ? "/recipes" : menu === "plan" ? "/meal-planner" : menu === "resource" ? "/resources" : `/${menu}`}
               className="text-sm font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-all duration-300 relative group"
             >
               {menu}
@@ -91,20 +91,6 @@ const DesktopNav = ({ menuItems, Logo }) => {
           ) : (
             /* Regular User View */
             <div className="flex items-center gap-4">
-              <Link
-                to="/addRecipe"
-                className="vitality-gradient text-white px-6 py-3 rounded-2xl text-sm shadow-xl shadow-primary/10 hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-sm font-black">add</span>
-                Add Recipe
-              </Link>
-              <Link
-                to="/my-recipes"
-                className="w-11 h-11 rounded-2xl bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-white hover:shadow-lg transition-all"
-                title="My Recipes"
-              >
-                <span className="material-symbols-outlined">menu_book</span>
-              </Link>
               <Link
                 to="/profile"
                 className="w-11 h-11 rounded-2xl bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-white hover:shadow-lg transition-all"

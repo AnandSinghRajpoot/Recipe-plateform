@@ -25,7 +25,7 @@ import EditRecipe from "./pages/EditRecipe.jsx";
 import ProfileComplete from "./pages/ProfileComplete.jsx";
 import Profile from './pages/Homes/profile.jsx';
 import ChefDashboard from './pages/ChefDashboard.jsx';
-import BottomNav from './components/Headers/BottomNav.jsx';
+import MealPlanner from './pages/product/MealPlanner.jsx';
 
 
 const router = createBrowserRouter([
@@ -55,6 +55,10 @@ const router = createBrowserRouter([
         {
           path : "/recipes",
           element : <Recipes/>
+        },
+        {
+          path : "/meal-planner",
+          element : <MealPlanner/>
         },
         {
           path : "/addRecipe",
