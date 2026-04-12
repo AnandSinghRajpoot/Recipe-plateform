@@ -1,5 +1,7 @@
 package com.recipeplatform.service.impl;
 
+import com.recipeplatform.domain.Allergy;
+import com.recipeplatform.domain.Disease;
 import com.recipeplatform.domain.Ingredient;
 import com.recipeplatform.domain.Recipe;
 import com.recipeplatform.domain.RecipeIngredient;
@@ -9,6 +11,8 @@ import com.recipeplatform.dto.recipe.RecipeResponseDTO;
 import com.recipeplatform.exception.NotAllowedOperation;
 import com.recipeplatform.exception.ResourceNotFoundException;
 import com.recipeplatform.mapper.RecipeMapper;
+import com.recipeplatform.repository.AllergyRepository;
+import com.recipeplatform.repository.DiseaseRepository;
 import com.recipeplatform.repository.RecipeRepository;
 import com.recipeplatform.service.ImageService;
 import com.recipeplatform.service.IngredientService;
@@ -18,7 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,19 +37,23 @@ public class RecipeServiceImpl implements RecipeService {
     private final IngredientService ingredientService;
     private final CurrentUser currentUser;
     private final ImageService imageService;
+    private final AllergyRepository allergyRepository;
+    private final DiseaseRepository diseaseRepository;
 
     public RecipeServiceImpl(RecipeRepository recipeRepository, RecipeMapper recipeMapper,
-            IngredientService ingredientService, CurrentUser currentUser, ImageService imageService) {
+            IngredientService ingredientService, CurrentUser currentUser, ImageService imageService,
+            AllergyRepository allergyRepository, DiseaseRepository diseaseRepository) {
         this.recipeRepository = recipeRepository;
         this.recipeMapper = recipeMapper;
         this.ingredientService = ingredientService;
         this.currentUser = currentUser;
         this.imageService = imageService;
+        this.allergyRepository = allergyRepository;
+        this.diseaseRepository = diseaseRepository;
     }
 
     @Override
     public RecipeResponseDTO createRecipe(RecipeRequestDto recipeDTO, MultipartFile file) {
-
         User user = currentUser.getCurrentUser();
         Recipe recipe = recipeMapper.toEntity(recipeDTO);
         recipe.setUser(user);
@@ -64,22 +75,32 @@ public class RecipeServiceImpl implements RecipeService {
             recipe.setIngredients(recipeIngredients);
         }
 
-        String coverImageUrl = null;
-        if (file != null) {
-            coverImageUrl = imageService.saveImage(file);
+        // Wire allergens
+        if (recipeDTO.getAllergenIds() != null && !recipeDTO.getAllergenIds().isEmpty()) {
+            Set<Allergy> allergens = new HashSet<>(allergyRepository.findAllById(recipeDTO.getAllergenIds()));
+            recipe.setContainsAllergens(allergens);
         }
-        recipe.setCoverImageUrl(coverImageUrl);
+
+        // Wire safe-for diseases
+        if (recipeDTO.getSafeForDiseaseIds() != null && !recipeDTO.getSafeForDiseaseIds().isEmpty()) {
+            Set<Disease> diseases = new HashSet<>(diseaseRepository.findAllById(recipeDTO.getSafeForDiseaseIds()));
+            recipe.setSafeForDiseases(diseases);
+        }
+
+        // Handle cover image
+        if (file != null && !file.isEmpty()) {
+            recipe.setCoverImageUrl(imageService.saveImage(file));
+        }
+
         Recipe savedRecipe = recipeRepository.save(recipe);
         return recipeMapper.toResponseDTO(savedRecipe);
     }
 
     @Override
     public RecipeResponseDTO updateRecipe(Long id, RecipeRequestDto recipeDTO, MultipartFile file) {
-
         Recipe existingRecipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe", "id", id));
 
-        // Check if current user is the author
         User user = currentUser.getCurrentUser();
         if (!java.util.Objects.equals(existingRecipe.getUser().getId(), user.getId())) {
             throw new NotAllowedOperation("Unauthorized to update this recipe");
@@ -89,8 +110,7 @@ public class RecipeServiceImpl implements RecipeService {
 
         // Update image if provided
         if (file != null && !file.isEmpty()) {
-            String newImageUrl = imageService.saveImage(file);
-            existingRecipe.setCoverImageUrl(newImageUrl);
+            existingRecipe.setCoverImageUrl(imageService.saveImage(file));
         }
 
         // Update ingredients
@@ -110,41 +130,64 @@ public class RecipeServiceImpl implements RecipeService {
             existingRecipe.getIngredients().addAll(recipeIngredients);
         }
 
-        Recipe updatedRecipe = recipeRepository.save(existingRecipe);
+        // Update allergens
+        if (recipeDTO.getAllergenIds() != null) {
+            existingRecipe.setContainsAllergens(
+                new HashSet<>(allergyRepository.findAllById(recipeDTO.getAllergenIds())));
+        }
 
-        return recipeMapper.toResponseDTO(updatedRecipe);
+        // Update safe-for diseases
+        if (recipeDTO.getSafeForDiseaseIds() != null) {
+            existingRecipe.setSafeForDiseases(
+                new HashSet<>(diseaseRepository.findAllById(recipeDTO.getSafeForDiseaseIds())));
+        }
+
+        return recipeMapper.toResponseDTO(recipeRepository.save(existingRecipe));
     }
 
     @Override
     public void deleteRecipe(Long id) {
-
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe", "id", id));
 
         User user = currentUser.getCurrentUser();
         if (!java.util.Objects.equals(recipe.getUser().getId(), user.getId())) {
-            throw new RuntimeException("Unauthorized to delete this recipe");
+            throw new NotAllowedOperation("Unauthorized to delete this recipe");
         }
 
-        recipeRepository.delete(recipe);
+        // Soft delete
+        recipe.setDeletedAt(LocalDateTime.now());
+        recipeRepository.save(recipe);
+    }
+
+    @Override
+    public RecipeResponseDTO togglePublish(Long id) {
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe", "id", id));
+
+        User user = currentUser.getCurrentUser();
+        if (!java.util.Objects.equals(recipe.getUser().getId(), user.getId())) {
+            throw new NotAllowedOperation("Unauthorized to publish this recipe");
+        }
+
+        recipe.setIsPublished(!recipe.getIsPublished());
+        return recipeMapper.toResponseDTO(recipeRepository.save(recipe));
     }
 
     @Override
     @Transactional(readOnly = true)
     public RecipeResponseDTO getRecipeById(Long id) {
-
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe", "id", id));
-
         return recipeMapper.toResponseDTO(recipe);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<RecipeResponseDTO> getAllRecipes() {
-
-        List<Recipe> recipes = recipeRepository.findAll();
-        return recipeMapper.toResponseDTOList(recipes);
+        // Public feed: only published, non-deleted
+        return recipeMapper.toResponseDTOList(
+            recipeRepository.findByIsPublishedTrueAndDeletedAtIsNull());
     }
 
     @Override
@@ -156,24 +199,19 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     @Transactional(readOnly = true)
     public List<RecipeResponseDTO> searchRecipes(String query) {
-
-        List<Recipe> recipes = recipeRepository.searchRecipes(query);
-        return recipeMapper.toResponseDTOList(recipes);
+        return recipeMapper.toResponseDTOList(recipeRepository.searchRecipes(query));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<RecipeResponseDTO> getLatestRecipes() {
-
-        List<Recipe> recipes = recipeRepository.findAllOrderByCreatedAtDesc();
-        return recipeMapper.toResponseDTOList(recipes);
+        return recipeMapper.toResponseDTOList(recipeRepository.findAllOrderByCreatedAtDesc());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<RecipeResponseDTO> getMyRecipes() {
         User user = currentUser.getCurrentUser();
-        List<Recipe> recipes = recipeRepository.findByUser(user);
-        return recipeMapper.toResponseDTOList(recipes);
+        return recipeMapper.toResponseDTOList(recipeRepository.findByUser(user));
     }
 }

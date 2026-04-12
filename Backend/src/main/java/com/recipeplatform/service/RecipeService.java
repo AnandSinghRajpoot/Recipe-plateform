@@ -25,4 +25,6 @@ public interface RecipeService {
     List<RecipeResponseDTO> getLatestRecipes();
 
     List<RecipeResponseDTO> getMyRecipes();
+
+    RecipeResponseDTO togglePublish(Long id);
 }

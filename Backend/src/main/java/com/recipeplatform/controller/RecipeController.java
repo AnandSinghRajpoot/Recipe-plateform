@@ -128,4 +128,14 @@ public class RecipeController {
                 HttpStatus.OK.value());
         return ResponseEntity.ok(response);
     }
+
+    @PatchMapping("/{id}/publish")
+    public ResponseEntity<ApiResponse<RecipeResponseDTO>> togglePublish(@PathVariable Long id) {
+        RecipeResponseDTO recipe = recipeService.togglePublish(id);
+        ApiResponse<RecipeResponseDTO> response = new ApiResponse<>(
+                "Recipe publish status toggled successfully",
+                recipe,
+                HttpStatus.OK.value());
+        return ResponseEntity.ok(response);
+    }
 }
