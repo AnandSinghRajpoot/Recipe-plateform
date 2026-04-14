@@ -49,7 +49,7 @@ const DesktopNav = ({ menuItems, Logo }) => {
             placeholder="Search recipes..." 
             type="text"
             onKeyDown={(e) => {
-              if (e.key === 'Enter') navigate(`/search?query=${e.target.value}`);
+              if (e.key === 'Enter') navigate(`/recipes?q=${e.target.value}`);
             }}
           />
         </div>
