@@ -5,6 +5,7 @@ import com.recipeplatform.domain.User;
 import com.recipeplatform.domain.enums.DietType;
 import com.recipeplatform.domain.enums.MealType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,9 +14,11 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-public interface RecipeRepository extends JpaRepository<Recipe, Long> {
+public interface RecipeRepository extends JpaRepository<Recipe, Long>, JpaSpecificationExecutor<Recipe> {
 
     List<Recipe> findByUser(User user);
+
+    List<Recipe> findByUserIdAndIsPublishedTrue(Long userId);
 
     @Query("SELECT r FROM Recipe r WHERE LOWER(r.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(r.description) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Recipe> searchRecipes(@Param("query") String query);
