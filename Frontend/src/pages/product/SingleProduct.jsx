@@ -1,10 +1,132 @@
 import React, { useEffect, useState } from 'react'
-import { useLoaderData, Link } from 'react-router-dom'
+import { useLoaderData, Link, useParams } from 'react-router-dom'
 import { resolveImageUrl } from '../../utils/imageUtils'
+import apiClient from '../../utils/apiClient'
+import toast from 'react-hot-toast'
+import { motion, AnimatePresence } from 'framer-motion'
+import generalProfilePic from '../../assets/general-profile-pic.png'
 
 const SingleProduct = () => {
-    const loaderData = useLoaderData()
-    const item = loaderData?.data || loaderData;
+    const { id } = useParams();
+    const [item, setItem] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [newComment, setNewComment] = useState("");
+    const [isLiking, setIsLiking] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const fetchRecipe = async () => {
+        try {
+            const res = await apiClient.get(`/recipes/${id}`);
+            setItem(res.data.data);
+        } catch (err) {
+            console.error("Error fetching recipe:", err);
+            toast.error("Failed to load recipe details");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchRecipe();
+    }, [id]);
+
+    const handleLike = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            toast.error("Please login to like recipes");
+            return;
+        }
+        setIsLiking(true);
+        try {
+            const res = await apiClient.post(`/recipes/${id}/like`);
+            setItem(prev => ({
+                ...prev,
+                isLiked: res.data.data,
+                likesCount: res.data.data ? prev.likesCount + 1 : prev.likesCount - 1
+            }));
+        } catch (err) {
+            toast.error("Action failed");
+        } finally {
+            setIsLiking(false);
+        }
+    };
+
+    const handleSave = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            toast.error("Please login to save recipes");
+            return;
+        }
+        setIsSaving(true);
+        
+        // If already saved, unsave it
+        if (item?.isSaved) {
+            try {
+                await apiClient.delete(`/saved-recipes/${id}`);
+                setItem(prev => ({
+                    ...prev,
+                    isSaved: false
+                }));
+                toast.success("Recipe removed from saved!");
+            } catch (err) {
+                toast.error("Failed to remove recipe from saved");
+            }
+        } else {
+            // If not saved, save it
+            try {
+                await apiClient.post(`/saved-recipes/${id}`);
+                setItem(prev => ({
+                    ...prev,
+                    isSaved: true
+                }));
+                toast.success("Recipe saved successfully!");
+            } catch (err) {
+                // Check if it's already saved due to race condition
+                if (err.response?.status === 409 || err.response?.status === 400) {
+                    try {
+                        await apiClient.delete(`/saved-recipes/${id}`);
+                        setItem(prev => ({
+                            ...prev,
+                            isSaved: false
+                        }));
+                        toast.success("Recipe removed from saved!");
+                    } catch (deleteErr) {
+                        toast.error("Failed to update save status");
+                    }
+                } else {
+                    toast.error("Failed to save recipe");
+                }
+            }
+        }
+        
+        setIsSaving(false);
+    };
+
+    const handleAddComment = async (e) => {
+        e.preventDefault();
+        if (!newComment.trim()) return;
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+            toast.error("Please login to comment");
+            return;
+        }
+
+        try {
+            const res = await apiClient.post(`/recipes/${id}/comments`, { content: newComment });
+            setItem(prev => ({
+                ...prev,
+                comments: [res.data.data, ...(prev.comments || [])]
+            }));
+            setNewComment("");
+            toast.success("Comment added");
+        } catch (err) {
+            toast.error("Failed to add comment");
+        }
+    };
+
+    if (loading) return <div className="min-h-screen bg-surface flex items-center justify-center"><div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
+    if (!item) return <div className="min-h-screen bg-surface flex items-center justify-center">Recipe not found.</div>;
 
     const title = item?.title || item?.name || "Untitled Recipe";
     const description = item?.description || "A meticulously crafted recipe.";
@@ -13,23 +135,12 @@ const SingleProduct = () => {
     const difficulty = item?.difficulty || "Medium";
     const dietType = item?.dietType;
     const mealType = item?.mealType;
-    const cuisineType = item?.cuisineType;
-    const more = Array.isArray(item?.more) ? item.more[0] : item?.more || {};
-
-    const extractNumber = (v) => {
-        if (typeof v === 'number') return v;
-        if (!v || typeof v !== 'string') return 0;
-        return parseInt(v.split(" ")[0]) || 0;
-    };
-
-    const prepTime = item?.prepTime !== undefined ? item.prepTime : extractNumber(more.prep_time);
-    const cookTime = item?.cookTime !== undefined ? item.cookTime : extractNumber(more.cook_time);
+    
+    const prepTime = item?.prepTime || 0;
+    const cookTime = item?.cookTime || 0;
     const totalTime = prepTime + cookTime;
-    const calories = item?.calories || more.calories;
-    const protein = item?.protein || more.protein;
-    const carbs = item?.carbs || more.carbs;
-    const fat = item?.fat || more.fat;
-    const servings = item?.servings || more.servings || 2;
+    const calories = item?.calories || 450;
+    const servants = item?.servings || 2;
 
     const steps = typeof instructions === "string"
         ? instructions.split(/\d+\.\s*|\n/).filter(s => s.trim() !== "")
@@ -41,29 +152,48 @@ const SingleProduct = () => {
     return (
         <div className="bg-surface font-body text-on-surface min-h-screen selection:bg-primary/20 py-12 md:py-20 px-4 md:px-8">
             
-            {/* The "Recipe Card" — Centered and constrained */}
-            <div className="max-w-4xl mx-auto bg-white rounded-[3.5rem] shadow-[0_40px_100px_rgba(0,110,28,0.08)] border border-white overflow-hidden overflow-y-auto">
+            <div className="max-w-4xl mx-auto bg-white rounded-[3.5rem] shadow-[0_40px_100px_rgba(0,110,28,0.08)] border border-white overflow-hidden">
                 
-                {/* Visual Header / Image Area */}
+                {/* Visual Header */}
                 <div className="relative h-[400px] md:h-[550px] w-full group">
                     <img 
                         src={imageUrl} 
                         alt={title} 
                         className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                        onError={(e) => {
-                            e.target.src = "https://images.unsplash.com/photo-1495521821757-a1efb6729352?q=80&w=2000&auto=format&fit=crop";
-                        }}
+                        onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1495521821757-a1efb6729352?q=80&w=2000&auto=format&fit=crop"; }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
                     
-                    {/* Floating Back Button */}
                     <Link to="/recipes" 
                         className="absolute top-8 left-8 flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-primary transition-all group/back">
                         <span className="material-symbols-outlined text-sm group-hover/back:-translate-x-1 transition-transform">arrow_back</span>
                         Back
                     </Link>
 
-                    {/* Content Overlay */}
+                    {/* Like and Save Floating Buttons */}
+                    <div className="absolute top-8 right-8 flex flex-col gap-3">
+                        <button 
+                            onClick={handleLike}
+                            disabled={isLiking}
+                            className="w-14 h-14 rounded-3xl backdrop-blur-md flex flex-col items-center justify-center transition-all shadow-xl group/like bg-white/20 text-white border border-white/40 hover:bg-white active:scale-90 duration-200"
+                        >
+                            <span className={`material-symbols-outlined text-2xl group-active/like:scale-150 transition-transform ${item.isLiked ? 'text-green-600' : 'text-white group-hover/like:text-green-600'}`} style={item.isLiked ? { fontVariationSettings: '"FILL" 1' } : {}}>
+                                {item.isLiked ? 'favorite' : 'favorite_border'}
+                            </span>
+                            <span className="text-[9px] font-black">{item.likesCount || 0}</span>
+                        </button>
+                        <button 
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className="w-14 h-14 rounded-3xl backdrop-blur-md flex flex-col items-center justify-center transition-all shadow-xl group/save bg-white/20 text-white border border-white/40 hover:bg-white active:scale-90 duration-200"
+                        >
+                            <span className={`material-symbols-outlined text-2xl group-active/save:scale-150 transition-transform ${item.isSaved ? 'text-green-600' : 'text-white group-hover/save:text-green-600'}`} style={item.isSaved ? { fontVariationSettings: '"FILL" 1' } : {}}>
+                                {isSaving ? 'hourglass_empty' : (item.isSaved ? 'bookmark' : 'bookmark_border')}
+                            </span>
+                            <span className="text-[9px] font-black">Save</span>
+                        </button>
+                    </div>
+
                     <div className="absolute bottom-10 left-10 right-10 flex flex-col items-start gap-4">
                         <div className="flex gap-2">
                              {dietType && <span className="px-3 py-1 bg-primary text-white text-[9px] font-black uppercase tracking-widest rounded-full">{dietType}</span>}
@@ -78,20 +208,33 @@ const SingleProduct = () => {
                 {/* Body Content */}
                 <div className="p-8 md:p-16 space-y-16">
                     
-                    {/* Intro & Stats */}
+                    {/* Author & Intro Row */}
                     <div className="flex flex-col md:flex-row gap-10 items-start md:items-center justify-between">
-                        <div className="flex-grow max-w-xl">
+                        <div className="flex-grow max-w-xl space-y-6">
+                            <Link to={`/chef/${item.author?.id}`} className="inline-flex items-center gap-4 group/author bg-surface-container-low/50 pr-6 pl-2 py-2 rounded-full border border-outline-variant/10 hover:border-primary/40 transition-all">
+                                <img 
+                                    src={item.author?.profilePhoto || generalProfilePic} 
+                                    className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                                    alt={item.author?.name}
+                                    onError={(e) => { e.target.src = generalProfilePic; }}
+                                />
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-primary">Curated BY</p>
+                                    <p className="font-headline font-black text-on-surface text-lg group-hover/author:text-primary transition-colors">{item.author?.name || "Botanical Guru"}</p>
+                                </div>
+                            </Link>
+
                             <p className="text-xl md:text-2xl text-on-surface-variant font-medium leading-relaxed opacity-80 italic">
                                 "{description}"
                             </p>
                         </div>
-                        <div className="grid grid-cols-2 gap-6 shrink-0">
+                        <div className="grid grid-cols-2 gap-6 shrink-0 bg-surface-container-low rounded-[2.5rem] p-8 border border-white">
                             <div className="text-center">
                                 <p className="text-2xl font-black text-primary">{totalTime}m</p>
                                 <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Total Time</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-2xl font-black text-secondary">{calories || 450}</p>
+                                <p className="text-2xl font-black text-secondary">{calories}</p>
                                 <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Calories</p>
                             </div>
                         </div>
@@ -101,8 +244,6 @@ const SingleProduct = () => {
 
                     {/* Ingredients & Steps Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-                        
-                        {/* Ingredients (4 Cols) */}
                         <div className="lg:col-span-12 xl:col-span-5 space-y-8">
                             <h3 className="text-2xl font-headline font-black text-on-surface flex items-center gap-3">
                                 <span className="w-8 h-8 rounded-lg vitality-gradient flex items-center justify-center text-white text-sm">
@@ -121,25 +262,8 @@ const SingleProduct = () => {
                                     </li>
                                 ))}
                             </ul>
-
-                             {/* Nutrition Tiny Bar */}
-                            <div className="bg-surface-container-low rounded-3xl p-6 mt-10 grid grid-cols-3 gap-2">
-                                <div className="text-center">
-                                    <p className="font-black text-primary text-sm">{protein || '24'}g</p>
-                                    <p className="text-[8px] font-black uppercase opacity-40">Protein</p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="font-black text-secondary text-sm">{carbs || '42'}g</p>
-                                    <p className="text-[8px] font-black uppercase opacity-40">Carbs</p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="font-black text-tertiary text-sm">{fat || '18'}g</p>
-                                    <p className="text-[8px] font-black uppercase opacity-40">Fat</p>
-                                </div>
-                            </div>
                         </div>
 
-                        {/* Instructions (7 Cols) */}
                         <div className="lg:col-span-12 xl:col-span-7 space-y-8">
                             <h3 className="text-2xl font-headline font-black text-on-surface flex items-center gap-3">
                                 <span className="w-8 h-8 rounded-lg vitality-gradient flex items-center justify-center text-white text-sm">
@@ -159,19 +283,62 @@ const SingleProduct = () => {
                                     </div>
                                 ))}
                             </div>
-
-                            {/* Tags Section */}
-                            {(allergens.length > 0 || safeDiseases.length > 0) && (
-                                <div className="pt-10 flex flex-wrap gap-4">
-                                     {allergens.map((a, i) => (
-                                         <span key={i} className="px-4 py-2 bg-error/5 text-error text-[10px] font-black uppercase tracking-widest rounded-xl border border-error/10">Allergen: {a.name || a}</span>
-                                     ))}
-                                     {safeDiseases.map((d, i) => (
-                                         <span key={i} className="px-4 py-2 bg-primary/5 text-primary text-[10px] font-black uppercase tracking-widest rounded-xl border border-primary/10">Safe for: {d.name || d}</span>
-                                     ))}
-                                </div>
-                            )}
                         </div>
+                    </div>
+
+                    {/* Interaction - Comments */}
+                    <div className="pt-20 space-y-12">
+                         <div className="flex items-end justify-between">
+                            <h3 className="text-3xl font-headline font-black text-on-surface italic">Community Dialogue</h3>
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{item.comments?.length || 0} Responses</span>
+                         </div>
+
+                         {/* Comment Form */}
+                         <form onSubmit={handleAddComment} className="relative">
+                            <textarea 
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                placeholder="Add your intelligence to this recipe..."
+                                className="w-full bg-surface-container-low rounded-[2rem] border border-outline-variant/10 p-6 min-h-[120px] text-on-surface font-medium focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
+                            />
+                            <button 
+                                type="submit"
+                                className="absolute bottom-4 right-4 vitality-gradient text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                            >
+                                Publish Response
+                            </button>
+                         </form>
+
+                         {/* Comment List */}
+                         <div className="space-y-8">
+                            <AnimatePresence>
+                                {item.comments?.map((comment) => (
+                                    <motion.div 
+                                        key={comment.id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="flex gap-6 items-start"
+                                    >
+                                        <img 
+                                            src={comment.author?.profilePhoto || generalProfilePic} 
+                                            className="w-12 h-12 rounded-2xl object-cover"
+                                            alt={comment.author?.name}
+                                            onError={(e) => { e.target.src = generalProfilePic; }}
+                                        />
+                                        <div className="flex-grow space-y-2">
+                                            <div className="flex items-center gap-3">
+                                                <p className="font-black text-on-surface">{comment.author?.name}</p>
+                                                <span className="w-1 h-1 bg-on-surface/20 rounded-full" />
+                                                <p className="text-[10px] font-black uppercase tracking-widest opacity-40">{new Date(comment.createdAt).toLocaleDateString()}</p>
+                                            </div>
+                                            <p className="text-on-surface-variant font-medium leading-relaxed bg-surface-container-low/30 p-4 rounded-2xl rounded-tl-none inline-block">
+                                                {comment.content}
+                                            </p>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                         </div>
                     </div>
                 </div>
 
@@ -183,7 +350,6 @@ const SingleProduct = () => {
                      </Link>
                 </div>
             </div>
-
             <style dangerouslySetInnerHTML={{ __html: `
                 .font-headline { font-family: 'Manrope', sans-serif; }
                 .bg-surface { background-color: #f5fced; }
@@ -192,4 +358,4 @@ const SingleProduct = () => {
     );
 };
 
-export default SingleProduct
+export default SingleProduct;
