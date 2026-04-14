@@ -13,19 +13,19 @@ import { motion, AnimatePresence } from "framer-motion";
 function App() {
   const location = useLocation();
   const hideHeaderFooter = [
-    "/login", 
-    "/signup", 
+    "/login",
+    "/signup",
     "/forgot-password",
     "/reset-password-sent",
     "/reset-password",
     "/password-reset-success",
-    "/profile", 
-    "/profile/complete", 
+    "/profile",
+    "/profile/complete",
     "/settings",
-    "/addRecipe", 
+    "/addRecipe",
     "/checkout",
     "/chef-dashboard"
-  ].some(path => location.pathname === path || location.pathname.startsWith("/edit-recipe/"));
+  ].some(path => location.pathname === path || location.pathname.startsWith("/edit-recipe/") || location.pathname.startsWith("/chef/"));
 
   return (
     <ErrorBoundary>
