@@ -80,10 +80,20 @@ public class RecipeController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<RecipeResponseDTO>>> getAllRecipes() {
-        List<RecipeResponseDTO> recipes = recipeService.getAllRecipes();
+    public ResponseEntity<ApiResponse<List<RecipeResponseDTO>>> getAllRecipes(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) com.recipeplatform.domain.enums.Difficulty difficulty,
+            @RequestParam(required = false) com.recipeplatform.domain.enums.DietType dietType,
+            @RequestParam(required = false) com.recipeplatform.domain.enums.MealType mealType,
+            @RequestParam(required = false) com.recipeplatform.domain.enums.CuisineType cuisineType,
+            @RequestParam(required = false) Double minCalories,
+            @RequestParam(required = false) Double maxCalories,
+            @RequestParam(required = false) Long authorId
+    ) {
+        List<RecipeResponseDTO> recipes = recipeService.filterRecipes(
+                q, difficulty, dietType, mealType, cuisineType, minCalories, maxCalories, authorId);
         ApiResponse<List<RecipeResponseDTO>> response = new ApiResponse<>(
-                "recipe fetched successfully",
+                "recipes fetched successfully",
                 recipes,
                 HttpStatus.OK.value());
         return new ResponseEntity<>(response, HttpStatus.OK);
