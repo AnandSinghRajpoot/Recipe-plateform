@@ -12,12 +12,19 @@ const RecipeDetails = () => {
   const navigate = useNavigate();
   const [recipe, setRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
         const res = await apiClient.get(`/recipes/${id}`);
         setRecipe(res.data);
+        setLiked(res.data?.isLiked || false);
+        setLikesCount(res.data?.likesCount || 0);
+        setSaved(res.data?.isSaved || false);
       } catch (err) {
         const msg = extractErrorMessage(err);
         toast.error(msg);
@@ -28,6 +35,64 @@ const RecipeDetails = () => {
 
     fetchRecipe();
   }, [id]);
+
+  const handleLike = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error("Please login to like recipes");
+      return;
+    }
+
+    try {
+      const res = await apiClient.post(`/recipes/${id}/like`);
+      setLiked(res.data.data);
+      setLikesCount(prev => res.data.data ? prev + 1 : prev - 1);
+    } catch (err) {
+      toast.error("Failed to like recipe");
+    }
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    if (!token) return toast.error("Please login to save recipes!");
+    
+    setSaving(true);
+    
+    // If already saved, unsave it
+    if (saved) {
+      try {
+        await apiClient.delete(`/saved-recipes/${id}`);
+        setSaved(false);
+        toast.success("Recipe removed from saved!");
+      } catch (err) {
+        toast.error("Failed to remove recipe from saved");
+      }
+    } else {
+      // If not saved, save it
+      try {
+        await apiClient.post(`/saved-recipes/${id}`);
+        setSaved(true);
+        toast.success("Recipe saved successfully!");
+      } catch (err) {
+        // Check if it's already saved due to race condition
+        if (err.response?.status === 409 || err.response?.status === 400) {
+          try {
+            await apiClient.delete(`/saved-recipes/${id}`);
+            setSaved(false);
+            toast.success("Recipe removed from saved!");
+          } catch (deleteErr) {
+            toast.error("Failed to update save status");
+          }
+        } else {
+          toast.error("Failed to save recipe");
+        }
+      }
+    }
+    
+    setSaving(false);
+  };
 
   if (loading) return <div className="bg-surface min-h-screen py-20 px-6"><HeroSkeleton /></div>;
   if (!recipe) return (
@@ -147,12 +212,24 @@ const RecipeDetails = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-6 pt-6">
-                    <button className="vitality-gradient text-white px-10 py-5 rounded-[2rem] font-black text-lg shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-4">
-                        Save to Greenhouse
-                        <span className="material-symbols-outlined">bookmark</span>
+                <div className="flex items-center gap-4 pt-6">
+                    <button 
+                        onClick={handleLike}
+                        className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all active:scale-90 duration-200 bg-surface-container-low relative ${liked ? 'text-green-600' : 'text-on-surface-variant hover:text-green-600'}`}
+                        title={liked ? "Unlike" : "Like"}
+                    >
+                        <span className={`material-symbols-outlined text-2xl`} style={liked ? { fontVariationSettings: '"FILL" 1' } : {}}>{liked ? 'favorite' : 'favorite_border'}</span>
+                        {likesCount > 0 && <span className="absolute -top-1 -right-1 bg-white text-green-600 text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border border-green-600/20 shadow-sm">{likesCount}</span>}
                     </button>
-                    <button className="bg-surface-container-high text-on-surface-variant px-10 py-5 rounded-[2rem] font-black text-lg hover:bg-white hover:shadow-md transition-all flex items-center gap-4">
+                    <button 
+                        onClick={handleSave}
+                        disabled={saving}
+                        className={`w-14 h-14 rounded-2xl bg-surface-container-low flex items-center justify-center transition-all active:scale-90 duration-200 disabled:opacity-50 ${saved ? 'text-green-600' : 'text-on-surface-variant hover:text-green-600'}`}
+                        title={saved ? "Remove from Saved" : "Save Recipe"}
+                    >
+                        <span className={`material-symbols-outlined text-2xl`} style={saved ? { fontVariationSettings: '"FILL" 1' } : {}}>{saving ? 'hourglass_empty' : (saved ? 'bookmark' : 'bookmark_border')}</span>
+                    </button>
+                    <button className="vitality-gradient text-white px-10 py-5 rounded-[2rem] font-black text-lg shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-4">
                         Share Insight
                         <span className="material-symbols-outlined">share</span>
                     </button>
