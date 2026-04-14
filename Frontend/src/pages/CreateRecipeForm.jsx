@@ -22,6 +22,7 @@ const CreateRecipeForm = ({ onSuccess }) => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
@@ -92,23 +93,48 @@ const CreateRecipeForm = ({ onSuccess }) => {
   };
 
   const validateStep = () => {
+    let isValid = true;
+    const newErrors = {};
+
     if (step === 1) {
-      if (!recipe.title || !recipe.description || !recipe.dietType || !recipe.mealType || !recipe.cuisineType) {
-        toast.error("Please fill all required basic fields");
-        return false;
+      if (!recipe.title || recipe.title.length < 3 || recipe.title.length > 120) {
+        newErrors.title = "Title must be between 3 and 120 characters";
+        isValid = false;
+      }
+      if (!recipe.description || recipe.description.length < 20 || recipe.description.length > 500) {
+        newErrors.description = "Description must be between 20 and 500 characters";
+        isValid = false;
+      }
+      if (!recipe.dietType) { newErrors.dietType = "Required"; isValid = false; }
+      if (!recipe.mealType) { newErrors.mealType = "Required"; isValid = false; }
+      if (!recipe.cuisineType) { newErrors.cuisineType = "Required"; isValid = false; }
+      
+      if (recipe.prepTime < 0 || recipe.prepTime > 180) {
+        newErrors.prepTime = "Must be 0-180";
+        isValid = false;
+      }
+      if (recipe.cookTime < 1 || recipe.cookTime > 240) {
+        newErrors.cookTime = "Must be 1-240";
+        isValid = false;
+      }
+      if (recipe.servings < 1) {
+        newErrors.servings = "Least 1";
+        isValid = false;
       }
     }
     if (step === 2) {
-      if (!recipe.instructions) {
-        toast.error("Instructions are required");
-        return false;
+      if (!recipe.instructions || recipe.instructions.length < 30 || recipe.instructions.length > 2000) {
+        newErrors.instructions = "Instructions must be between 30 and 2000 characters";
+        isValid = false;
       }
       if (recipe.ingredients.some(i => !i.name || !i.quantity)) {
-        toast.error("All ingredients must have name and quantity");
-        return false;
+        newErrors.ingredients = "All ingredients must have name and quantity";
+        isValid = false;
       }
     }
-    return true;
+    
+    setErrors(newErrors);
+    return isValid;
   };
 
   const nextStep = () => {
@@ -174,50 +200,58 @@ const CreateRecipeForm = ({ onSuccess }) => {
           <div className="space-y-6 animate-fade-in">
             <h3 className="font-headline font-black text-xl mb-4">1. Basic Details</h3>
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Title *</label>
-              <input type="text" name="title" value={recipe.title} onChange={handleChange} className="w-full bg-surface-container-low border-2 border-transparent rounded-2xl px-6 py-4 focus:border-primary/30 outline-none font-bold" placeholder="e.g. Avocado Toast" />
+              <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.title ? 'text-error' : 'text-on-surface-variant'}`}>Title *</label>
+              <input type="text" name="title" value={recipe.title} onChange={handleChange} className={`w-full bg-surface-container-low border-2 rounded-2xl px-6 py-4 outline-none font-bold ${errors.title ? 'border-error/50 focus:border-error' : 'border-transparent focus:border-primary/30'}`} placeholder="e.g. Avocado Toast" />
+              {errors.title && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.title}</p>}
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Description *</label>
-              <textarea name="description" value={recipe.description} onChange={handleChange} rows={3} className="w-full bg-surface-container-low border-2 border-transparent rounded-2xl px-6 py-4 focus:border-primary/30 outline-none font-medium resize-none" placeholder="Short description..." />
+              <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.description ? 'text-error' : 'text-on-surface-variant'}`}>Description *</label>
+              <textarea name="description" value={recipe.description} onChange={handleChange} rows={3} className={`w-full bg-surface-container-low border-2 rounded-2xl px-6 py-4 outline-none font-medium resize-none ${errors.description ? 'border-error/50 focus:border-error' : 'border-transparent focus:border-primary/30'}`} placeholder="Short description..." />
+              {errors.description && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.description}</p>}
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Diet *</label>
-                <select name="dietType" value={recipe.dietType} onChange={handleChange} className="w-full bg-surface-container-low border-2 border-transparent rounded-2xl px-4 py-3 outline-none font-bold text-sm text-on-surface">
+                <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.dietType ? 'text-error' : 'text-on-surface-variant'}`}>Diet *</label>
+                <select name="dietType" value={recipe.dietType} onChange={handleChange} className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm text-on-surface ${errors.dietType ? 'border-error/50' : 'border-transparent'}`}>
                   <option value="">Select</option>
                   {referenceData.dietTypes.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
+                {errors.dietType && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.dietType}</p>}
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Meal *</label>
-                <select name="mealType" value={recipe.mealType} onChange={handleChange} className="w-full bg-surface-container-low border-2 border-transparent rounded-2xl px-4 py-3 outline-none font-bold text-sm text-on-surface">
+                <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.mealType ? 'text-error' : 'text-on-surface-variant'}`}>Meal *</label>
+                <select name="mealType" value={recipe.mealType} onChange={handleChange} className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm text-on-surface ${errors.mealType ? 'border-error/50' : 'border-transparent'}`}>
                   <option value="">Select</option>
                   {referenceData.mealTypes.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
+                {errors.mealType && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.mealType}</p>}
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Cuisine *</label>
-                <select name="cuisineType" value={recipe.cuisineType} onChange={handleChange} className="w-full bg-surface-container-low border-2 border-transparent rounded-2xl px-4 py-3 outline-none font-bold text-sm text-on-surface">
+                <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.cuisineType ? 'text-error' : 'text-on-surface-variant'}`}>Cuisine *</label>
+                <select name="cuisineType" value={recipe.cuisineType} onChange={handleChange} className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm text-on-surface ${errors.cuisineType ? 'border-error/50' : 'border-transparent'}`}>
                   <option value="">Select</option>
                   {referenceData.cuisineTypes.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
+                {errors.cuisineType && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.cuisineType}</p>}
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Servings</label>
-                <input type="number" name="servings" value={recipe.servings} onChange={handleChange} min="1" className="w-full bg-surface-container-low border-2 border-transparent rounded-2xl px-4 py-3 outline-none font-bold text-sm" />
+                <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.servings ? 'text-error' : 'text-on-surface-variant'}`}>Servings</label>
+                <input type="number" name="servings" value={recipe.servings} onChange={handleChange} min="1" className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm ${errors.servings ? 'border-error/50' : 'border-transparent'}`} />
+                {errors.servings && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.servings}</p>}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6 mt-4">
               <div className="space-y-3">
-                <div className="flex justify-between"><label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Prep Time</label><span className="text-primary font-black text-xs">{recipe.prepTime} min</span></div>
+                <div className="flex justify-between"><label className={`text-[10px] font-black uppercase tracking-widest ${errors.prepTime ? 'text-error' : 'text-on-surface-variant'}`}>Prep Time</label><span className="text-primary font-black text-xs">{recipe.prepTime} min</span></div>
                 <input type="range" name="prepTime" min="0" max="180" value={recipe.prepTime} onChange={handleChange} className="w-full accent-primary cursor-pointer" />
+                {errors.prepTime && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.prepTime}</p>}
               </div>
               <div className="space-y-3">
-                <div className="flex justify-between"><label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Cook Time</label><span className="text-secondary font-black text-xs">{recipe.cookTime} min</span></div>
+                <div className="flex justify-between"><label className={`text-[10px] font-black uppercase tracking-widest ${errors.cookTime ? 'text-error' : 'text-on-surface-variant'}`}>Cook Time</label><span className="text-secondary font-black text-xs">{recipe.cookTime} min</span></div>
                 <input type="range" name="cookTime" min="0" max="240" value={recipe.cookTime} onChange={handleChange} className="w-full accent-secondary cursor-pointer" />
+                {errors.cookTime && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.cookTime}</p>}
               </div>
             </div>
           </div>
@@ -228,13 +262,14 @@ const CreateRecipeForm = ({ onSuccess }) => {
             <h3 className="font-headline font-black text-xl mb-4">2. Ingredients & Instructions</h3>
             <div className="space-y-4">
               <div className="flex justify-between items-end">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Ingredients *</label>
+                <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.ingredients ? 'text-error' : 'text-on-surface-variant'}`}>Ingredients *</label>
                 <button type="button" onClick={addIngredient} className="text-xs font-black text-primary uppercase tracking-widest hover:bg-primary/10 px-3 py-1 rounded-full transition-colors">+ Add</button>
               </div>
+              {errors.ingredients && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.ingredients}</p>}
               {recipe.ingredients.map((ing, idx) => (
                 <div key={idx} className="flex gap-2">
-                  <input type="text" name="name" value={ing.name} onChange={e => handleIngredientChange(idx, e)} placeholder="Name" className="flex-[2] bg-surface-container-low rounded-xl px-4 py-3 font-bold text-sm outline-none focus:border-primary/30 border-2 border-transparent" />
-                  <input type="number" name="quantity" value={ing.quantity} onChange={e => handleIngredientChange(idx, e)} placeholder="Qty" className="flex-1 bg-surface-container-low rounded-xl px-4 py-3 font-bold text-sm outline-none focus:border-primary/30 border-2 border-transparent" />
+                  <input type="text" name="name" value={ing.name} onChange={e => handleIngredientChange(idx, e)} placeholder="Name" className={`flex-[2] bg-surface-container-low rounded-xl px-4 py-3 font-bold text-sm outline-none focus:border-primary/30 border-2 ${(!ing.name && errors.ingredients) ? 'border-error/50' : 'border-transparent'}`} />
+                  <input type="number" name="quantity" value={ing.quantity} onChange={e => handleIngredientChange(idx, e)} placeholder="Qty" className={`flex-1 bg-surface-container-low rounded-xl px-4 py-3 font-bold text-sm outline-none focus:border-primary/30 border-2 ${(!ing.quantity && errors.ingredients) ? 'border-error/50' : 'border-transparent'}`} />
                   <select name="unit" value={ing.unit} onChange={e => handleIngredientChange(idx, e)} className="flex-1 bg-surface-container-low rounded-xl px-2 py-3 font-bold text-sm outline-none">
                     {["GRAM","KILOGRAM","LITER","MILLILITER","CUP","TABLESPOON","TEASPOON","PIECE"].map(u => <option key={u} value={u}>{u}</option>)}
                   </select>
@@ -245,8 +280,9 @@ const CreateRecipeForm = ({ onSuccess }) => {
               ))}
             </div>
             <div className="space-y-2 mt-6">
-              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Instructions *</label>
-              <textarea name="instructions" value={recipe.instructions} onChange={handleChange} rows={6} className="w-full bg-surface-container-low border-2 border-transparent rounded-2xl px-6 py-4 focus:border-primary/30 outline-none font-medium resize-none" placeholder="Step 1...&#10;Step 2..." />
+              <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.instructions ? 'text-error' : 'text-on-surface-variant'}`}>Instructions *</label>
+              <textarea name="instructions" value={recipe.instructions} onChange={handleChange} rows={6} className={`w-full bg-surface-container-low border-2 rounded-2xl px-6 py-4 outline-none font-medium resize-none ${errors.instructions ? 'border-error/50 focus:border-error' : 'border-transparent focus:border-primary/30'}`} placeholder="Step 1...&#10;Step 2..." />
+              {errors.instructions && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.instructions}</p>}
             </div>
           </div>
         )}
