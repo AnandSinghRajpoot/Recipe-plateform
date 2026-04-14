@@ -29,8 +29,12 @@ public class SecurityConfig {
         httpSecurity.csrf(AbstractHttpConfigurer::disable);
 
         httpSecurity.authorizeHttpRequests(auth ->
-                auth.
-                        requestMatchers("/api/v1/auth/test", "/api/v1/auth/reminder-dismiss", "/api/v1/auth/profile", "/api/v1/auth/complete-profile", "/api/v1/auth/change-password").authenticated()
+                auth
+                        // Public chef profile endpoint - must be before authenticated /profile rule
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/profile/**").permitAll()
+                        // Authenticated auth endpoints
+                        .requestMatchers("/api/v1/auth/test", "/api/v1/auth/reminder-dismiss", "/api/v1/auth/profile", "/api/v1/auth/complete-profile", "/api/v1/auth/change-password").authenticated()
+                        // All other auth endpoints are public
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         // Reference data — public (no JWT needed for profile wizard & chef form)
                         .requestMatchers(HttpMethod.GET, "/api/v1/reference/**").permitAll()
