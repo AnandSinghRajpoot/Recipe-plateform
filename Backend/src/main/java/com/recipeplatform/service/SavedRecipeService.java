@@ -27,7 +27,14 @@ public class SavedRecipeService {
     @Transactional
     public SavedRecipeDTO saveRecipe(Long userId, Long recipeId) {
         if (savedRecipeRepository.existsByUserIdAndRecipeId(userId, recipeId)) {
-            throw new RuntimeException("Recipe is already saved");
+        return savedRecipeRepository.findByUserIdAndRecipeId(userId, recipeId)
+                .map(sr -> SavedRecipeDTO.builder()
+                        .id(sr.getId())
+                        .recipeId(recipeId)
+                        .recipe(recipeMapper.toResponseDTO(sr.getRecipe()))
+                        .savedAt(sr.getSavedAt())
+                        .build())
+                .orElseThrow(() -> new RuntimeException("Consistency error: exists check passed but not found"));
         }
 
         User user = userRepository.findById(userId)
