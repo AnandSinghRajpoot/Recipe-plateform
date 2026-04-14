@@ -56,6 +56,12 @@ public class AuthController {
         return userMapper.toDto(user);
     }
 
+    @GetMapping("/profile/{id}")
+    public RegisterResponse getUserProfile(@PathVariable Long id) {
+        User user = authService.getUserById(id);
+        return userMapper.toDto(user);
+    }
+
     @PostMapping(value = "/profile/photo", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     public String updateProfilePhoto(@RequestPart("profilePhoto") org.springframework.web.multipart.MultipartFile profilePhoto) {
         return authService.updateProfilePhoto(profilePhoto);
