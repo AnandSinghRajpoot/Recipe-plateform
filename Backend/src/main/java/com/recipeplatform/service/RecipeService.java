@@ -1,5 +1,9 @@
 package com.recipeplatform.service;
 
+import com.recipeplatform.domain.enums.CuisineType;
+import com.recipeplatform.domain.enums.DietType;
+import com.recipeplatform.domain.enums.Difficulty;
+import com.recipeplatform.domain.enums.MealType;
 import com.recipeplatform.dto.recipe.RecipeRequestDto;
 import com.recipeplatform.dto.recipe.RecipeResponseDTO;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +25,16 @@ public interface RecipeService {
     List<RecipeResponseDTO> getRecipesByCategory(String categoryName);
 
     List<RecipeResponseDTO> searchRecipes(String query);
+
+    List<RecipeResponseDTO> filterRecipes(
+            String query,
+            Difficulty difficulty,
+            DietType dietType,
+            MealType mealType,
+            CuisineType cuisineType,
+            Double minCalories,
+            Double maxCalories,
+            Long authorId);
 
     List<RecipeResponseDTO> getLatestRecipes();
 
