@@ -17,4 +17,6 @@ public class LoginRequest {
 
     @NotBlank(message = "password is required.")
     private String password;
+
+    private com.recipeplatform.domain.enums.UserRole role;
 }

@@ -14,4 +14,6 @@ public interface AuthService {
     User register(RegisterRequest registerRequest, MultipartFile profilePhoto);
 
     String completeProfile(com.recipeplatform.dto.auth.ProfileCompletionRequest request);
+
+    String updateProfilePhoto(MultipartFile profilePhoto);
 }

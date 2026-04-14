@@ -13,6 +13,7 @@ import com.recipeplatform.exception.ResourceNotFoundException;
 import com.recipeplatform.mapper.RecipeMapper;
 import com.recipeplatform.repository.AllergyRepository;
 import com.recipeplatform.repository.DiseaseRepository;
+import com.recipeplatform.repository.SavedRecipeRepository;
 import com.recipeplatform.repository.RecipeRepository;
 import com.recipeplatform.service.ImageService;
 import com.recipeplatform.service.IngredientService;
@@ -39,10 +40,12 @@ public class RecipeServiceImpl implements RecipeService {
     private final ImageService imageService;
     private final AllergyRepository allergyRepository;
     private final DiseaseRepository diseaseRepository;
+    private final SavedRecipeRepository savedRecipeRepository;
 
     public RecipeServiceImpl(RecipeRepository recipeRepository, RecipeMapper recipeMapper,
             IngredientService ingredientService, CurrentUser currentUser, ImageService imageService,
-            AllergyRepository allergyRepository, DiseaseRepository diseaseRepository) {
+            AllergyRepository allergyRepository, DiseaseRepository diseaseRepository, 
+            SavedRecipeRepository savedRecipeRepository) {
         this.recipeRepository = recipeRepository;
         this.recipeMapper = recipeMapper;
         this.ingredientService = ingredientService;
@@ -50,6 +53,7 @@ public class RecipeServiceImpl implements RecipeService {
         this.imageService = imageService;
         this.allergyRepository = allergyRepository;
         this.diseaseRepository = diseaseRepository;
+        this.savedRecipeRepository = savedRecipeRepository;
     }
 
     @Override
@@ -90,6 +94,8 @@ public class RecipeServiceImpl implements RecipeService {
         // Handle cover image
         if (file != null && !file.isEmpty()) {
             recipe.setCoverImageUrl(imageService.saveImage(file));
+        } else {
+            recipe.setCoverImageUrl("no-image.jpg");
         }
 
         Recipe savedRecipe = recipeRepository.save(recipe);
@@ -179,15 +185,19 @@ public class RecipeServiceImpl implements RecipeService {
     public RecipeResponseDTO getRecipeById(Long id) {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe", "id", id));
-        return recipeMapper.toResponseDTO(recipe);
+        RecipeResponseDTO dto = recipeMapper.toResponseDTO(recipe);
+        dto.setSavedCount(savedRecipeRepository.countByRecipeId(id));
+        return dto;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<RecipeResponseDTO> getAllRecipes() {
         // Public feed: only published, non-deleted
-        return recipeMapper.toResponseDTOList(
+        List<RecipeResponseDTO> dtos = recipeMapper.toResponseDTOList(
             recipeRepository.findByIsPublishedTrueAndDeletedAtIsNull());
+        dtos.forEach(dto -> dto.setSavedCount(savedRecipeRepository.countByRecipeId(dto.getId())));
+        return dtos;
     }
 
     @Override
@@ -212,6 +222,8 @@ public class RecipeServiceImpl implements RecipeService {
     @Transactional(readOnly = true)
     public List<RecipeResponseDTO> getMyRecipes() {
         User user = currentUser.getCurrentUser();
-        return recipeMapper.toResponseDTOList(recipeRepository.findByUser(user));
+        List<RecipeResponseDTO> dtos = recipeMapper.toResponseDTOList(recipeRepository.findByUser(user));
+        dtos.forEach(dto -> dto.setSavedCount(savedRecipeRepository.countByRecipeId(dto.getId())));
+        return dtos;
     }
 }

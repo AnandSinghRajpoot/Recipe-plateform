@@ -72,6 +72,10 @@ public class AuthServiceImpl implements AuthService {
         com.recipeplatform.security.CustomUserDetails userDetails = (com.recipeplatform.security.CustomUserDetails) authentication
                 .getPrincipal();
         User user = userDetails.getUser();
+
+        if (loginRequest.getRole() != null && user.getRole() != loginRequest.getRole()) {
+            throw new org.springframework.security.authentication.BadCredentialsException("Invalid credentials for the specified role.");
+        }
         return new LoginResponse(
                 accessToken, jwtUtill.extractClaims(accessToken).getIssuedAt().getTime(),
                 jwtUtill.extractClaims(accessToken).getExpiration().getTime(), 
@@ -229,5 +233,17 @@ public class AuthServiceImpl implements AuthService {
         userHealthProfileRepository.save(profile);
 
         return "profile completed successfully";
+    }
+
+    @Override
+    public String updateProfilePhoto(org.springframework.web.multipart.MultipartFile profilePhoto) {
+        User user = currentUser.getCurrentUser();
+        if (profilePhoto != null && !profilePhoto.isEmpty()) {
+            String imageUrl = imageService.saveImage(profilePhoto);
+            user.setProfilePhoto(imageUrl);
+            userRepository.save(user);
+            return imageUrl;
+        }
+        return user.getProfilePhoto();
     }
 }

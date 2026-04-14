@@ -56,6 +56,11 @@ public class AuthController {
         return userMapper.toDto(user);
     }
 
+    @PostMapping(value = "/profile/photo", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String updateProfilePhoto(@RequestPart("profilePhoto") org.springframework.web.multipart.MultipartFile profilePhoto) {
+        return authService.updateProfilePhoto(profilePhoto);
+    }
+
     @PostMapping("/forgot-password")
     public String forgotPassword(@RequestBody java.util.Map<String, String> request) {
         String identifier = request.get("identifier");

@@ -4,9 +4,7 @@ package com.recipeplatform.domain.enums;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public enum DietType {
-    VEG, NON_VEG, VEGAN, NO_PREFERENCE,
-    VEGETARIAN, NON_VEGETARIAN, KETO, PALEO,
-    GLUTEN_FREE, DIABETIC_FRIENDLY, LOW_SODIUM, HIGH_PROTEIN;
+    VEG, NON_VEG, VEGAN, NO_PREFERENCE;
 
     @JsonCreator
     public static DietType fromValue(String dietType){

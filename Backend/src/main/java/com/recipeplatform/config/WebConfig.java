@@ -17,4 +17,13 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowCredentials(true)
                 .maxAge(3600);
     }
+
+    @org.springframework.beans.factory.annotation.Value("${app.file-upload.dir:upload}")
+    private String uploadDir;
+
+    @Override
+    public void addResourceHandlers(org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/images/**")
+                .addResourceLocations("file:" + uploadDir + "/", "classpath:/static/images/");
+    }
 }

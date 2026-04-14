@@ -1,14 +1,8 @@
 package com.recipeplatform.config;
 
-import com.recipeplatform.domain.Allergy;
-import com.recipeplatform.domain.Disease;
-import com.recipeplatform.domain.Recipe;
-import com.recipeplatform.domain.User;
+import com.recipeplatform.domain.*;
 import com.recipeplatform.domain.enums.*;
-import com.recipeplatform.repository.AllergyRepository;
-import com.recipeplatform.repository.DiseaseRepository;
-import com.recipeplatform.repository.RecipeRepository;
-import com.recipeplatform.repository.UserRepository;
+import com.recipeplatform.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -31,15 +25,20 @@ public class DataSeeder implements ApplicationRunner {
     private final DiseaseRepository diseaseRepository;
     private final AllergyRepository allergyRepository;
     private final RecipeRepository recipeRepository;
+    private final SavedRecipeRepository savedRecipeRepository;
     private final UserRepository userRepository;
+    private final IngredientRepository ingredientRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        seedAdminUsers();
+        seedIngredients();
         seedDiseases();
         seedAllergies();
-        seedIndianRecipes();
+        seedChefs();
+        seedBulkRecipes(); 
     }
 
     // ==============================
@@ -126,98 +125,154 @@ public class DataSeeder implements ApplicationRunner {
         log.info("Seeded {} allergies.", allergyRepository.count());
     }
 
-    // ==============================
-    // 5 Indian Recipes with Chefs
-    // ==============================
-    private void seedIndianRecipes() {
-        if (userRepository.existsByEmail("chef.sanjeev@recipehub.com")) {
-            log.info("Indian recipes and chefs already seeded — skipping.");
+    private void seedBulkRecipes() {
+        // Run migrations first to prevent Enum constant errors if database is dirty
+        userRepository.migrateVegetarianToVeg();
+        userRepository.migrateRecipeVegetarianToVeg();
+
+        // If we have significantly fewer or "stale" recipes, we re-seed
+        if (recipeRepository.count() == 85) {
+            log.info("Bulk recipes already seeded — skipping.");
             return;
         }
 
-        // Create 2 Chef Accounts
-        User chef1 = new User();
-        chef1.setName("Chef Sanjeev");
-        chef1.setEmail("chef.sanjeev@recipehub.com");
-        chef1.setPassword(passwordEncoder.encode("password123"));
-        chef1.setRole(UserRole.CHEF);
-        chef1.setIsProfileCompleted(true);
-        chef1.setBio("Expert in traditional Indian cuisine.");
-        chef1.setDietType(DietType.NON_VEG);
-        chef1.setSkillLevel(SkillLevel.INTERMEDIATE);
-        chef1 = userRepository.save(chef1);
+        log.info("Cleaning up old recipes and user bookmarks for a fresh 85-recipe seed...");
+        savedRecipeRepository.deleteAll();
+        recipeRepository.deleteAll();
+        
+        List<User> chefs = userRepository.findAllByRole(UserRole.CHEF);
+        if (chefs.isEmpty()) {
+            log.error("No chefs found! Cannot seed recipes.");
+            return;
+        }
 
-        User chef2 = new User();
-        chef2.setName("Chef Vikas");
-        chef2.setEmail("chef.vikas@recipehub.com");
-        chef2.setPassword(passwordEncoder.encode("password123"));
-        chef2.setRole(UserRole.CHEF);
-        chef2.setIsProfileCompleted(true);
-        chef2.setBio("Modern Indian culinary artist.");
-        chef2.setDietType(DietType.VEGETARIAN);
-        chef2.setSkillLevel(SkillLevel.EXPERT);
-        chef2 = userRepository.save(chef2);
+        // List of 85 slugs that match static/images
+        String[] slugs = {
+            "aloo-gobi", "apple-pie", "avocado-toast", "baingan-bharta", "brownies", "burritos", "butter-chicken", 
+            "caesar-salad", "cheesecake", "chicken-65", "chicken-biryani", "chicken-curry", "chicken-fried-rice", 
+            "chicken-manchurian", "chicken-shawarma", "chicken-tikka-masala", "chocolate-chip-cookies", "churros", 
+            "dal-makhani", "dal-tadka", "dhokla", "double-patty-cheese-burger", "egg-benedict", "enchiladas", 
+            "falafel", "fish-and-chips", "fish-curry", "french-fries", "french-toast", "fruit-salad", "garlic-naan", 
+            "gelato", "gobi-manchurian", "greek-salad", "green-thai-curry", "grilled-salmon", "gulab-jamun", 
+            "hakka-noodles", "hummus", "hyderabadi-haleem", "idli-sambar", "jalebi", "jeera-rice", "kadai-paneer", 
+            "kung-pao-chicken", "lassi", "lobster-bisque", "macarons", "malai-kofta", "margherita-pizza", 
+            "masala-chai", "masala-dosa", "masala-omelette", "methi-thepla", "miso-soup", "mutton-biryani", 
+            "nachos-with-cheese", "oatmeal-with-berries", "pad-thai", "palak-paneer", "pancakes", "paneer-65", 
+            "paneer-butter-masala", "pani-puri", "pasta-alfredo", "pasta-carbonara", "pav-bhaji", "pepperoni-pizza", 
+            "quesadillas", "quinoa-salad", "rasgulla", "samosa", "scrambled-eggs", "shakshuka", "sorbet", 
+            "spring-rolls", "sushi-roll", "tacos", "tandoori-chicken", "tiramisu", "vada-pav", "veg-biryani", 
+            "veg-burger", "veg-fried-rice", "waffles"
+        };
 
-        // Fetch needed references
-        Optional<Allergy> dairy = allergyRepository.findByName("Milk / Dairy");
-        Optional<Allergy> gluten = allergyRepository.findByName("Wheat / Gluten");
-        Optional<Disease> t2d = diseaseRepository.findByName("Type 2 Diabetes");
-        Optional<Disease> htn = diseaseRepository.findByName("Hypertension");
+        List<Recipe> bulkRecipes = new ArrayList<>();
+        Random rand = new Random();
 
-        List<Recipe> indianRecipes = new ArrayList<>();
+        for (int i = 0; i < slugs.length; i++) {
+            String slug = slugs[i];
+            String title = capitalizeSlug(slug);
+            User assignedChef = chefs.get(i % chefs.size());
 
-        // 1. Butter Chicken
-        Recipe r1 = build(chef1, "Authentic Butter Chicken",
-                "Tender chicken in a rich, creamy tomato gravy.",
-                "1. Marinate chicken. 2. Grill. 3. Simmer in tomato and butter sauce.",
-                DietType.NON_VEG, MealType.DINNER, CuisineType.INDIAN,
-                20, 40, 4, 650.0, 30.0, 15.0, 45.0,
-                allergenSet(dairy), diseaseSet());
-        r1.setCoverImageUrl("http://localhost:8080/images/butter-chicken.jpg");
-        indianRecipes.add(r1);
+            // Determine DietType and CuisineType based on keywords
+            DietType diet = determineDietType(slug);
+            CuisineType cuisine = determineCuisineType(slug);
+            MealType meal = determineMealType(slug, rand);
 
-        // 2. Chicken Tikka Masala
-        Recipe r2 = build(chef2, "Chicken Tikka Masala",
-                "Classic roasted chicken chunks in a spicy sauce.",
-                "1. Skewer and roast chicken. 2. Prepare onion-tomato gravy. 3. Mix and simmer.",
-                DietType.NON_VEG, MealType.DINNER, CuisineType.INDIAN,
-                20, 35, 4, 550.0, 35.0, 20.0, 35.0,
-                allergenSet(dairy), diseaseSet());
-        r2.setCoverImageUrl("http://localhost:8080/images/chicken-tikka-masala.jpg");
-        indianRecipes.add(r2);
+            Recipe r = build(assignedChef, title,
+                    "Professional preparation of " + title + ". A favorite among food enthusiasts.",
+                    "1. Prepare and clean all ingredients thoroughly.\n2. Heat the pan and follow precise temperature controls.\n3. Combine ingredients in the specified order to preserve flavors.\n4. Garnish with fresh herbs and serve immediately.",
+                    diet, meal, cuisine,
+                    15 + rand.nextInt(15), 20 + rand.nextInt(40), 2 + rand.nextInt(4),
+                    300.0 + rand.nextInt(500), 10.0 + rand.nextInt(30), 20.0 + rand.nextInt(50), 10.0 + rand.nextInt(30),
+                    new HashSet<>(), new HashSet<>());
 
-        // 3. Dal Khichdi
-        Recipe r3 = build(chef1, "Dal Khichdi",
-                "Comforting one-pot dish made with rice and lentils.",
-                "1. Wash rice and dal. 2. Pressure cook with turmeric and salt. 3. Temper with ghee and cumin.",
-                DietType.VEGETARIAN, MealType.LUNCH, CuisineType.INDIAN,
-                10, 20, 3, 300.0, 12.0, 50.0, 8.0,
-                allergenSet(dairy), diseaseSet(htn, t2d));
-        r3.setCoverImageUrl("http://localhost:8080/images/dal-khichdi.jpg");
-        indianRecipes.add(r3);
+            // Add 3-5 dummy ingredients to satisfy the "proper ingredients" request
+            List<RecipeIngredient> recipeIngredients = new ArrayList<>();
+            String[] baseIngredients = {"Onion", "Tomato", "Garlic", "Ginger", "Salt", "Oil", "Butter", "Pepper"};
+            int ingCount = 3 + rand.nextInt(3);
+            for (int k = 0; k < ingCount; k++) {
+                String ingName = baseIngredients[rand.nextInt(baseIngredients.length)];
+                Ingredient ing = ingredientRepository.findByNameIgnoreCase(ingName).orElseGet(() -> {
+                     Ingredient newIng = new Ingredient();
+                     newIng.setName(ingName);
+                     return ingredientRepository.save(newIng);
+                });
+                RecipeIngredient ri = new RecipeIngredient();
+                ri.setRecipe(r);
+                ri.setIngredient(ing);
+                ri.setQuantity((double)(1 + rand.nextInt(3)));
+                ri.setUnit(MeasureUnit.PIECE);
+                recipeIngredients.add(ri);
+            }
+            r.setIngredients(recipeIngredients);
 
-        // 4. Masala Dosa
-        Recipe r4 = build(chef2, "Crispy Masala Dosa",
-                "Thin savory crepe made from fermented rice and lentil batter, filled with potato curry.",
-                "1. Ferment batter. 2. Prepare potato filling. 3. Spread batter on hot griddle. 4. Add filling and fold.",
-                DietType.VEGAN, MealType.BREAKFAST, CuisineType.INDIAN,
-                30, 15, 2, 250.0, 6.0, 40.0, 8.0,
-                allergenSet(), diseaseSet());
-        r4.setCoverImageUrl("http://localhost:8080/images/masala-dosa.jpg");
-        indianRecipes.add(r4);
+            // Accurate image mapping
+            r.setCoverImageUrl("http://localhost:8080/images/" + slug + ".jpg");
+            
+            // Randomly assign difficulty
+            r.setDifficulty(Difficulty.values()[rand.nextInt(Difficulty.values().length)]);
+            
+            bulkRecipes.add(r);
+        }
 
-        // 5. Veg Samosa
-        Recipe r5 = build(chef1, "Punjabi Veg Samosa",
-                "Crispy pastry crust filled with spiced potatoes and peas.",
-                "1. Prepare dough. 2. Make potato filling. 3. Stuff and shape. 4. Deep fry until golden.",
-                DietType.VEGETARIAN, MealType.SNACK, CuisineType.INDIAN,
-                30, 20, 6, 200.0, 3.0, 25.0, 10.0,
-                allergenSet(gluten), diseaseSet());
-        r5.setCoverImageUrl("http://localhost:8080/images/veg-samosa.jpg");
-        indianRecipes.add(r5);
+        recipeRepository.saveAll(bulkRecipes);
+        log.info("Seeded 85 high-quality recipes assigned to 10 chefs.");
+    }
 
-        recipeRepository.saveAll(indianRecipes);
-        log.info("Seeded 2 Indian Chefs and 5 image-based recipes.");
+    private String capitalizeSlug(String slug) {
+        String[] parts = slug.split("-");
+        StringBuilder sb = new StringBuilder();
+        for (String part : parts) {
+            sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1)).append(" ");
+        }
+        return sb.toString().trim();
+    }
+
+    private DietType determineDietType(String slug) {
+        if (slug.contains("chicken") || slug.contains("mutton") || slug.contains("fish") || 
+            slug.contains("pork") || slug.contains("steak") || slug.contains("salmon") || 
+            slug.contains("shrimp") || slug.contains("seafood") || slug.contains("lobster") ||
+            slug.contains("burger")) return DietType.NON_VEG;
+        
+        if (slug.contains("salad") || slug.contains("toast") || slug.contains("falafel") || 
+            slug.contains("hummus") || slug.contains("dosa") || slug.contains("sorbet")) return DietType.VEGAN;
+            
+        return DietType.VEG;
+    }
+
+    private CuisineType determineCuisineType(String slug) {
+        if (slug.contains("gobi") || slug.contains("paneer") || slug.contains("dal") || 
+            slug.contains("masala") || slug.contains("biryani") || slug.contains("naan") ||
+            slug.contains("chai") || slug.contains("lassi") || slug.contains("pav") ||
+            slug.contains("puri") || slug.contains("samosa") || slug.contains("tandoori") ||
+            slug.contains("dhokla") || slug.contains("jalebi") || slug.contains("gulab") ||
+            slug.contains("rasgulla") || slug.contains("kofta") || slug.contains("bharta") ||
+            slug.contains("haleem")) return CuisineType.INDIAN;
+            
+        if (slug.contains("pizza") || slug.contains("pasta")) return CuisineType.ITALIAN;
+        if (slug.contains("tacos") || slug.contains("burritos") || slug.contains("nachos") || 
+            slug.contains("enchiladas") || slug.contains("quesadillas")) return CuisineType.MEXICAN;
+        if (slug.contains("noodles") || slug.contains("fried-rice") || slug.contains("manchurian") ||
+            slug.contains("kung-pao") || slug.contains("spring-rolls") || slug.contains("miso") ||
+            slug.contains("sushi") || slug.contains("thai")) return CuisineType.ASIAN;
+        if (slug.contains("hummus") || slug.contains("falafel") || slug.contains("shawarma") ||
+            slug.contains("shakshuka") || slug.contains("greek")) return CuisineType.CONTINENTAL; 
+            
+        return CuisineType.AMERICAN;
+    }
+
+    private MealType determineMealType(String slug, Random rand) {
+        if (slug.contains("breakfast") || slug.contains("egg") || slug.contains("pancakes") || 
+            slug.contains("waffles") || slug.contains("toast") || slug.contains("oatmeal")) return MealType.BREAKFAST;
+        if (slug.contains("salad") || slug.contains("sandwich") || slug.contains("dosa")) return MealType.LUNCH;
+        if (slug.contains("samosa") || slug.contains("fries") || slug.contains("snack") || 
+            slug.contains("spring-rolls") || slug.contains("nachos")) return MealType.SNACK;
+        if (slug.contains("chai") || slug.contains("lassi") || slug.contains("drink")) return MealType.BEVERAGE;
+        if (slug.contains("pie") || slug.contains("cake") || slug.contains("brownie") || 
+            slug.contains("cookie") || slug.contains("gelato") || slug.contains("macarons") ||
+            slug.contains("sorbet") || slug.contains("tiramisu") || slug.contains("churros") ||
+            slug.contains("gulab") || slug.contains("jalebi")) return MealType.DESSERT;
+            
+        return rand.nextBoolean() ? MealType.LUNCH : MealType.DINNER;
     }
 
     // ---- Builder helpers ----
@@ -260,5 +315,73 @@ public class DataSeeder implements ApplicationRunner {
         Set<Disease> set = new HashSet<>();
         for (Optional<Disease> opt : opts) opt.ifPresent(set::add);
         return set;
+    }
+
+    private void seedChefs() {
+        if (userRepository.existsByEmail("chef.sanjeev@recipehub.com")) {
+            return;
+        }
+
+        log.info("Seeding 10 professional chefs...");
+        createChef("Chef Sanjeev", "chef.sanjeev@recipehub.com", "Expert in traditional Indian cuisine.", DietType.NON_VEG, SkillLevel.INTERMEDIATE);
+        createChef("Chef Vikas", "chef.vikas@recipehub.com", "Modern Indian culinary artist.", DietType.VEG, SkillLevel.EXPERT);
+        createChef("Chef Kunal", "chef.kunal@recipehub.com", "Indian celebrity chef and restaurateur.", DietType.NON_VEG, SkillLevel.EXPERT);
+        createChef("Chef Ranveer", "chef.ranveer@recipehub.com", "Culinary storyteller and food explorer.", DietType.VEG, SkillLevel.EXPERT);
+        createChef("Chef Anahita", "chef.anahita@recipehub.com", "Parsi cuisine specialist.", DietType.NON_VEG, SkillLevel.INTERMEDIATE);
+        createChef("Chef Shipra", "chef.shipra@recipehub.com", "Fusion and modern cooking expert.", DietType.VEGAN, SkillLevel.EXPERT);
+        createChef("Chef Ajay", "chef.ajay@recipehub.com", "Master of Indian flavors.", DietType.VEG, SkillLevel.INTERMEDIATE);
+        createChef("Chef Garima", "chef.garima@recipehub.com", "First Indian woman with a Michelin star.", DietType.NO_PREFERENCE, SkillLevel.EXPERT);
+        createChef("Chef Vineet", "chef.vineet@recipehub.com", "Innovator of global Indian cuisine.", DietType.NON_VEG, SkillLevel.EXPERT);
+        createChef("Chef Manish", "chef.manish@recipehub.com", "Pioneer of Indian comfort food.", DietType.VEG, SkillLevel.INTERMEDIATE);
+    }
+
+    private User createChef(String name, String email, String bio, DietType dietType, SkillLevel skillLevel) {
+        User chef = new User();
+        chef.setName(name);
+        chef.setEmail(email);
+        chef.setPassword(passwordEncoder.encode("password123"));
+        chef.setRole(UserRole.CHEF);
+        chef.setIsProfileCompleted(true);
+        chef.setBio(bio);
+        chef.setDietType(dietType);
+        chef.setSkillLevel(skillLevel);
+        return userRepository.save(chef);
+    }
+
+    private void seedAdminUsers() {
+        if (userRepository.existsByEmail("admin1@recipe.com")) {
+            return;
+        }
+
+        User admin1 = new User();
+        admin1.setName("Admin One");
+        admin1.setEmail("admin1@recipe.com");
+        admin1.setPassword(passwordEncoder.encode("Admin@123"));
+        admin1.setRole(UserRole.ADMIN);
+
+        User admin2 = new User();
+        admin2.setName("Admin Two");
+        admin2.setEmail("admin2@recipe.com");
+        admin2.setPassword(passwordEncoder.encode("Admin@123"));
+        admin2.setRole(UserRole.ADMIN);
+
+        userRepository.saveAll(List.of(admin1, admin2));
+        log.info("Seeded 2 admin users.");
+    }
+
+    private void seedIngredients() {
+        List<String> ingredients = List.of(
+            "Onion", "Tomato", "Garlic", "Ginger",
+            "Salt", "Sugar", "Oil", "Butter", "Paneer"
+        );
+
+        for (String name : ingredients) {
+            if (!ingredientRepository.existsByNameIgnoreCase(name)) {
+                Ingredient ingredient = new Ingredient();
+                ingredient.setName(name);
+                ingredientRepository.save(ingredient);
+            }
+        }
+        log.info("Seeded basic ingredients.");
     }
 }

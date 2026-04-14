@@ -53,4 +53,6 @@ public class RecipeResponseDTO {
 
     // Publication
     private Boolean isPublished;
+
+    private Long savedCount = 0L;
 }
