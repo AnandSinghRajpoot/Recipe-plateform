@@ -4,6 +4,7 @@ import com.recipeplatform.domain.enums.CuisineType;
 import com.recipeplatform.domain.enums.DietType;
 import com.recipeplatform.domain.enums.MealType;
 import com.recipeplatform.dto.AuthorDto;
+import com.recipeplatform.dto.CommentResponseDto;
 import com.recipeplatform.dto.recipeIngredient.RecipeIngredientResponseDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -54,5 +55,11 @@ public class RecipeResponseDTO {
     // Publication
     private Boolean isPublished;
 
+    @Builder.Default
     private Long savedCount = 0L;
+    @Builder.Default
+    private Long likesCount = 0L;
+    @Builder.Default
+    private Boolean isLiked = false;
+    private List<CommentResponseDto> comments;
 }
