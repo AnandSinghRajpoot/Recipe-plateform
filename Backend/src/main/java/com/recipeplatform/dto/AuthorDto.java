@@ -10,5 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AuthorDto {
     private Long id;
+    private String name;
+    private String profilePhoto;
     private UserRole role;
 }
