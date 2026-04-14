@@ -1,10 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { resolveImageUrl } from "../../utils/imageUtils";
+import { resolveImageUrl, handleImageError } from "../../utils/imageUtils";
 import VanillaTilt from 'vanilla-tilt';
+import apiClient from '../../utils/apiClient';
+import toast from 'react-hot-toast';
 
 const HorizontalCard = ({ item }) => {
     const cardRef = useRef(null);
+    const [saving, setSaving] = useState(false);
     const title = item?.title || item?.name || "Untitled Recipe";
 
     useEffect(() => {
@@ -32,6 +35,22 @@ const HorizontalCard = ({ item }) => {
         }
     };
 
+    const handleSave = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+        if (!token) return toast.error("Please login to save recipes!");
+        
+        setSaving(true);
+        try {
+            await apiClient.post(`/saved-recipes/${id}`);
+            toast.success("Recipe saved successfully!");
+        } catch (err) {
+            toast.error("Failed to save recipe, you may have already saved it.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
     return (
         <div 
             ref={cardRef}
@@ -43,6 +62,7 @@ const HorizontalCard = ({ item }) => {
                 <img 
                     src={imageUrl} 
                     alt={title} 
+                    onError={handleImageError}
                     className="w-full h-56 md:h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent"></div>
@@ -96,13 +116,23 @@ const HorizontalCard = ({ item }) => {
                         </div>
                     </div>
                     
-                    <Link 
-                        to={`/items/${id}`}
-                        className="ml-auto w-12 h-12 rounded-2xl vitality-gradient text-white flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-110 active:scale-95 transition-all"
-                        title="View Recipe"
-                    >
-                        <span className="material-symbols-outlined font-black">arrow_forward</span>
-                    </Link>
+                    <div className="ml-auto flex items-center gap-3">
+                        <button 
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="w-12 h-12 rounded-2xl bg-surface-container-low text-primary flex items-center justify-center hover:bg-primary/10 transition-colors disabled:opacity-50"
+                            title="Save Recipe"
+                        >
+                            <span className="material-symbols-outlined text-xl">{saving ? 'hourglass_empty' : 'bookmark'}</span>
+                        </button>
+                        <Link 
+                            to={`/items/${id}`}
+                            className="w-12 h-12 rounded-2xl vitality-gradient text-white flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-110 active:scale-95 transition-all"
+                            title="View Recipe"
+                        >
+                            <span className="material-symbols-outlined font-black">arrow_forward</span>
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

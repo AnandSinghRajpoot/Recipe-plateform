@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import CreateRecipeForm from "./CreateRecipeForm";
 import MyRecipesTab from "./MyRecipesTab";
+import { resolveImageUrl } from "../utils/imageUtils";
+import { toast } from "react-hot-toast";
 
 // ──────────────────────────────────────────────────────────────────
 // Inline tab components
@@ -17,8 +19,8 @@ const OverviewTab = ({ stats, setActiveTab }) => (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
       {[
         { icon: "menu_book", label: "Published Recipes", value: stats.total ?? "—", color: "bg-primary/10 text-primary" },
-        { icon: "visibility", label: "Total Views", value: stats.views ?? "—", color: "bg-secondary-container/40 text-secondary" },
-        { icon: "favorite", label: "Total Likes", value: stats.likes ?? "—", color: "bg-tertiary-container/40 text-tertiary" },
+        { icon: "bookmark", label: "Total Saves", value: stats.saves ?? "—", color: "bg-secondary-container/40 text-secondary" },
+        { icon: "visibility", label: "Total Views", value: stats.views ?? "—", color: "bg-tertiary-container/40 text-tertiary" },
       ].map((s) => (
         <div key={s.label} className="bg-white rounded-3xl p-7 border border-outline-variant/10 shadow-sm hover:shadow-lg transition-all group">
           <div className={`w-12 h-12 rounded-2xl ${s.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
@@ -33,9 +35,7 @@ const OverviewTab = ({ stats, setActiveTab }) => (
       <h3 className="font-headline font-black text-lg text-on-surface mb-4">Quick Actions</h3>
       <div className="flex flex-wrap gap-4">
         {[
-          { icon: "add_circle", label: "New Recipe", action: "add" },
-          { icon: "photo_library", label: "My Library", action: "recipes" },
-          { icon: "person", label: "Edit Profile", action: "profile" },
+          { icon: "settings", label: "Settings & Profile", action: "profile" },
         ].map((a) => (
           <button key={a.label} onClick={() => setActiveTab(a.action)}
             className="flex items-center gap-3 px-6 py-3 bg-surface-container-low hover:bg-primary hover:text-white rounded-2xl transition-all text-sm font-black text-on-surface-variant group border border-transparent hover:border-primary/20 hover:shadow-lg"
@@ -50,27 +50,203 @@ const OverviewTab = ({ stats, setActiveTab }) => (
 );
 
 const ProfileTab = () => {
-  const role = localStorage.getItem("role");
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef(null);
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    axios.get("http://localhost:8080/api/v1/auth/profile", {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(res => {
+      setProfile(res.data);
+      setLoading(false);
+    })
+    .catch(err => {
+      console.error(err);
+      toast.error("Failed to load profile");
+      setLoading(false);
+    });
+  }, [token]);
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      // Extract completion request fields
+      const request = {
+        name: profile.name,
+        phoneNumber: profile.phoneNumber,
+        bio: profile.bio,
+        instagramLink: profile.instagramLink,
+        youtubeLink: profile.youtubeLink,
+        websiteLink: profile.websiteLink,
+        contentIntent: profile.contentIntent,
+        specializations: profile.specializations || [],
+        experienceLevel: profile.experienceLevel || "BEGINNER",
+        dietType: profile.dietType || "VEGETARIAN",
+        skillLevel: profile.skillLevel || "BEGINNER"
+      };
+
+      await axios.post("http://localhost:8080/api/v1/auth/complete-profile", request, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Profile updated successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("profilePhoto", file);
+
+    try {
+      const res = await axios.post("http://localhost:8080/api/v1/auth/profile/photo", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        }
+      });
+      setProfile(prev => ({ ...prev, profilePhoto: res.data }));
+      toast.success("Photo updated!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to upload photo");
+    }
+  };
+
+  if (loading) return <div className="animate-pulse space-y-4"><div className="h-8 w-48 bg-surface-container-high rounded-lg" /><div className="h-64 bg-surface-container-high rounded-3xl" /></div>;
+
   return (
-    <div className="space-y-8 max-w-2xl">
+    <div className="space-y-8 max-w-4xl animate-fade-in">
       <div>
-        <h2 className="text-3xl font-headline font-black text-on-surface">Chef Profile</h2>
-        <p className="text-on-surface-variant text-sm font-medium opacity-60 mt-1">Your public culinary identity on RecipeHub.</p>
+        <h2 className="text-3xl font-headline font-black text-on-surface">Settings & Profile</h2>
+        <p className="text-on-surface-variant text-sm font-medium opacity-60 mt-1">Manage your professional chef identity and account preferences.</p>
       </div>
-      <div className="bg-white rounded-3xl p-8 border border-outline-variant/10 shadow-sm space-y-6">
-        <div className="flex items-center gap-6">
-          <div className="w-20 h-20 rounded-full vitality-gradient flex items-center justify-center shadow-lg">
-            <span className="material-symbols-outlined text-4xl text-white">person</span>
-          </div>
-          <div>
-            <h3 className="font-headline font-black text-on-surface text-xl">Chef Account</h3>
-            <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-3 py-1 rounded-full inline-block mt-1">{role}</span>
+
+      <form onSubmit={handleUpdate} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Avatar & Quick Info */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm flex flex-col items-center text-center">
+            <div className="relative group mb-6">
+              <div className="w-32 h-32 rounded-[2rem] bg-surface-container-high border-4 border-white shadow-xl overflow-hidden">
+                <img 
+                  src={profile.profilePhoto ? resolveImageUrl(profile.profilePhoto) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`} 
+                  alt="Chef" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <button 
+                type="button"
+                onClick={() => fileInputRef.current.click()}
+                className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl vitality-gradient text-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+              >
+                <span className="material-symbols-outlined text-sm">photo_camera</span>
+              </button>
+              <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" accept="image/*" />
+            </div>
+            
+            <h3 className="font-headline font-black text-on-surface text-xl">{profile.name}</h3>
+            <p className="text-on-surface-variant text-xs font-bold opacity-60 mt-1 uppercase tracking-widest">{profile.role}</p>
+            
+            <div className="w-full mt-6 pt-6 border-t border-outline-variant/10 space-y-4">
+               <div className="flex justify-between text-xs font-bold px-2">
+                  <span className="text-on-surface-variant opacity-60">Status</span>
+                  <span className="text-primary">Professional</span>
+               </div>
+            </div>
           </div>
         </div>
-        <div className="p-5 bg-surface-container-low rounded-2xl border border-outline-variant/10">
-          <p className="text-sm font-medium text-on-surface-variant opacity-60">Full profile management is coming soon. You can update your bio, social links, and specializations from this section.</p>
+
+        {/* Right Column: Detailed Forms */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-6">
+            <h4 className="font-headline font-black text-on-surface flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">person</span>
+              Basic Information
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Full Name</label>
+                <input 
+                  type="text" 
+                  value={profile.name || ""} 
+                  onChange={e => setProfile({...profile, name: e.target.value})}
+                  className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-4 outline-none font-bold transition-all" 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Phone Number</label>
+                <input 
+                  type="text" 
+                  value={profile.phoneNumber || ""} 
+                  onChange={e => setProfile({...profile, phoneNumber: e.target.value})}
+                  className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-4 outline-none font-bold transition-all" 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+               <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Culinay Biography</label>
+               <textarea 
+                  rows={4}
+                  value={profile.bio || ""} 
+                  onChange={e => setProfile({...profile, bio: e.target.value})}
+                  className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-4 outline-none font-medium transition-all resize-none" 
+                  placeholder="Share your culinary journey..."
+               />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-6">
+            <h4 className="font-headline font-black text-on-surface flex items-center gap-2">
+              <span className="material-symbols-outlined text-secondary">share</span>
+              Social Presence
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Instagram Link</label>
+                <input 
+                  type="text" 
+                  value={profile.instagramLink || ""} 
+                  onChange={e => setProfile({...profile, instagramLink: e.target.value})}
+                  className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-3 outline-none font-bold" 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">YouTube Link</label>
+                <input 
+                  type="text" 
+                  value={profile.youtubeLink || ""} 
+                  onChange={e => setProfile({...profile, youtubeLink: e.target.value})}
+                  className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-3 outline-none font-bold" 
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-4 mt-8">
+            <button 
+              type="submit" 
+              disabled={saving}
+              className="vitality-gradient text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-primary/20 hover:scale-[1.03] active:scale-[0.98] transition-all disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
         </div>
-      </div>
+      </form>
     </div>
   );
 };
@@ -81,16 +257,15 @@ const ProfileTab = () => {
 
 const NAV_ITEMS = [
   { id: "overview",  icon: "dashboard",    label: "Dashboard" },
-  { id: "add",       icon: "add_circle",   label: "New Recipe" },
   { id: "recipes",   icon: "menu_book",    label: "My Recipes" },
-  { id: "profile",   icon: "account_circle", label: "Profile" },
+  { id: "profile",   icon: "settings",     label: "Settings & Profile" },
 ];
 
 const ChefDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [stats, setStats] = useState({ total: null, views: null, likes: null });
+  const [stats, setStats] = useState({ total: null, views: null, saves: null });
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
 
@@ -102,8 +277,11 @@ const ChefDashboard = () => {
         // fetch stats
         axios.get("http://localhost:8080/api/v1/recipes/my-recipes", {
             headers: { Authorization: `Bearer ${token}` }
-        }).then(res => setStats(prev => ({ ...prev, total: (res.data.data || res.data || []).length })))
-        .catch(console.error);
+        }).then(res => {
+            const recipes = res.data.data || res.data || [];
+            const totalSaves = recipes.reduce((sum, r) => sum + (r.savedCount || 0), 0);
+            setStats(prev => ({ ...prev, total: recipes.length, saves: totalSaves }));
+        }).catch(console.error);
     }
   }, [token, role, navigate]);
 

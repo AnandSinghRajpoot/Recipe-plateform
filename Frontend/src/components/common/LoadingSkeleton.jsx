@@ -25,6 +25,45 @@ export const CardSkeleton = () => {
   );
 };
 
+export const HorizontalCardSkeleton = () => {
+  return (
+    <div className="bg-white/60 backdrop-blur-xl rounded-[2.5rem] border border-white overflow-hidden flex flex-col md:flex-row h-full md:h-72 animate-pulse">
+      {/* Image Container Skeleton */}
+      <div className="relative w-full md:w-2/5 shrink-0 bg-surface-container-high overflow-hidden h-64 md:h-full">
+        <div className="w-full h-full skeleton-shimmer" />
+      </div>
+
+      {/* Content Container Skeleton */}
+      <div className="flex flex-col p-8 md:p-10 flex-grow justify-between w-full">
+        <div className="space-y-4">
+          <div className="flex justify-between items-start">
+             <div className="h-5 w-24 bg-surface-container-highest rounded-full skeleton-shimmer" />
+             <div className="h-10 w-10 bg-surface-container-highest rounded-full skeleton-shimmer" />
+          </div>
+          <div className="h-8 w-3/4 bg-surface-container-highest rounded-xl skeleton-shimmer mt-4" />
+          <div className="h-4 w-full bg-surface-container-highest rounded-xl skeleton-shimmer mt-3" />
+          <div className="h-4 w-2/3 bg-surface-container-highest rounded-xl skeleton-shimmer mt-2" />
+        </div>
+
+        <div className="mt-8 flex gap-4 border-t border-outline-variant/10 pt-6">
+          <div className="h-10 w-28 bg-surface-container-highest rounded-xl skeleton-shimmer" />
+          <div className="h-10 w-28 bg-surface-container-highest rounded-xl skeleton-shimmer" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const HorizontalRecipeListSkeleton = ({ count = 4 }) => {
+  return (
+    <div className="flex flex-col gap-14 pb-32">
+      {Array.from({ length: count }).map((_, i) => (
+        <HorizontalCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+};
+
 export const RecipeListSkeleton = ({ count = 6 }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">

@@ -3,6 +3,7 @@ import apiClient from '../../utils/apiClient';
 import toast from 'react-hot-toast';
 import { extractErrorMessage } from '../../utils/errorHandler';
 import { Link } from 'react-router-dom';
+import { handleImageError } from '../../utils/imageUtils';
 
 const SavedRecipesTab = () => {
     const [recipes, setRecipes] = useState([]);
@@ -74,7 +75,7 @@ const SavedRecipesTab = () => {
                             </button>
                             
                             <div className="w-full aspect-video rounded-2xl overflow-hidden mb-4 bg-surface-container-high relative">
-                                <img src={recipe.coverImageUrl} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                                <img src={recipe.coverImageUrl} alt={recipe.title} onError={handleImageError} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                                 <div className="absolute bottom-3 left-3 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20">
                                     {recipe.difficulty}

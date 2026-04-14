@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { SkeletonProfile, SkeletonCard } from "../../components/Skeleton";
@@ -6,8 +6,13 @@ import { FadeUp } from "../../hooks/useAnimations.jsx";
 import MealPlanner from "../product/MealPlanner.jsx";
 import SavedRecipesTab from "../product/SavedRecipesTab.jsx";
 import CollectionsTab from "../product/CollectionsTab.jsx";
+import { resolveImageUrl, handleImageError } from "../../utils/imageUtils";
+import { toast } from "react-hot-toast";
+
 const Profile = () => {
   const [profile, setProfile] = useState(null);
+  const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,6 +21,36 @@ const Profile = () => {
 
   const handleUpgradeToChef = () => {
     navigate('/signup?role=chef');
+  };
+
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    formData.append("profilePhoto", file);
+
+    setUploading(true);
+    try {
+      const res = await axios.post("http://localhost:8080/api/v1/auth/profile/photo", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setProfile(prev => ({ ...prev, profilePhoto: res.data }));
+      toast.success("Profile photo updated!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update photo");
+    } finally {
+      setUploading(false);
+    }
   };
 
   useEffect(() => {
@@ -119,13 +154,32 @@ const Profile = () => {
             {/* Avatar */}
             <div className="relative group shrink-0">
                 <div className="absolute inset-0 bg-primary/20 rounded-[2.5rem] blur-2xl group-hover:bg-primary/40 transition-all duration-700"></div>
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] bg-surface-container-high border-4 border-white shadow-xl relative overflow-hidden">
+                <div 
+                  className="w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] bg-surface-container-high border-4 border-white shadow-xl relative overflow-hidden cursor-pointer group/avatar"
+                  onClick={handlePhotoClick}
+                >
                     <img 
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`} 
+                        src={profile.profilePhoto ? resolveImageUrl(profile.profilePhoto) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`} 
                         alt="Profile" 
-                        className="w-full h-full object-cover"
+                        className={`w-full h-full object-cover transition-all duration-500 ${uploading ? 'opacity-40 grayscale' : 'group-hover/avatar:scale-110'}`}
                     />
+                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-300">
+                        <span className="material-symbols-outlined text-white text-3xl mb-1">photo_camera</span>
+                        <span className="text-white text-[10px] font-black uppercase tracking-widest">Update</span>
+                    </div>
+                    {uploading && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    )}
                 </div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handlePhotoChange} 
+                  className="hidden" 
+                  accept="image/*"
+                />
             </div>
             
             {/* Details */}
@@ -299,7 +353,7 @@ const Profile = () => {
                                     <div key={recipe.id} className="bg-white p-5 rounded-[2rem] border border-outline-variant/10 shadow-sm flex flex-col group hover:-translate-y-1 transition-all cursor-pointer" onClick={() => navigate(`/items/${recipe.id}`)}>
                                         <div className="h-32 rounded-2xl bg-surface-container-low mb-4 overflow-hidden relative">
                                             {recipe.coverImageUrl ? (
-                                                <img src={recipe.coverImageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt="" />
+                                                <img src={recipe.coverImageUrl} onError={handleImageError} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt={recipe.title} />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center"><span className="material-symbols-outlined opacity-30">restaurant</span></div>
                                             )}

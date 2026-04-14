@@ -40,7 +40,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await apiClient.post("/auth/login", user);
+      const res = await apiClient.post("/auth/login", { ...user, role: activeTab });
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
       toast.success("Login successful! Redirecting...");
