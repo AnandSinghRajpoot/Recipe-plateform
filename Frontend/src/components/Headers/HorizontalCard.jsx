@@ -4,10 +4,15 @@ import { resolveImageUrl, handleImageError } from "../../utils/imageUtils";
 import VanillaTilt from 'vanilla-tilt';
 import apiClient from '../../utils/apiClient';
 import toast from 'react-hot-toast';
+import generalProfilePic from '../../assets/general-profile-pic.png';
 
 const HorizontalCard = ({ item }) => {
     const cardRef = useRef(null);
     const [saving, setSaving] = useState(false);
+    const [liked, setLiked] = useState(item?.isLiked || false);
+    const [likesCount, setLikesCount] = useState(item?.likesCount || 0);
+    const [saved, setSaved] = useState(item?.isSaved || false);
+
     const title = item?.title || item?.name || "Untitled Recipe";
 
     useEffect(() => {
@@ -35,20 +40,62 @@ const HorizontalCard = ({ item }) => {
         }
     };
 
+    const handleLike = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+        if (!token) {
+            toast.error("Please login to like recipes");
+            return;
+        }
+
+        try {
+            const res = await apiClient.post(`/recipes/${id}/like`);
+            setLiked(res.data.data);
+            setLikesCount(prev => res.data.data ? prev + 1 : prev - 1);
+        } catch (err) {
+            toast.error("Failed to like recipe");
+        }
+    };
+
     const handleSave = async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
         if (!token) return toast.error("Please login to save recipes!");
         
         setSaving(true);
-        try {
-            await apiClient.post(`/saved-recipes/${id}`);
-            toast.success("Recipe saved successfully!");
-        } catch (err) {
-            toast.error("Failed to save recipe, you may have already saved it.");
-        } finally {
-            setSaving(false);
+        
+        // If already saved, unsave it
+        if (saved) {
+            try {
+                await apiClient.delete(`/saved-recipes/${id}`);
+                setSaved(false);
+                toast.success("Recipe removed from saved!");
+            } catch (err) {
+                toast.error("Failed to remove recipe from saved");
+            }
+        } else {
+            // If not saved, save it
+            try {
+                await apiClient.post(`/saved-recipes/${id}`);
+                setSaved(true);
+                toast.success("Recipe saved successfully!");
+            } catch (err) {
+                // Check if it's already saved due to race condition
+                if (err.response?.status === 409 || err.response?.status === 400) {
+                    try {
+                        await apiClient.delete(`/saved-recipes/${id}`);
+                        setSaved(false);
+                        toast.success("Recipe removed from saved!");
+                    } catch (deleteErr) {
+                        toast.error("Failed to update save status");
+                    }
+                } else {
+                    toast.error("Failed to save recipe");
+                }
+            }
         }
+        
+        setSaving(false);
     };
 
     return (
@@ -78,10 +125,16 @@ const HorizontalCard = ({ item }) => {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/10 transition-all duration-700"></div>
                 
                 <div>
-                    <div className="flex justify-between items-start mb-3">
-                        <span className="text-primary text-[10px] font-black uppercase tracking-[0.2em] opacity-70">
-                            {item?.category || "General Nutrition"}
-                        </span>
+                    <div className="flex justify-between items-start mb-4">
+                        <Link to={`/chef/${item?.author?.id}`} className="group/author flex items-center gap-2 hover:bg-primary/5 px-2 py-1 rounded-full transition-colors">
+                            <img 
+                                src={item?.author?.profilePhoto || generalProfilePic} 
+                                className="w-6 h-6 rounded-full object-cover border border-primary/20"
+                                alt={item?.author?.name}
+                                onError={(e) => { e.target.src = generalProfilePic; }}
+                            />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 group-hover/author:text-primary">{item?.author?.name || "Member"}</span>
+                        </Link>
                     </div>
                     
                     <Link to={`/items/${id}`}>
@@ -118,12 +171,20 @@ const HorizontalCard = ({ item }) => {
                     
                     <div className="ml-auto flex items-center gap-3">
                         <button 
+                            onClick={handleLike}
+                            className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all active:scale-90 duration-200 bg-surface-container-low relative ${liked ? 'text-green-600' : 'text-on-surface-variant hover:text-green-600'}`}
+                            title={liked ? "Unlike" : "Like"}
+                        >
+                            <span className={`material-symbols-outlined text-xl ${liked ? '' : 'font-variation-settings: "FILL" 0'}`} style={liked ? { fontVariationSettings: '"FILL" 1' } : {}}>{liked ? 'favorite' : 'favorite_border'}</span>
+                            {likesCount > 0 && <span className="absolute -top-1 -right-1 bg-white text-green-600 text-[8px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-green-600/20 shadow-sm">{likesCount}</span>}
+                        </button>
+                        <button 
                             onClick={handleSave}
                             disabled={saving}
-                            className="w-12 h-12 rounded-2xl bg-surface-container-low text-primary flex items-center justify-center hover:bg-primary/10 transition-colors disabled:opacity-50"
-                            title="Save Recipe"
+                            className={`w-12 h-12 rounded-2xl bg-surface-container-low flex items-center justify-center transition-all active:scale-90 duration-200 disabled:opacity-50 ${saved ? 'text-green-600' : 'text-on-surface-variant hover:text-green-600'}`}
+                            title={saved ? "Remove from Saved" : "Save Recipe"}
                         >
-                            <span className="material-symbols-outlined text-xl">{saving ? 'hourglass_empty' : 'bookmark'}</span>
+                            <span className={`material-symbols-outlined text-xl`} style={saved ? { fontVariationSettings: '"FILL" 1' } : {}}>{saving ? 'hourglass_empty' : (saved ? 'bookmark' : 'bookmark_border')}</span>
                         </button>
                         <Link 
                             to={`/items/${id}`}
