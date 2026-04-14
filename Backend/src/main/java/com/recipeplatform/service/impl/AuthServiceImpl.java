@@ -111,9 +111,12 @@ public class AuthServiceImpl implements AuthService {
         if (profilePhoto != null && !profilePhoto.isEmpty()) {
             String photoName = imageService.saveImage(profilePhoto);
             user.setProfilePhoto(photoName);
-        } else {
+        } else if (registerRequest.getProfilePhoto() != null && !registerRequest.getProfilePhoto().isEmpty()) {
+            // Use provided profile photo URL from request if available
             user.setProfilePhoto(registerRequest.getProfilePhoto());
         }
+        // If no profile photo is provided, it remains null
+        // Frontend will use general-profile-pic.png as default when null
 
         user.setSpecializations(registerRequest.getSpecializations());
         user.setExperienceLevel(registerRequest.getExperienceLevel());
@@ -245,5 +248,11 @@ public class AuthServiceImpl implements AuthService {
             return imageUrl;
         }
         return user.getProfilePhoto();
+    }
+
+    @Override
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }
