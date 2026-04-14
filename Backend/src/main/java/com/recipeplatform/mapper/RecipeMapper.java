@@ -61,7 +61,11 @@ public interface RecipeMapper {
         if (user == null) {
             return null;
         }
-        return new AuthorDto(user.getId(), user.getRole());
+        String photo = user.getProfilePhoto();
+        if (photo != null && !photo.startsWith("http")) {
+            photo = "http://localhost:8080/images/" + photo;
+        }
+        return new AuthorDto(user.getId(), user.getName(), photo, user.getRole());
     }
 
     @Named("mapAllergenNames")
