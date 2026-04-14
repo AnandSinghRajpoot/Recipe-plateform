@@ -89,19 +89,12 @@ export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
                 {isChef && (
                   <>
                     <Link
-                      to="/addRecipe"
+                      to="/chef-dashboard"
                       onClick={onClose}
                       className="w-full py-4 bg-primary text-white font-black rounded-2xl text-center shadow-lg flex items-center justify-center gap-2"
                     >
-                      <span className="material-symbols-outlined text-sm font-black">add</span>
-                      Add New Recipe
-                    </Link>
-                    <Link
-                      to="/my-recipes"
-                      onClick={onClose}
-                      className="w-full py-4 bg-surface-container-low text-on-surface-variant font-black rounded-2xl text-center border border-outline-variant/10"
-                    >
-                      My Recipes
+                      <span className="material-symbols-outlined text-sm font-black">dashboard</span>
+                      Chef Dashboard
                     </Link>
                   </>
                 )}

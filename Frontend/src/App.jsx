@@ -23,7 +23,6 @@ function App() {
     "/profile/complete", 
     "/settings",
     "/addRecipe", 
-    "/my-recipes",
     "/checkout",
     "/chef-dashboard"
   ].some(path => location.pathname === path || location.pathname.startsWith("/edit-recipe/"));

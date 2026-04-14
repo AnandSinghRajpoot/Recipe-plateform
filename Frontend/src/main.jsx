@@ -20,7 +20,6 @@ import ResetPassword from './pages/Homes/ResetPassword.jsx'
 import PasswordResetSuccess from './pages/Homes/PasswordResetSuccess.jsx'
 import Settings from './pages/Homes/Settings.jsx'
 import AddRecipe from "./pages/AddRecipe";
-import MyRecipes from "./pages/MyRecipes.jsx";
 import EditRecipe from "./pages/EditRecipe.jsx";
 import ProfileComplete from "./pages/ProfileComplete.jsx";
 import Profile from './pages/Homes/profile.jsx';
@@ -64,10 +63,6 @@ const router = createBrowserRouter([
           path : "/addRecipe",
           element : <AddRecipe/>
         
-        },
-        {
-          path : "/my-recipes",
-          element : <MyRecipes/>
         },
         {
           path : "/edit-recipe/:id",
