@@ -29,6 +29,8 @@ public class DataSeeder implements ApplicationRunner {
     private final UserRepository userRepository;
     private final IngredientRepository ingredientRepository;
     private final PasswordEncoder passwordEncoder;
+    private final LikeRepository likeRepository;
+    private final CommentRepository commentRepository;
 
     @Override
     @Transactional
@@ -38,7 +40,7 @@ public class DataSeeder implements ApplicationRunner {
         seedDiseases();
         seedAllergies();
         seedChefs();
-        seedBulkRecipes(); 
+        seedBulkRecipes();
     }
 
     // ==============================
@@ -323,16 +325,16 @@ public class DataSeeder implements ApplicationRunner {
         }
 
         log.info("Seeding 10 professional chefs...");
-        createChef("Chef Sanjeev", "chef.sanjeev@recipehub.com", "Expert in traditional Indian cuisine.", DietType.NON_VEG, SkillLevel.INTERMEDIATE);
-        createChef("Chef Vikas", "chef.vikas@recipehub.com", "Modern Indian culinary artist.", DietType.VEG, SkillLevel.EXPERT);
-        createChef("Chef Kunal", "chef.kunal@recipehub.com", "Indian celebrity chef and restaurateur.", DietType.NON_VEG, SkillLevel.EXPERT);
-        createChef("Chef Ranveer", "chef.ranveer@recipehub.com", "Culinary storyteller and food explorer.", DietType.VEG, SkillLevel.EXPERT);
-        createChef("Chef Anahita", "chef.anahita@recipehub.com", "Parsi cuisine specialist.", DietType.NON_VEG, SkillLevel.INTERMEDIATE);
-        createChef("Chef Shipra", "chef.shipra@recipehub.com", "Fusion and modern cooking expert.", DietType.VEGAN, SkillLevel.EXPERT);
-        createChef("Chef Ajay", "chef.ajay@recipehub.com", "Master of Indian flavors.", DietType.VEG, SkillLevel.INTERMEDIATE);
-        createChef("Chef Garima", "chef.garima@recipehub.com", "First Indian woman with a Michelin star.", DietType.NO_PREFERENCE, SkillLevel.EXPERT);
-        createChef("Chef Vineet", "chef.vineet@recipehub.com", "Innovator of global Indian cuisine.", DietType.NON_VEG, SkillLevel.EXPERT);
-        createChef("Chef Manish", "chef.manish@recipehub.com", "Pioneer of Indian comfort food.", DietType.VEG, SkillLevel.INTERMEDIATE);
+        createChef("Sanjeev", "chef.sanjeev@recipehub.com", "Expert in traditional Indian cuisine.", DietType.NON_VEG, SkillLevel.INTERMEDIATE);
+        createChef("Vikas", "chef.vikas@recipehub.com", "Modern Indian culinary artist.", DietType.VEG, SkillLevel.EXPERT);
+        createChef("Kunal", "chef.kunal@recipehub.com", "Indian celebrity chef and restaurateur.", DietType.NON_VEG, SkillLevel.EXPERT);
+        createChef("Ranveer", "chef.ranveer@recipehub.com", "Culinary storyteller and food explorer.", DietType.VEG, SkillLevel.EXPERT);
+        createChef("Anahita", "chef.anahita@recipehub.com", "Parsi cuisine specialist.", DietType.NON_VEG, SkillLevel.INTERMEDIATE);
+        createChef("Shipra", "chef.shipra@recipehub.com", "Fusion and modern cooking expert.", DietType.VEGAN, SkillLevel.EXPERT);
+        createChef("Ajay", "chef.ajay@recipehub.com", "Master of Indian flavors.", DietType.VEG, SkillLevel.INTERMEDIATE);
+        createChef("Garima", "chef.garima@recipehub.com", "First Indian woman with a Michelin star.", DietType.NO_PREFERENCE, SkillLevel.EXPERT);
+        createChef("Vineet", "chef.vineet@recipehub.com", "Innovator of global Indian cuisine.", DietType.NON_VEG, SkillLevel.EXPERT);
+        createChef("Manish", "chef.manish@recipehub.com", "Pioneer of Indian comfort food.", DietType.VEG, SkillLevel.INTERMEDIATE);
     }
 
     private User createChef(String name, String email, String bio, DietType dietType, SkillLevel skillLevel) {
@@ -345,6 +347,7 @@ public class DataSeeder implements ApplicationRunner {
         chef.setBio(bio);
         chef.setDietType(dietType);
         chef.setSkillLevel(skillLevel);
+        // Profile photo is optional - frontend will use general-profile-pic.png as default
         return userRepository.save(chef);
     }
 
