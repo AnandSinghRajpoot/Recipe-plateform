@@ -16,4 +16,6 @@ public interface AuthService {
     String completeProfile(com.recipeplatform.dto.auth.ProfileCompletionRequest request);
 
     String updateProfilePhoto(MultipartFile profilePhoto);
+
+    User getUserById(Long id);
 }
