@@ -247,7 +247,7 @@ public class DataSeeder implements ApplicationRunner {
         if (totalTime <= 20) return Difficulty.EASY;
         if (totalTime <= 40) return Difficulty.MEDIUM;
         if (totalTime <= 60) return Difficulty.HARD;
-        return Difficulty.EXPERT;
+        return Difficulty.HARD;
     }
 
     private DietType determineDietType(String slug) {
