@@ -21,15 +21,12 @@ const Signup = () => {
     instagramLink: "",
     youtubeLink: "",
     websiteLink: "",
-    contentIntent: "RECIPE_SHARING",
-    profilePhoto: ""
+    contentIntent: "RECIPE_SHARING"
   });
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const [profileImage, setProfileImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,16 +35,6 @@ const Signup = () => {
       setFormData(prev => ({ ...prev, role: 'CHEF' }));
     }
   }, [searchParams]);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfileImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -126,10 +113,6 @@ const Signup = () => {
     const data = new FormData();
     const jsonRequest = new Blob([JSON.stringify(formData)], { type: 'application/json' });
     data.append('request', jsonRequest);
-
-    if (profileImage) {
-      data.append('profilePhoto', profileImage);
-    }
 
     try {
       await apiClient.post("/auth/register", data, {
@@ -258,46 +241,20 @@ const Signup = () => {
               </div>
             </div>
 
-            <AnimatePresence mode="wait">
-              {errors.form && (
-                <motion.div 
-                   initial={{ opacity: 0, scale: 0.95 }}
-                   animate={{ opacity: 1, scale: 1 }}
-                   exit={{ opacity: 0, scale: 0.95 }}
-                   className="mb-8 p-4 bg-error-container text-on-error-container rounded-2xl text-center font-black border border-error/10 text-xs"
-                >
-                  {errors.form}
-                </motion.div>
-              )}
-            </AnimatePresence>
+<AnimatePresence mode="wait">
+                {errors.form && (
+                  <motion.div 
+                     initial={{ opacity: 0, scale: 0.95 }}
+                     animate={{ opacity: 1, scale: 1 }}
+                     exit={{ opacity: 0, scale: 0.95 }}
+                     className="mb-8 p-4 bg-error-container text-on-error-container rounded-2xl text-center font-black border border-error/10 text-xs"
+                  >
+                    {errors.form}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            <form className="space-y-8" onSubmit={handleSubmit}>
-              {/* Photo Upload - Chef Exclusive */}
-              {formData.role === 'CHEF' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex flex-col items-center gap-4 mb-10"
-                >
-                  <div className="relative group">
-                    <div className="w-24 h-24 rounded-3xl vitality-gradient flex items-center justify-center p-0.5 shadow-lg overflow-hidden transition-all group-hover:rotate-2 group-hover:scale-105">
-                      <div className="w-full h-full rounded-[1.3rem] bg-white flex items-center justify-center overflow-hidden">
-                        {imagePreview ? (
-                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="material-symbols-outlined text-4xl text-outline-variant">account_circle</span>
-                        )}
-                      </div>
-                    </div>
-                    <label className="absolute -bottom-1 -right-1 w-9 h-9 rounded-2xl bg-white shadow-xl border border-outline-variant/10 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-colors">
-                      <input type="file" className="hidden" onChange={handleFileChange} />
-                      <span className="material-symbols-outlined text-lg">add_a_photo</span>
-                    </label>
-                  </div>
-                  <p className="text-[9px] uppercase font-black tracking-widest text-on-surface-variant opacity-60">Identity Frame</p>
-                </motion.div>
-              )}
-
+              <form className="space-y-8" onSubmit={handleSubmit}>
               {/* Standard Identity Controls */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2 col-span-2">

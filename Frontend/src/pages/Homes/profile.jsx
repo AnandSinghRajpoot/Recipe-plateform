@@ -8,6 +8,7 @@ import SavedRecipesTab from "../product/SavedRecipesTab.jsx";
 import CollectionsTab from "../product/CollectionsTab.jsx";
 import { resolveImageUrl, handleImageError } from "../../utils/imageUtils";
 import { toast } from "react-hot-toast";
+import generalProfilePic from "../../assets/general-profile-pic.png";
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);
@@ -159,7 +160,7 @@ const Profile = () => {
                   onClick={handlePhotoClick}
                 >
                     <img 
-                        src={profile.profilePhoto ? resolveImageUrl(profile.profilePhoto) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`} 
+                        src={profile.profilePhoto ? resolveImageUrl(profile.profilePhoto) : generalProfilePic} 
                         alt="Profile" 
                         className={`w-full h-full object-cover transition-all duration-500 ${uploading ? 'opacity-40 grayscale' : 'group-hover/avatar:scale-110'}`}
                     />

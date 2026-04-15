@@ -1,11 +1,12 @@
 import React from 'react'
 import {useState,useEffect} from 'react'
 import { IoSearchOutline } from "react-icons/io5";
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios';
 import HorizontalCard from '../components/Headers/HorizontalCard';
 
 const Search = () => {
+    const navigate = useNavigate();
     const [query, setQuery] = useState('')
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -51,6 +52,14 @@ const Search = () => {
     return (
         <div className='bg-gray-50 min-h-screen px-6 lg:px-12 py-20'>
             <div className="max-w-6xl mx-auto">
+                <button 
+                    onClick={() => navigate('/')}
+                    className="flex items-center gap-2 text-secondary hover:text-primary transition-colors mb-4"
+                >
+                    <span className="material-symbols-outlined">arrow_back</span>
+                    <span className="text-sm font-bold">Back to Home</span>
+                </button>
+
                 <h1 className="text-center text-4xl py-10 font-bold text-secondary sm:text-6xl sm:leading-relaxed">
                     Search <span className="text-orange-500">Recipes</span>
                 </h1>
