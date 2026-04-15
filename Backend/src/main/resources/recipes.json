@@ -510,7 +510,7 @@
     "title": "Hyderabadi Haleem",
     "description": "Thick wheat and meat stew from Hyderabad.",
     "ingredients": ["500g mutton", "1 cup wheat", "2 onions", "1 cup yogurt", "Ginger-garlic", "Whole spices", "Ghee", "Mint"],
-    "instruction": ["Soak wheat overnight.", "Pressure cook wheat until soft.", "Cook mutton until tender.", "Mash wheat and add to meat.", "Add yogurt and spices.", "Simmer for hours until thick.", "Serve with rumali roti."],
+    "instructions": ["Soak wheat overnight.", "Pressure cook wheat until soft.", "Cook mutton until tender.", "Mash wheat and add to meat.", "Add yogurt and spices.", "Simmer for hours until thick.", "Serve with rumali roti."],
     "prepTime": 30,
     "cookTime": 180,
     "servings": 6,

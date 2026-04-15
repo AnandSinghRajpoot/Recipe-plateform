@@ -11,9 +11,9 @@ spring:
       max-file-size: 2MB
 
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/recipehub?createDatabaseIfNotExist=true}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/recipe}
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:root}
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -29,8 +29,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${email}
-    password: ${email_password}
+    username: ${EMAIL:}
+    password: ${EMAIL_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -56,7 +56,7 @@ logging:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:yourSecretKeyForJWTTokenMustBe256BitsLong!}
+    secret: ${JWT_SECRET:}
     expiration: ${JWT_EXPIRATION:86400000}
 
   file-upload:
