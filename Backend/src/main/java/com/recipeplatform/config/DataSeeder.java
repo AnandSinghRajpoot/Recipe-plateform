@@ -1,5 +1,6 @@
 package com.recipeplatform.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recipeplatform.domain.*;
 import com.recipeplatform.domain.enums.*;
 import com.recipeplatform.repository.*;
@@ -7,10 +8,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -128,11 +131,9 @@ public class DataSeeder implements ApplicationRunner {
     }
 
     private void seedBulkRecipes() {
-        // Run migrations first to prevent Enum constant errors if database is dirty
         userRepository.migrateVegetarianToVeg();
         userRepository.migrateRecipeVegetarianToVeg();
 
-        // If we have significantly fewer or "stale" recipes, we re-seed
         if (recipeRepository.count() == 85) {
             log.info("Bulk recipes already seeded — skipping.");
             return;
@@ -148,95 +149,117 @@ public class DataSeeder implements ApplicationRunner {
             return;
         }
 
-        // List of 85 slugs that match static/images
-        String[] slugs = {
-            "aloo-gobi", "apple-pie", "avocado-toast", "baingan-bharta", "brownies", "burritos", "butter-chicken", 
-            "caesar-salad", "cheesecake", "chicken-65", "chicken-biryani", "chicken-curry", "chicken-fried-rice", 
-            "chicken-manchurian", "chicken-shawarma", "chicken-tikka-masala", "chocolate-chip-cookies", "churros", 
-            "dal-makhani", "dal-tadka", "dhokla", "double-patty-cheese-burger", "egg-benedict", "enchiladas", 
-            "falafel", "fish-and-chips", "fish-curry", "french-fries", "french-toast", "fruit-salad", "garlic-naan", 
-            "gelato", "gobi-manchurian", "greek-salad", "green-thai-curry", "grilled-salmon", "gulab-jamun", 
-            "hakka-noodles", "hummus", "hyderabadi-haleem", "idli-sambar", "jalebi", "jeera-rice", "kadai-paneer", 
-            "kung-pao-chicken", "lassi", "lobster-bisque", "macarons", "malai-kofta", "margherita-pizza", 
-            "masala-chai", "masala-dosa", "masala-omelette", "methi-thepla", "miso-soup", "mutton-biryani", 
-            "nachos-with-cheese", "oatmeal-with-berries", "pad-thai", "palak-paneer", "pancakes", "paneer-65", 
-            "paneer-butter-masala", "pani-puri", "pasta-alfredo", "pasta-carbonara", "pav-bhaji", "pepperoni-pizza", 
-            "quesadillas", "quinoa-salad", "rasgulla", "samosa", "scrambled-eggs", "shakshuka", "sorbet", 
-            "spring-rolls", "sushi-roll", "tacos", "tandoori-chicken", "tiramisu", "vada-pav", "veg-biryani", 
-            "veg-burger", "veg-fried-rice", "waffles"
-        };
+        // Load recipe data from JSON
+        Map<String, RecipeData> recipeDataMap = loadRecipeData();
+        if (recipeDataMap.isEmpty()) {
+            log.error("No recipe data found in JSON file!");
+            return;
+        }
 
         List<Recipe> bulkRecipes = new ArrayList<>();
-        Random rand = new Random();
+        int index = 0;
+        
+        for (Map.Entry<String, RecipeData> entry : recipeDataMap.entrySet()) {
+            RecipeData data = entry.getValue();
+            User assignedChef = chefs.get(index % chefs.size());
 
-        for (int i = 0; i < slugs.length; i++) {
-            String slug = slugs[i];
-            String title = capitalizeSlug(slug);
-            User assignedChef = chefs.get(i % chefs.size());
+            DietType diet = determineDietType(entry.getKey());
+            CuisineType cuisine = determineCuisineType(entry.getKey());
+            MealType meal = determineMealType(entry.getKey());
+            Difficulty difficulty = determineDifficulty(data.getPrepTime(), data.getCookTime());
 
-            // Determine DietType and CuisineType based on keywords
-            DietType diet = determineDietType(slug);
-            CuisineType cuisine = determineCuisineType(slug);
-            MealType meal = determineMealType(slug, rand);
+            Recipe r = new Recipe();
+            r.setUser(assignedChef);
+            r.setTitle(data.getTitle());
+            r.setDescription(data.getDescription());
+            r.setInstructions(String.join("\n", data.getInstructions()));
+            r.setDietType(diet);
+            r.setMealType(meal);
+            r.setCuisineType(cuisine);
+            r.setPrepTime(data.getPrepTime());
+            r.setCookTime(data.getCookTime());
+            r.setServings(data.getServings());
+            r.setCalories(data.getCalories());
+            r.setProtein(data.getProtein());
+            r.setCarbs(data.getCarbs());
+            r.setFat(data.getFat());
+            r.setDifficulty(difficulty);
+            r.setIsPublished(true);
+            r.setCoverImageUrl("http://localhost:8080/images/" + entry.getKey() + ".jpg");
 
-            Recipe r = build(assignedChef, title,
-                    "Professional preparation of " + title + ". A favorite among food enthusiasts.",
-                    "1. Prepare and clean all ingredients thoroughly.\n2. Heat the pan and follow precise temperature controls.\n3. Combine ingredients in the specified order to preserve flavors.\n4. Garnish with fresh herbs and serve immediately.",
-                    diet, meal, cuisine,
-                    15 + rand.nextInt(15), 20 + rand.nextInt(40), 2 + rand.nextInt(4),
-                    300.0 + rand.nextInt(500), 10.0 + rand.nextInt(30), 20.0 + rand.nextInt(50), 10.0 + rand.nextInt(30),
-                    new HashSet<>(), new HashSet<>());
-
-            // Add 3-5 dummy ingredients to satisfy the "proper ingredients" request
+            // Add ingredients from JSON
             List<RecipeIngredient> recipeIngredients = new ArrayList<>();
-            String[] baseIngredients = {"Onion", "Tomato", "Garlic", "Ginger", "Salt", "Oil", "Butter", "Pepper"};
-            int ingCount = 3 + rand.nextInt(3);
-            for (int k = 0; k < ingCount; k++) {
-                String ingName = baseIngredients[rand.nextInt(baseIngredients.length)];
+            for (String ingName : data.getIngredients()) {
                 Ingredient ing = ingredientRepository.findByNameIgnoreCase(ingName).orElseGet(() -> {
-                     Ingredient newIng = new Ingredient();
-                     newIng.setName(ingName);
-                     return ingredientRepository.save(newIng);
+                    Ingredient newIng = new Ingredient();
+                    newIng.setName(ingName);
+                    return ingredientRepository.save(newIng);
                 });
                 RecipeIngredient ri = new RecipeIngredient();
                 ri.setRecipe(r);
                 ri.setIngredient(ing);
-                ri.setQuantity((double)(1 + rand.nextInt(3)));
+                ri.setQuantity(1.0);
                 ri.setUnit(MeasureUnit.PIECE);
                 recipeIngredients.add(ri);
             }
             r.setIngredients(recipeIngredients);
 
-            // Accurate image mapping
-            r.setCoverImageUrl("http://localhost:8080/images/" + slug + ".jpg");
-            
-            // Randomly assign difficulty
-            r.setDifficulty(Difficulty.values()[rand.nextInt(Difficulty.values().length)]);
-            
             bulkRecipes.add(r);
+            index++;
         }
 
         recipeRepository.saveAll(bulkRecipes);
-        log.info("Seeded 85 high-quality recipes assigned to 10 chefs.");
+        log.info("Seeded {} high-quality recipes assigned to {} chefs.", bulkRecipes.size(), chefs.size());
     }
 
-    private String capitalizeSlug(String slug) {
-        String[] parts = slug.split("-");
-        StringBuilder sb = new StringBuilder();
-        for (String part : parts) {
-            sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1)).append(" ");
+    @SuppressWarnings("unchecked")
+    private Map<String, RecipeData> loadRecipeData() {
+        Map<String, RecipeData> map = new HashMap<>();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> rawData = mapper.readValue(new ClassPathResource("recipes.json").getInputStream(), Map.class);
+            for (Map.Entry<String, Object> entry : rawData.entrySet()) {
+                Map<String, Object> val = (Map<String, Object>) entry.getValue();
+                RecipeData rd = new RecipeData();
+                rd.setSlug(entry.getKey());
+                rd.setTitle((String) val.get("title"));
+                rd.setDescription((String) val.get("description"));
+                rd.setIngredients((List<String>) val.get("ingredients"));
+                rd.setInstructions((List<String>) val.get("instructions"));
+                rd.setPrepTime((Integer) val.get("prepTime"));
+                rd.setCookTime((Integer) val.get("cookTime"));
+                rd.setServings((Integer) val.get("servings"));
+                rd.setCalories(((Number) val.get("calories")).doubleValue());
+                rd.setProtein(((Number) val.get("protein")).doubleValue());
+                rd.setCarbs(((Number) val.get("carbs")).doubleValue());
+                rd.setFat(((Number) val.get("fat")).doubleValue());
+                map.put(entry.getKey(), rd);
+            }
+            log.info("Loaded {} recipes from JSON", map.size());
+        } catch (IOException e) {
+            log.error("Failed to load recipes.json: {}", e.getMessage());
         }
-        return sb.toString().trim();
+        return map;
+    }
+
+    private Difficulty determineDifficulty(int prepTime, int cookTime) {
+        int totalTime = prepTime + cookTime;
+        if (totalTime <= 20) return Difficulty.EASY;
+        if (totalTime <= 40) return Difficulty.MEDIUM;
+        if (totalTime <= 60) return Difficulty.HARD;
+        return Difficulty.EXPERT;
     }
 
     private DietType determineDietType(String slug) {
         if (slug.contains("chicken") || slug.contains("mutton") || slug.contains("fish") || 
             slug.contains("pork") || slug.contains("steak") || slug.contains("salmon") || 
             slug.contains("shrimp") || slug.contains("seafood") || slug.contains("lobster") ||
-            slug.contains("burger")) return DietType.NON_VEG;
+            slug.contains("burger") || slug.contains("biryani") || slug.contains("curry") ||
+            slug.contains("lamb") || slug.contains("bacon") || slug.contains("pepperoni")) return DietType.NON_VEG;
         
         if (slug.contains("salad") || slug.contains("toast") || slug.contains("falafel") || 
-            slug.contains("hummus") || slug.contains("dosa") || slug.contains("sorbet")) return DietType.VEGAN;
+            slug.contains("hummus") || slug.contains("dosa") || slug.contains("sorbet") ||
+            slug.contains("quinoa")) return DietType.VEGAN;
             
         return DietType.VEG;
     }
@@ -248,75 +271,43 @@ public class DataSeeder implements ApplicationRunner {
             slug.contains("puri") || slug.contains("samosa") || slug.contains("tandoori") ||
             slug.contains("dhokla") || slug.contains("jalebi") || slug.contains("gulab") ||
             slug.contains("rasgulla") || slug.contains("kofta") || slug.contains("bharta") ||
-            slug.contains("haleem")) return CuisineType.INDIAN;
+            slug.contains("haleem") || slug.contains("idli") || slug.contains("vada") ||
+            slug.contains("thepla") || slug.contains("kulfi")) return CuisineType.INDIAN;
             
-        if (slug.contains("pizza") || slug.contains("pasta")) return CuisineType.ITALIAN;
+        if (slug.contains("pizza") || slug.contains("pasta") || slug.contains("risotto") ||
+            slug.contains("gelato") || slug.contains("lasagna") || slug.contains("carbonara") ||
+            slug.contains("alfredo")) return CuisineType.ITALIAN;
         if (slug.contains("tacos") || slug.contains("burritos") || slug.contains("nachos") || 
-            slug.contains("enchiladas") || slug.contains("quesadillas")) return CuisineType.MEXICAN;
+            slug.contains("enchiladas") || slug.contains("quesadillas") ||
+            slug.contains("guacamole")) return CuisineType.MEXICAN;
         if (slug.contains("noodles") || slug.contains("fried-rice") || slug.contains("manchurian") ||
             slug.contains("kung-pao") || slug.contains("spring-rolls") || slug.contains("miso") ||
-            slug.contains("sushi") || slug.contains("thai")) return CuisineType.ASIAN;
+            slug.contains("sushi") || slug.contains("pad-thai") || slug.contains("thai") ||
+            slug.contains("ramen")) return CuisineType.ASIAN;
         if (slug.contains("hummus") || slug.contains("falafel") || slug.contains("shawarma") ||
-            slug.contains("shakshuka") || slug.contains("greek")) return CuisineType.CONTINENTAL; 
+            slug.contains("shakshuka") || slug.contains("greek") || slug.contains("tabbouleh")) return CuisineType.CONTINENTAL; 
             
         return CuisineType.AMERICAN;
     }
 
-    private MealType determineMealType(String slug, Random rand) {
+    private MealType determineMealType(String slug) {
         if (slug.contains("breakfast") || slug.contains("egg") || slug.contains("pancakes") || 
-            slug.contains("waffles") || slug.contains("toast") || slug.contains("oatmeal")) return MealType.BREAKFAST;
-        if (slug.contains("salad") || slug.contains("sandwich") || slug.contains("dosa")) return MealType.LUNCH;
+            slug.contains("waffles") || slug.contains("toast") || slug.contains("oatmeal") ||
+            slug.contains("omelette") || slug.contains("french-toast")) return MealType.BREAKFAST;
+        if (slug.contains("salad") || slug.contains("sandwich") || slug.contains("dosa") ||
+            slug.contains("wrap") || slug.contains("burger") || slug.contains("sub")) return MealType.LUNCH;
         if (slug.contains("samosa") || slug.contains("fries") || slug.contains("snack") || 
-            slug.contains("spring-rolls") || slug.contains("nachos")) return MealType.SNACK;
-        if (slug.contains("chai") || slug.contains("lassi") || slug.contains("drink")) return MealType.BEVERAGE;
+            slug.contains("spring-rolls") || slug.contains("nachos") || slug.contains("chips") ||
+            slug.contains("chaat")) return MealType.SNACK;
+        if (slug.contains("chai") || slug.contains("lassi") || slug.contains("smoothie") ||
+            slug.contains("coffee") || slug.contains("tea")) return MealType.BEVERAGE;
         if (slug.contains("pie") || slug.contains("cake") || slug.contains("brownie") || 
             slug.contains("cookie") || slug.contains("gelato") || slug.contains("macarons") ||
             slug.contains("sorbet") || slug.contains("tiramisu") || slug.contains("churros") ||
-            slug.contains("gulab") || slug.contains("jalebi")) return MealType.DESSERT;
+            slug.contains("gulab") || slug.contains("jalebi") || slug.contains("rasgulla") ||
+            slug.contains("cheesecake") || slug.contains("waffle") || slug.contains("muffin")) return MealType.DESSERT;
             
-        return rand.nextBoolean() ? MealType.LUNCH : MealType.DINNER;
-    }
-
-    // ---- Builder helpers ----
-
-    private Recipe build(User chef, String title, String description, String instructions,
-            DietType dietType, MealType mealType, CuisineType cuisineType,
-            int prepTime, int cookTime, int servings, double calories,
-            double protein, double carbs, double fat,
-            Set<Allergy> allergens, Set<Disease> diseases) {
-        Recipe r = new Recipe();
-        r.setUser(chef);
-        r.setTitle(title);
-        r.setDescription(description);
-        r.setInstructions(instructions);
-        r.setDietType(dietType);
-        r.setMealType(mealType);
-        r.setCuisineType(cuisineType);
-        r.setPrepTime(prepTime);
-        r.setCookTime(cookTime);
-        r.setServings(servings);
-        r.setCalories(calories);
-        r.setProtein(protein);
-        r.setCarbs(carbs);
-        r.setFat(fat);
-        r.setContainsAllergens(new HashSet<>(allergens));
-        r.setSafeForDiseases(new HashSet<>(diseases));
-        r.setIsPublished(true);
-        return r;
-    }
-
-    @SafeVarargs
-    private Set<Allergy> allergenSet(Optional<Allergy>... opts) {
-        Set<Allergy> set = new HashSet<>();
-        for (Optional<Allergy> opt : opts) opt.ifPresent(set::add);
-        return set;
-    }
-
-    @SafeVarargs
-    private Set<Disease> diseaseSet(Optional<Disease>... opts) {
-        Set<Disease> set = new HashSet<>();
-        for (Optional<Disease> opt : opts) opt.ifPresent(set::add);
-        return set;
+        return MealType.DINNER;
     }
 
     private void seedChefs() {
@@ -347,7 +338,6 @@ public class DataSeeder implements ApplicationRunner {
         chef.setBio(bio);
         chef.setDietType(dietType);
         chef.setSkillLevel(skillLevel);
-        // Profile photo is optional - frontend will use general-profile-pic.png as default
         return userRepository.save(chef);
     }
 
@@ -386,5 +376,46 @@ public class DataSeeder implements ApplicationRunner {
             }
         }
         log.info("Seeded basic ingredients.");
+    }
+
+    // Inner class for JSON mapping
+    static class RecipeData {
+        private String slug;
+        private String title;
+        private String description;
+        private List<String> ingredients;
+        private List<String> instructions;
+        private int prepTime;
+        private int cookTime;
+        private int servings;
+        private double calories;
+        private double protein;
+        private double carbs;
+        private double fat;
+
+        public String getSlug() { return slug; }
+        public void setSlug(String slug) { this.slug = slug; }
+        public String getTitle() { return title; }
+        public void setTitle(String title) { this.title = title; }
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+        public List<String> getIngredients() { return ingredients; }
+        public void setIngredients(List<String> ingredients) { this.ingredients = ingredients; }
+        public List<String> getInstructions() { return instructions; }
+        public void setInstructions(List<String> instructions) { this.instructions = instructions; }
+        public int getPrepTime() { return prepTime; }
+        public void setPrepTime(int prepTime) { this.prepTime = prepTime; }
+        public int getCookTime() { return cookTime; }
+        public void setCookTime(int cookTime) { this.cookTime = cookTime; }
+        public int getServings() { return servings; }
+        public void setServings(int servings) { this.servings = servings; }
+        public double getCalories() { return calories; }
+        public void setCalories(double calories) { this.calories = calories; }
+        public double getProtein() { return protein; }
+        public void setProtein(double protein) { this.protein = protein; }
+        public double getCarbs() { return carbs; }
+        public void setCarbs(double carbs) { this.carbs = carbs; }
+        public double getFat() { return fat; }
+        public void setFat(double fat) { this.fat = fat; }
     }
 }
