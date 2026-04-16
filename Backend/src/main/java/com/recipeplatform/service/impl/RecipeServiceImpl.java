@@ -149,9 +149,15 @@ public class RecipeServiceImpl implements RecipeService {
         // Populate comments
         dto.setComments(commentRepository.findByRecipeIdOrderByCreatedAtDesc(id).stream()
             .map(c -> {
-                AuthorDto author = new AuthorDto(c.getUser().getId(), c.getUser().getName(), 
+                AuthorDto author = new AuthorDto(c.getUser().getId(), c.getUser().getName(),
                     recipeMapper.resolveUrl(c.getUser().getProfilePhoto()), c.getUser().getRole());
-                return new CommentResponseDto(c.getId(), c.getContent(), author, c.getCreatedAt());
+                return CommentResponseDto.builder()
+                    .id(c.getId())
+                    .content(c.getContent())
+                    .author(author)
+                    .createdAt(c.getCreatedAt())
+                    .rating(c.getRating())
+                    .build();
             })
             .collect(Collectors.toList()));
             
@@ -192,7 +198,8 @@ public class RecipeServiceImpl implements RecipeService {
             CuisineType cuisineType,
             Double minCalories,
             Double maxCalories,
-            Long authorId) {
+            Long authorId,
+            Integer maxPrepTime) {
 
         // If authorId is provided, fetch recipes by that author directly
         if (authorId != null) {
@@ -203,7 +210,7 @@ public class RecipeServiceImpl implements RecipeService {
         }
 
         Specification<Recipe> spec = RecipeSpecification.filterRecipes(
-                query, difficulty, dietType, mealType, cuisineType, minCalories, maxCalories);
+                query, difficulty, dietType, mealType, cuisineType, minCalories, maxCalories, maxPrepTime);
 
         List<Recipe> recipes = recipeRepository.findAll(spec);
         List<RecipeResponseDTO> dtos = recipeMapper.toResponseDTOList(recipes);
