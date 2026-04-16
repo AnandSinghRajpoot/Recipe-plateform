@@ -3,7 +3,7 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { SkeletonProfile, SkeletonCard } from "../../components/Skeleton";
 import { FadeUp } from "../../hooks/useAnimations.jsx";
-import MealPlanner from "../product/MealPlanner.jsx";
+import MealPlannerLanding from "../product/MealPlannerLanding.jsx";
 import SavedRecipesTab from "../product/SavedRecipesTab.jsx";
 import CollectionsTab from "../product/CollectionsTab.jsx";
 import { resolveImageUrl, handleImageError } from "../../utils/imageUtils";
@@ -428,7 +428,7 @@ const Profile = () => {
 
         {activeTab === 'planner' && (
             <div className="animate-fade-in-up">
-                <MealPlanner />
+                <MealPlannerLanding isTab={true} />
             </div>
         )}
 

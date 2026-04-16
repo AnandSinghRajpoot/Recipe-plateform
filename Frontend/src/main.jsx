@@ -25,6 +25,7 @@ import ProfileComplete from "./pages/ProfileComplete.jsx";
 import Profile from './pages/Homes/profile.jsx';
 import ChefDashboard from './pages/ChefDashboard.jsx';
 import MealPlanner from './pages/product/MealPlanner.jsx';
+import MealPlannerLanding from './pages/product/MealPlannerLanding.jsx';
 import ChefProfile from './pages/ChefProfile.jsx';
 
 
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
         },
         {
           path : "/meal-planner",
+          element : <MealPlannerLanding/>
+        },
+        {
+          path : "/meal-planner/:planId",
           element : <MealPlanner/>
         },
         {
