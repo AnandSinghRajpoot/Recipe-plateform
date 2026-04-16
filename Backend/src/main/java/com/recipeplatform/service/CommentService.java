@@ -38,13 +38,9 @@ public class CommentService {
             .user(user)
             .recipe(recipe)
             .content(dto.getContent())
-            .rating(dto.getRating())
             .build();
 
         comment = commentRepository.save(comment);
-
-        // Recalculate recipe average rating and review count
-        updateRecipeRating(recipe);
 
         return mapToResponseDto(comment);
     }
@@ -62,16 +58,12 @@ public class CommentService {
             .orElseThrow(() -> new ResourceNotFoundException("Comment", "id", commentId));
 
         User user = currentUser.getCurrentUser();
-        if (!comment.getUser().getId().equals(user.getId()) &&
+        if (!comment.getUser().getId().equals(user.getId()) && 
             !comment.getRecipe().getUser().getId().equals(user.getId())) {
             throw new NotAllowedOperation("Unauthorized to delete this comment");
         }
 
-        Recipe recipe = comment.getRecipe();
         commentRepository.delete(comment);
-
-        // Recalculate recipe average rating and review count
-        updateRecipeRating(recipe);
     }
 
     private CommentResponseDto mapToResponseDto(RecipeComment comment) {
@@ -87,29 +79,6 @@ public class CommentService {
             .content(comment.getContent())
             .author(author)
             .createdAt(comment.getCreatedAt())
-            .rating(comment.getRating())
             .build();
-    }
-
-    private void updateRecipeRating(Recipe recipe) {
-        List<RecipeComment> comments = commentRepository.findByRecipeIdOrderByCreatedAtDesc(recipe.getId());
-        
-        // Filter comments that have ratings
-        List<RecipeComment> ratedComments = comments.stream()
-            .filter(c -> c.getRating() != null && c.getRating() > 0)
-            .collect(Collectors.toList());
-
-        if (ratedComments.isEmpty()) {
-            recipe.setAverageRating(0.0);
-            recipe.setReviewCount(0L);
-        } else {
-            double sum = ratedComments.stream()
-                .mapToInt(RecipeComment::getRating)
-                .sum();
-            recipe.setAverageRating(sum / ratedComments.size());
-            recipe.setReviewCount((long) ratedComments.size());
-        }
-
-        recipeRepository.save(recipe);
     }
 }

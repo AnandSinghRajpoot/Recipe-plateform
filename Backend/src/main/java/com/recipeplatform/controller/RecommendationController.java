@@ -26,17 +26,17 @@ public class RecommendationController {
         Long userId = currentUser.getCurrentUser().getId();
         List<RecipeRecommendationDTO> recommendations = recommendationEngine.getRecommendations(userId, limit);
         return ResponseEntity.ok(
-                new ApiResponse<List<RecipeRecommendationDTO>>("Recommendations generated successfully", recommendations, HttpStatus.OK.value()));
+                new ApiResponse<>("Recommendations generated successfully", recommendations, HttpStatus.OK.value()));
     }
 
-    @GetMapping("/meal-type/{mealType}")
-    public ResponseEntity<ApiResponse<List<RecipeRecommendationDTO>>> getByMealType(
+    @GetMapping("/by-meal-type/{mealType}")
+    public ResponseEntity<ApiResponse<List<RecipeRecommendationDTO>>> getRecommendationsByMealType(
             @PathVariable String mealType,
             @RequestParam(defaultValue = "10") int limit) {
         Long userId = currentUser.getCurrentUser().getId();
         MealType parsedMealType = MealType.valueOf(mealType.toUpperCase());
         List<RecipeRecommendationDTO> recommendations = recommendationEngine.getByMealType(userId, parsedMealType, limit);
         return ResponseEntity.ok(
-                new ApiResponse<List<RecipeRecommendationDTO>>("Dietary specific recommendations generated successfully", recommendations, HttpStatus.OK.value()));
+                new ApiResponse<>("Dietary specific recommendations generated successfully", recommendations, HttpStatus.OK.value()));
     }
 }

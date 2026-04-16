@@ -24,15 +24,15 @@ public class SavedRecipeController {
         Long userId = currentUser.getCurrentUser().getId();
         SavedRecipeDTO saved = savedRecipeService.saveRecipe(userId, recipeId);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<SavedRecipeDTO>("Recipe saved successfully", saved, HttpStatus.CREATED.value()));
+                .body(new ApiResponse<>("Recipe saved successfully", saved, HttpStatus.CREATED.value()));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<SavedRecipeDTO>>> getSavedRecipes() {
+    public ResponseEntity<ApiResponse<List<SavedRecipeDTO>>> getMySavedRecipes() {
         Long userId = currentUser.getCurrentUser().getId();
         List<SavedRecipeDTO> recipes = savedRecipeService.getSavedRecipes(userId);
         return ResponseEntity.ok(
-                new ApiResponse<List<SavedRecipeDTO>>("Saved recipes retrieved", recipes, HttpStatus.OK.value()));
+                new ApiResponse<>("Saved recipes retrieved", recipes, HttpStatus.OK.value()));
     }
 
     @DeleteMapping("/{recipeId}")
@@ -40,6 +40,6 @@ public class SavedRecipeController {
         Long userId = currentUser.getCurrentUser().getId();
         savedRecipeService.removeSavedRecipe(userId, recipeId);
         return ResponseEntity.ok(
-                new ApiResponse<Void>("Recipe removed from saved list", null, HttpStatus.OK.value()));
+                new ApiResponse<>("Recipe removed from saved list", null, HttpStatus.OK.value()));
     }
 }

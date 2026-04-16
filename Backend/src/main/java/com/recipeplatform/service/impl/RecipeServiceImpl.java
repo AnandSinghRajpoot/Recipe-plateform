@@ -149,15 +149,9 @@ public class RecipeServiceImpl implements RecipeService {
         // Populate comments
         dto.setComments(commentRepository.findByRecipeIdOrderByCreatedAtDesc(id).stream()
             .map(c -> {
-                AuthorDto author = new AuthorDto(c.getUser().getId(), c.getUser().getName(),
+                AuthorDto author = new AuthorDto(c.getUser().getId(), c.getUser().getName(), 
                     recipeMapper.resolveUrl(c.getUser().getProfilePhoto()), c.getUser().getRole());
-                return CommentResponseDto.builder()
-                    .id(c.getId())
-                    .content(c.getContent())
-                    .author(author)
-                    .createdAt(c.getCreatedAt())
-                    .rating(c.getRating())
-                    .build();
+                return new CommentResponseDto(c.getId(), c.getContent(), author, c.getCreatedAt());
             })
             .collect(Collectors.toList()));
             

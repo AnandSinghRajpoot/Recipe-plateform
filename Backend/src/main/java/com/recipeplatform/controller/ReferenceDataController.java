@@ -39,7 +39,7 @@ public class ReferenceDataController {
     @GetMapping("/diseases")
     public ResponseEntity<ApiResponse<List<DiseaseDTO>>> getDiseases() {
         return ResponseEntity.ok(
-            new ApiResponse<List<DiseaseDTO>>("Diseases retrieved", diseaseService.getAllDiseases(), HttpStatus.OK.value()));
+            new ApiResponse<>("Diseases retrieved", diseaseService.getAllDiseases(), HttpStatus.OK.value()));
     }
 
     /**
@@ -49,7 +49,7 @@ public class ReferenceDataController {
     @GetMapping("/allergies")
     public ResponseEntity<ApiResponse<List<AllergyDTO>>> getAllergies() {
         return ResponseEntity.ok(
-            new ApiResponse<List<AllergyDTO>>("Allergies retrieved", allergyService.getAllAllergies(), HttpStatus.OK.value()));
+            new ApiResponse<>("Allergies retrieved", allergyService.getAllAllergies(), HttpStatus.OK.value()));
     }
 
     /**
@@ -60,7 +60,7 @@ public class ReferenceDataController {
     public ResponseEntity<ApiResponse<List<String>>> getDietTypes() {
         List<String> values = Arrays.stream(DietType.values()).map(Enum::name).toList();
         return ResponseEntity.ok(
-            new ApiResponse<List<String>>("Diet types retrieved", values, HttpStatus.OK.value()));
+            new ApiResponse<>("Diet types retrieved", values, HttpStatus.OK.value()));
     }
 
     /**
@@ -71,6 +71,6 @@ public class ReferenceDataController {
     public ResponseEntity<ApiResponse<List<String>>> getMealTypes() {
         List<String> values = Arrays.stream(MealType.values()).map(Enum::name).toList();
         return ResponseEntity.ok(
-            new ApiResponse<List<String>>("Meal types retrieved", values, HttpStatus.OK.value()));
+            new ApiResponse<>("Meal types retrieved", values, HttpStatus.OK.value()));
     }
 }

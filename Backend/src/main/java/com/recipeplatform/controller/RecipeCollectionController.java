@@ -27,15 +27,15 @@ public class RecipeCollectionController {
         Long userId = currentUser.getCurrentUser().getId();
         RecipeCollectionDTO collection = collectionService.createCollection(userId, name, description);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<RecipeCollectionDTO>("Collection created", collection, HttpStatus.CREATED.value()));
+                .body(new ApiResponse<>("Collection created", collection, HttpStatus.CREATED.value()));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<RecipeCollectionDTO>>> getUserCollections() {
+    public ResponseEntity<ApiResponse<List<RecipeCollectionDTO>>> getMyCollections() {
         Long userId = currentUser.getCurrentUser().getId();
         List<RecipeCollectionDTO> collections = collectionService.getUserCollections(userId);
         return ResponseEntity.ok(
-                new ApiResponse<List<RecipeCollectionDTO>>("Collections retrieved", collections, HttpStatus.OK.value()));
+                new ApiResponse<>("Collections retrieved", collections, HttpStatus.OK.value()));
     }
 
     @PostMapping("/{collectionId}/recipes/{recipeId}")
@@ -45,7 +45,7 @@ public class RecipeCollectionController {
         Long userId = currentUser.getCurrentUser().getId();
         RecipeCollectionDTO updated = collectionService.addRecipeToCollection(collectionId, recipeId, userId);
         return ResponseEntity.ok(
-                new ApiResponse<RecipeCollectionDTO>("Recipe added to collection", updated, HttpStatus.OK.value()));
+                new ApiResponse<>("Recipe added to collection", updated, HttpStatus.OK.value()));
     }
 
     @DeleteMapping("/{collectionId}")
@@ -53,28 +53,29 @@ public class RecipeCollectionController {
         Long userId = currentUser.getCurrentUser().getId();
         collectionService.deleteCollection(collectionId, userId);
         return ResponseEntity.ok(
-                new ApiResponse<Void>("Collection deleted", null, HttpStatus.OK.value()));
+                new ApiResponse<>("Collection deleted", null, HttpStatus.OK.value()));
     }
 
-    @PutMapping("/{collectionId}/recipes/{recipeId}/move/{targetCollectionId}")
+    @PutMapping("/{collectionId}/recipes/{recipeId}/move")
     public ResponseEntity<ApiResponse<RecipeCollectionDTO>> moveRecipeToCollection(
             @PathVariable Long collectionId,
-            @PathVariable Long targetCollectionId,
-            @PathVariable Long recipeId) {
+            @PathVariable Long recipeId,
+            @RequestBody Map<String, Long> body) {
+        Long targetCollectionId = body.get("targetCollectionId");
         Long userId = currentUser.getCurrentUser().getId();
         RecipeCollectionDTO updated = collectionService.moveRecipeToCollection(
                 collectionId, targetCollectionId, recipeId, userId);
         return ResponseEntity.ok(
-                new ApiResponse<RecipeCollectionDTO>("Recipe moved to collection", updated, HttpStatus.OK.value()));
+                new ApiResponse<>("Recipe moved to collection", updated, HttpStatus.OK.value()));
     }
 
-    @PostMapping("/saved/{collectionId}/recipes/{recipeId}")
+    @PostMapping("/{collectionId}/recipes/{recipeId}/add")
     public ResponseEntity<ApiResponse<RecipeCollectionDTO>> addSavedRecipeToCollection(
             @PathVariable Long collectionId,
             @PathVariable Long recipeId) {
         Long userId = currentUser.getCurrentUser().getId();
         RecipeCollectionDTO updated = collectionService.addSavedRecipeToCollection(collectionId, recipeId, userId);
         return ResponseEntity.ok(
-                new ApiResponse<RecipeCollectionDTO>("Recipe added to collection", updated, HttpStatus.OK.value()));
+                new ApiResponse<>("Recipe added to collection", updated, HttpStatus.OK.value()));
     }
 }

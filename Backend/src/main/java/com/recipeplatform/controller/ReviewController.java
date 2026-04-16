@@ -26,7 +26,7 @@ public class ReviewController {
     @GetMapping("/recipe/{recipeId}")
     public ResponseEntity<ApiResponse<List<ReviewResponseDTO>>> getReviewsForRecipe(@PathVariable Long recipeId) {
         List<ReviewResponseDTO> reviews = reviewService.getReviewsForRecipe(recipeId);
-        return ResponseEntity.ok(new ApiResponse<List<ReviewResponseDTO>>("Reviews retrieved successfully", reviews, HttpStatus.OK.value()));
+        return ResponseEntity.ok(new ApiResponse<>("Reviews retrieved successfully", reviews, HttpStatus.OK.value()));
     }
 
     // Get current user's review for a recipe
@@ -35,9 +35,9 @@ public class ReviewController {
         Long userId = currentUser.getCurrentUser().getId();
         ReviewResponseDTO review = reviewService.getUserReviewForRecipe(recipeId, userId);
         if (review == null) {
-            return ResponseEntity.ok(new ApiResponse<ReviewResponseDTO>("No review found", null, HttpStatus.OK.value()));
+            return ResponseEntity.ok(new ApiResponse<>("No review found", null, HttpStatus.OK.value()));
         }
-        return ResponseEntity.ok(new ApiResponse<ReviewResponseDTO>("Review retrieved successfully", review, HttpStatus.OK.value()));
+        return ResponseEntity.ok(new ApiResponse<>("Review retrieved successfully", review, HttpStatus.OK.value()));
     }
 
     // Create or update review
@@ -48,7 +48,7 @@ public class ReviewController {
         Long userId = currentUser.getCurrentUser().getId();
         ReviewResponseDTO review = reviewService.createOrUpdateReview(recipeId, userId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<ReviewResponseDTO>("Review submitted successfully", review, HttpStatus.CREATED.value()));
+                .body(new ApiResponse<>("Review submitted successfully", review, HttpStatus.CREATED.value()));
     }
 
     // Delete review
@@ -56,7 +56,7 @@ public class ReviewController {
     public ResponseEntity<ApiResponse<Void>> deleteReview(@PathVariable Long reviewId) {
         Long userId = currentUser.getCurrentUser().getId();
         reviewService.deleteReview(reviewId, userId);
-        return ResponseEntity.ok(new ApiResponse<Void>("Review deleted successfully", null, HttpStatus.OK.value()));
+        return ResponseEntity.ok(new ApiResponse<>("Review deleted successfully", null, HttpStatus.OK.value()));
     }
 
     // Get rating stats for a recipe
@@ -66,6 +66,6 @@ public class ReviewController {
         long reviewCount = reviewService.getReviewCount(recipeId);
 
         RatingStatsDTO stats = new RatingStatsDTO(averageRating, reviewCount);
-        return ResponseEntity.ok(new ApiResponse<RatingStatsDTO>("Rating stats retrieved", stats, HttpStatus.OK.value()));
+        return ResponseEntity.ok(new ApiResponse<>("Rating stats retrieved", stats, HttpStatus.OK.value()));
     }
 }

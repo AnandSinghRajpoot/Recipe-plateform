@@ -30,9 +30,6 @@ public class RecipeComment {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    @Column(name = "rating")
-    private Integer rating;
-
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
