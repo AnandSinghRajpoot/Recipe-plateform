@@ -23,18 +23,18 @@ public class CommentController {
             @PathVariable Long recipeId,
             @Valid @RequestBody CommentRequestDto dto) {
         CommentResponseDto comment = commentService.addComment(recipeId, dto);
-        return ResponseEntity.ok(new ApiResponse<>("Comment added", comment, 201));
+        return ResponseEntity.ok(new ApiResponse<CommentResponseDto>("Comment added", comment, 201));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<CommentResponseDto>>> getComments(@PathVariable Long recipeId) {
         List<CommentResponseDto> comments = commentService.getCommentsByRecipe(recipeId);
-        return ResponseEntity.ok(new ApiResponse<>("Comments fetched", comments, 200));
+        return ResponseEntity.ok(new ApiResponse<List<CommentResponseDto>>("Comments fetched", comments, 200));
     }
 
     @DeleteMapping("/{commentId}")
     public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable Long commentId) {
         commentService.deleteComment(commentId);
-        return ResponseEntity.ok(new ApiResponse<>("Comment deleted", null, 200));
+        return ResponseEntity.ok(new ApiResponse<Void>("Comment deleted", null, 200));
     }
 }
