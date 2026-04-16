@@ -121,6 +121,13 @@ public class Recipe {
     @Column(name = "sodium")
     private Double sodium;
 
+    // === Rating Information ===
+    @Column(name = "average_rating")
+    private Double averageRating = 0.0;
+
+    @Column(name = "review_count")
+    private Long reviewCount = 0L;
+
     // Legacy cuisine text field
     @Size(max = 50, message = "Cuisine must not exceed 50 characters")
     @Column(name = "cuisine", length = 50)

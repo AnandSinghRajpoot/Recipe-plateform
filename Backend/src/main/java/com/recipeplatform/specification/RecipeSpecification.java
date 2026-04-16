@@ -7,6 +7,7 @@ import com.recipeplatform.domain.enums.Difficulty;
 import com.recipeplatform.domain.enums.MealType;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Expression;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +20,8 @@ public class RecipeSpecification {
             MealType mealType,
             CuisineType cuisineType,
             Double minCalories,
-            Double maxCalories
+            Double maxCalories,
+            Integer maxPrepTime
     ) {
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -58,6 +60,12 @@ public class RecipeSpecification {
 
             if (maxCalories != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("calories"), maxCalories));
+            }
+
+            if (maxPrepTime != null) {
+                Expression<Integer> prep = criteriaBuilder.coalesce(root.get("prepTime"), 0);
+                Expression<Integer> cook = criteriaBuilder.coalesce(root.get("cookTime"), 0);
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(criteriaBuilder.sum(prep, cook), maxPrepTime));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

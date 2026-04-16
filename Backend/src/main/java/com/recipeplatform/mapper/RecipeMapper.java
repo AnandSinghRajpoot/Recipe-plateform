@@ -33,6 +33,8 @@ public interface RecipeMapper {
     @Mapping(target = "coverImageUrl", source = "coverImageUrl", qualifiedByName = "resolveUrl")
     @Mapping(target = "containsAllergens", qualifiedByName = "mapAllergenNames")
     @Mapping(target = "safeForDiseases", qualifiedByName = "mapDiseaseNames")
+    @Mapping(target = "averageRating", source = "averageRating")
+    @Mapping(target = "reviewCount", source = "reviewCount")
     RecipeResponseDTO toResponseDTO(Recipe recipe);
 
     @Named("resolveUrl")

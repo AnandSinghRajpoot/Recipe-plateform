@@ -17,7 +17,7 @@ public class LikeController {
     public ResponseEntity<ApiResponse<Boolean>> toggleLike(@PathVariable Long recipeId) {
         likeService.toggleLike(recipeId);
         boolean liked = likeService.isLiked(recipeId);
-        return ResponseEntity.ok(new ApiResponse<>(
+        return ResponseEntity.ok(new ApiResponse<Boolean>(
             liked ? "Recipe liked" : "Recipe unliked",
             liked,
             200

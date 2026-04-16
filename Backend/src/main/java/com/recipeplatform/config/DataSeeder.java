@@ -190,7 +190,47 @@ public class DataSeeder implements ApplicationRunner {
 
             // Add ingredients from JSON
             List<RecipeIngredient> recipeIngredients = new ArrayList<>();
-            for (String ingName : data.getIngredients()) {
+            String unitStr = data.getUnit();
+            MeasureUnit defaultUnit = MeasureUnit.PIECE;
+            if (unitStr != null && !unitStr.isEmpty()) {
+                try {
+                    defaultUnit = MeasureUnit.fromValue(unitStr.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    log.warn("Invalid unit '{}' for recipe '{}', defaulting to PIECE", unitStr, entry.getKey());
+                }
+            }
+            // Handle ingredients - can be strings or objects with name/quantity/unit
+            for (Object ingObj : data.getIngredients()) {
+                String ingName;
+                double quantity = 1.0;
+                MeasureUnit unit = defaultUnit;
+                
+                if (ingObj instanceof Map) {
+                    Map<?, ?> ingMap = (Map<?, ?>) ingObj;
+                    Object nameObj = ingMap.get("name");
+                    ingName = nameObj != null ? nameObj.toString() : "";
+                    Object qtyObj = ingMap.get("quantity");
+                    if (qtyObj instanceof Number) {
+                        quantity = ((Number) qtyObj).doubleValue();
+                    }
+                    Object unitObj = ingMap.get("unit");
+                    if (unitObj != null) {
+                        try {
+                            unit = MeasureUnit.fromValue(unitObj.toString().toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            unit = defaultUnit;
+                        }
+                    }
+                } else if (ingObj instanceof String) {
+                    ingName = (String) ingObj;
+                } else {
+                    continue;
+                }
+                
+                if (ingName == null || ingName.isEmpty()) {
+                    continue;
+                }
+                
                 Ingredient ing = ingredientRepository.findByNameIgnoreCase(ingName).orElseGet(() -> {
                     Ingredient newIng = new Ingredient();
                     newIng.setName(ingName);
@@ -199,8 +239,8 @@ public class DataSeeder implements ApplicationRunner {
                 RecipeIngredient ri = new RecipeIngredient();
                 ri.setRecipe(r);
                 ri.setIngredient(ing);
-                ri.setQuantity(1.0);
-                ri.setUnit(MeasureUnit.PIECE);
+                ri.setQuantity(quantity);
+                ri.setUnit(unit);
                 recipeIngredients.add(ri);
             }
             r.setIngredients(recipeIngredients);
@@ -234,6 +274,7 @@ public class DataSeeder implements ApplicationRunner {
                 rd.setProtein(((Number) val.get("protein")).doubleValue());
                 rd.setCarbs(((Number) val.get("carbs")).doubleValue());
                 rd.setFat(((Number) val.get("fat")).doubleValue());
+                rd.setUnit((String) val.get("unit"));
                 map.put(entry.getKey(), rd);
             }
             log.info("Loaded {} recipes from JSON", map.size());
@@ -393,6 +434,7 @@ public class DataSeeder implements ApplicationRunner {
         private double protein;
         private double carbs;
         private double fat;
+        private String unit;
 
         public String getSlug() { return slug; }
         public void setSlug(String slug) { this.slug = slug; }
@@ -418,5 +460,7 @@ public class DataSeeder implements ApplicationRunner {
         public void setCarbs(double carbs) { this.carbs = carbs; }
         public double getFat() { return fat; }
         public void setFat(double fat) { this.fat = fat; }
+        public String getUnit() { return unit; }
+        public void setUnit(String unit) { this.unit = unit; }
     }
 }

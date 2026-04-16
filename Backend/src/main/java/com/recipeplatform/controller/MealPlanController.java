@@ -24,26 +24,26 @@ public class MealPlanController {
     public ResponseEntity<ApiResponse<MealPlanResponseDTO>> addMeal(@Valid @RequestBody MealPlanRequestDTO request) {
         MealPlanResponseDTO response = mealPlanService.addMeal(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>("Meal added to plan", response, HttpStatus.CREATED.value()));
+                .body(new ApiResponse<MealPlanResponseDTO>("Meal added to plan", response, HttpStatus.CREATED.value()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> removeMeal(@PathVariable Long id) {
         mealPlanService.removeMeal(id);
-        return ResponseEntity.ok(new ApiResponse<>("Meal removed from plan", null, HttpStatus.OK.value()));
+        return ResponseEntity.ok(new ApiResponse<Void>("Meal removed from plan", null, HttpStatus.OK.value()));
     }
 
     @GetMapping("/weekly")
     public ResponseEntity<ApiResponse<Map<LocalDate, DailyNutrientSummaryDTO>>> getWeeklyPlan(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate) {
         Map<LocalDate, DailyNutrientSummaryDTO> plan = mealPlanService.getWeeklyPlan(startDate);
-        return ResponseEntity.ok(new ApiResponse<>("Weekly plan retrieved", plan, HttpStatus.OK.value()));
+        return ResponseEntity.ok(new ApiResponse<Map<LocalDate, DailyNutrientSummaryDTO>>("Weekly plan retrieved", plan, HttpStatus.OK.value()));
     }
 
     @GetMapping("/daily")
     public ResponseEntity<ApiResponse<DailyNutrientSummaryDTO>> getDailySummary(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         DailyNutrientSummaryDTO summary = mealPlanService.getDailySummary(date);
-        return ResponseEntity.ok(new ApiResponse<>("Daily summary retrieved", summary, HttpStatus.OK.value()));
+        return ResponseEntity.ok(new ApiResponse<DailyNutrientSummaryDTO>("Daily summary retrieved", summary, HttpStatus.OK.value()));
     }
 }

@@ -74,6 +74,47 @@ public class RecipeCollectionService {
         collectionRepository.delete(collection);
     }
 
+    @Transactional
+    public RecipeCollectionDTO moveRecipeToCollection(Long fromCollectionId, Long toCollectionId, Long recipeId, Long userId) {
+        RecipeCollection fromCollection = collectionRepository.findById(fromCollectionId)
+                .orElseThrow(() -> new RuntimeException("Source collection not found"));
+        RecipeCollection toCollection = collectionRepository.findById(toCollectionId)
+                .orElseThrow(() -> new RuntimeException("Target collection not found"));
+
+        if (!fromCollection.getUser().getId().equals(userId) || !toCollection.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new RuntimeException("Recipe not found"));
+
+        fromCollection.getRecipes().remove(recipe);
+        collectionRepository.save(fromCollection);
+
+        toCollection.getRecipes().add(recipe);
+        collectionRepository.save(toCollection);
+
+        return mapToDTO(toCollection);
+    }
+
+    @Transactional
+    public RecipeCollectionDTO addSavedRecipeToCollection(Long collectionId, Long recipeId, Long userId) {
+        RecipeCollection collection = collectionRepository.findById(collectionId)
+                .orElseThrow(() -> new RuntimeException("Collection not found"));
+
+        if (!collection.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new RuntimeException("Recipe not found"));
+
+        collection.getRecipes().add(recipe);
+        collectionRepository.save(collection);
+
+        return mapToDTO(collection);
+    }
+
     private RecipeCollectionDTO mapToDTO(RecipeCollection collection) {
         return RecipeCollectionDTO.builder()
                 .id(collection.getId())

@@ -88,12 +88,39 @@ public class RecipeController {
             @RequestParam(required = false) com.recipeplatform.domain.enums.CuisineType cuisineType,
             @RequestParam(required = false) Double minCalories,
             @RequestParam(required = false) Double maxCalories,
-            @RequestParam(required = false) Long authorId
+            @RequestParam(required = false) Long authorId,
+            @RequestParam(required = false) Integer maxPrepTime,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        List<RecipeResponseDTO> recipes = recipeService.filterRecipes(
-                q, difficulty, dietType, mealType, cuisineType, minCalories, maxCalories, authorId);
+        List<RecipeResponseDTO> allRecipes = recipeService.filterRecipes(
+                q, difficulty, dietType, mealType, cuisineType, minCalories, maxCalories, authorId, maxPrepTime);
+        
+        boolean hasFilter = q != null || difficulty != null || dietType != null || mealType != null || 
+                cuisineType != null || minCalories != null || maxCalories != null || authorId != null;
+        
+        List<RecipeResponseDTO> recipes;
+        Long nextCursor = null;
+        
+        if (cursor == null) {
+            recipes = allRecipes.stream().limit(size + 1).toList();
+        } else {
+            recipes = allRecipes.stream()
+                    .filter(r -> r.getId() != null && r.getId() > cursor)
+                    .limit(size + 1)
+                    .toList();
+        }
+        
+        boolean hasMore = recipes.size() > size;
+        if (hasMore) {
+            recipes = recipes.subList(0, size);
+            nextCursor = recipes.get(recipes.size() - 1).getId();
+        }
+        
+        String message = hasFilter ? "Found " + allRecipes.size() + " recipes" : "recipes fetched successfully";
+        
         ApiResponse<List<RecipeResponseDTO>> response = new ApiResponse<>(
-                "recipes fetched successfully",
+                message,
                 recipes,
                 HttpStatus.OK.value());
         return new ResponseEntity<>(response, HttpStatus.OK);

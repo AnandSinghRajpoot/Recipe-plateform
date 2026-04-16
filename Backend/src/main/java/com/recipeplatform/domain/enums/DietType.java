@@ -9,7 +9,7 @@ public enum DietType {
     @JsonCreator
     public static DietType fromValue(String dietType){
         for (DietType type:DietType.values()){
-            if (type.name().equalsIgnoreCase(dietType)) {
+            if   (type.name().equalsIgnoreCase(dietType)) {
                 return type;
             }
         }
