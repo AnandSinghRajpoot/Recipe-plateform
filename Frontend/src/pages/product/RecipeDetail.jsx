@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import { HeroSkeleton } from "../../components/common/LoadingSkeleton";
 import { resolveImageUrl } from "../../utils/imageUtils";
+import ReviewsSection from "../../components/common/ReviewsSection";
 
 const RecipeDetails = () => {
   const { id } = useParams();
@@ -18,6 +19,7 @@ const RecipeDetails = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     const fetchRecipe = async () => {
       try {
         const res = await apiClient.get(`/recipes/${id}`);
@@ -236,6 +238,16 @@ const RecipeDetails = () => {
                 </div>
             </motion.div>
         </div>
+
+        {/* Reviews */}
+        <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-32 max-w-4xl mx-auto relative z-10"
+        >
+            <ReviewsSection recipeId={id} />
+        </motion.div>
       </div>
     </div>
   );

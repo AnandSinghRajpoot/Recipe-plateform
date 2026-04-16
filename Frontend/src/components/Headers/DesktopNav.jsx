@@ -13,6 +13,13 @@ const DesktopNav = ({ menuItems, Logo }) => {
   const [recentSearches, setRecentSearches] = useState([]);
   const searchRef = useRef(null);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    alert("Logged out successfully!");
+    navigate("/login");
+  };
+
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("recentSearches") || "[]");
     setRecentSearches(saved);

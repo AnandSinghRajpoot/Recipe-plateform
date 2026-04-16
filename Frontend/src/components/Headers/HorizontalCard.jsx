@@ -5,6 +5,7 @@ import VanillaTilt from 'vanilla-tilt';
 import apiClient from '../../utils/apiClient';
 import toast from 'react-hot-toast';
 import generalProfilePic from '../../assets/general-profile-pic.png';
+import StarRating from '../common/StarRating';
 
 const HorizontalCard = ({ item }) => {
     const cardRef = useRef(null);
@@ -27,7 +28,8 @@ const HorizontalCard = ({ item }) => {
     }, []);
     const description = item?.description || "No description available.";
     const difficulty = item?.difficulty || "Medium";
-    const prepTime = item?.prepTime !== undefined ? item?.prepTime : (item?.more?.[0]?.prep_time || "N/A");
+    const totalTime = (Number(item?.prepTime) || 0) + (Number(item?.cookTime) || 0);
+    const displayTime = totalTime > 0 ? totalTime : (item?.more?.[0]?.prep_time || "N/A");
     const id = item?.id || item?._id;
     const imageUrl = resolveImageUrl(item?.coverImageUrl || item?.thumbnail_image);
 
@@ -101,19 +103,25 @@ const HorizontalCard = ({ item }) => {
     return (
         <div 
             ref={cardRef}
-            className="group bg-white/60 backdrop-blur-xl rounded-[2.5rem] botanical-shadow hover:shadow-[0_32px_64px_rgba(0,110,28,0.12)] transition-all duration-700 border border-white overflow-hidden flex flex-col md:flex-row h-full md:h-72"
+            className="group bg-white/60 backdrop-blur-xl rounded-[2.5rem] botanical-shadow hover:shadow-[0_32px_64px_rgba(0,110,28,0.12)] transition-all duration-700 border border-white overflow-hidden flex flex-col md:flex-row h-full md:h-[22rem]"
         >
             
             {/* Image Section - Botanical Presentation */}
-            <div className="relative w-full md:w-96 flex-shrink-0 overflow-hidden">
-                <img 
-                    src={imageUrl} 
-                    alt={title} 
-                    onError={handleImageError}
-                    className="w-full h-56 md:h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent"></div>
-                <div className="absolute top-5 left-5">
+            <div className="relative w-full h-64 md:h-auto md:w-[26rem] flex-shrink-0 overflow-hidden">
+                <Link 
+                    to={`/items/${id}`}
+                    onClick={() => sessionStorage.setItem('recipesScrollPos', window.scrollY.toString())}
+                    className="absolute inset-0 w-full h-full z-0 block"
+                >
+                    <img 
+                        src={imageUrl} 
+                        alt={title} 
+                        onError={handleImageError}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                    />
+                </Link>
+                <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent pointer-events-none z-10"></div>
+                <div className="absolute top-5 left-5 z-20">
                     <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border backdrop-blur-md shadow-lg ${getDifficultyStyles(difficulty)}`}>
                         {difficulty}
                     </span>
@@ -137,15 +145,25 @@ const HorizontalCard = ({ item }) => {
                         </Link>
                     </div>
                     
-                    <Link to={`/items/${id}`}>
-                        <h3 className="text-3xl font-headline font-black text-on-surface mb-3 group-hover:text-primary transition-colors tracking-tight leading-tight">
+                    <Link 
+                        to={`/items/${id}`}
+                        onClick={() => sessionStorage.setItem('recipesScrollPos', window.scrollY.toString())}
+                    >
+                        <h3 className="text-3xl font-headline font-black text-on-surface mb-2 group-hover:text-primary transition-colors tracking-tight leading-tight line-clamp-2">
                             {title}
                         </h3>
                     </Link>
                     
-                    <p className="text-on-surface-variant text-base font-medium leading-relaxed opacity-80 line-clamp-2 mb-6">
+                    <p className="text-on-surface-variant text-base font-medium leading-relaxed opacity-80 line-clamp-2 mb-3">
                         {description}
                     </p>
+
+                    {/* Rating Display */}
+                    <div className="flex items-center gap-2 mb-4">
+                        <StarRating rating={item?.averageRating || 0} readonly size={16} />
+                        <span className="text-sm font-bold text-on-surface">{(item?.averageRating || 0).toFixed(1)}</span>
+                        <span className="text-xs text-on-surface-variant">({item?.reviewCount || 0} review{(item?.reviewCount || 0) !== 1 ? 's' : ''})</span>
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-8 mt-auto pt-6 border-t border-outline-variant/10">
@@ -155,7 +173,7 @@ const HorizontalCard = ({ item }) => {
                         </div>
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Time</p>
-                            <p className="text-sm font-black text-on-surface">{prepTime} {typeof prepTime === 'number' ? 'mins' : ''}</p>
+                            <p className="text-sm font-black text-on-surface">{displayTime} {typeof displayTime === 'number' || !isNaN(displayTime) ? 'mins' : ''}</p>
                         </div>
                     </div>
                     
@@ -188,6 +206,7 @@ const HorizontalCard = ({ item }) => {
                         </button>
                         <Link 
                             to={`/items/${id}`}
+                            onClick={() => sessionStorage.setItem('recipesScrollPos', window.scrollY.toString())}
                             className="w-12 h-12 rounded-2xl vitality-gradient text-white flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-110 active:scale-95 transition-all"
                             title="View Recipe"
                         >

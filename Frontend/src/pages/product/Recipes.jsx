@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import HorizontalCard from "../../components/Headers/HorizontalCard.jsx";
-import { HorizontalRecipeListSkeleton } from '../../components/common/LoadingSkeleton';
 import LottiePlayer from '../../components/common/LottiePlayer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IoSearchOutline } from 'react-icons/io5';
@@ -10,15 +9,42 @@ import { IoSearchOutline } from 'react-icons/io5';
 const Recipes = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
-    const [items, setItems] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [visibleCount, setVisibleCount] = useState(6);
-    const [cache, setCache] = useState(new Map());
-    const [filters, setFilters] = useState({
-        diet: searchParams.get('diet') || '',
+    const location = useLocation();
+
+    const isReturning = !!sessionStorage.getItem('recipesScrollPos');
+
+    const getCachedState = () => {
+        try {
+            const cached = sessionStorage.getItem('recipesDataCache');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                
+                const norm = (s) => decodeURIComponent(s || '').replace(/\+/g, ' ').trim();
+                
+                if (isReturning || norm(parsed.searchQuery) === norm(location.search)) {
+                    return parsed;
+                }
+            }
+        } catch (e) {}
+        return null;
+    };
+
+    const cachedState = getCachedState();
+
+    const [items, setItems] = useState(cachedState ? cachedState.items : []);
+    const [loading, setLoading] = useState(!cachedState);
+    const [initialLoadDone, setInitialLoadDone] = useState(!!cachedState);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(cachedState ? cachedState.hasMore : true);
+    const [cursor, setCursor] = useState(cachedState ? cachedState.cursor : null);
+    const [allLoaded, setAllLoaded] = useState(cachedState ? cachedState.allLoaded : false);
+    const [resultCount, setResultCount] = useState(cachedState ? cachedState.resultCount : null);
+    const [preventInitialFetch, setPreventInitialFetch] = useState(!!cachedState);
+    const [filters, setFilters] = useState(cachedState && cachedState.filters ? cachedState.filters : {
+        dietType: searchParams.get('dietType') || '',
         difficulty: searchParams.get('difficulty') || '',
-        level: searchParams.get('level') || '',
-        category: searchParams.get('category') || '',
+        mealType: searchParams.get('mealType') || '',
+        cuisineType: searchParams.get('cuisineType') || '',
         prepTime: searchParams.get('prepTime') || ''
     });
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
@@ -79,12 +105,11 @@ const Recipes = () => {
         setSearchQuery(query);
         const newParams = new URLSearchParams();
         newParams.set('q', query);
-        if (filters.diet) newParams.set('dietType', filters.diet);
+        if (filters.dietType) newParams.set('dietType', filters.dietType);
         if (filters.difficulty) newParams.set('difficulty', filters.difficulty);
-        if (filters.category) newParams.set('category', filters.category);
-        if (filters.prepTime) newParams.set('cookingTime', filters.prepTime);
+        if (filters.mealType) newParams.set('mealType', filters.mealType);
+        if (filters.prepTime) newParams.set('prepTime', filters.prepTime);
         setSearchParams(newParams);
-        setVisibleCount(6);
         setShowDropdown(false);
     };
 
@@ -93,81 +118,189 @@ const Recipes = () => {
         localStorage.removeItem("recentSearches");
     };
 
-    const dietTypes = ['Vegetarian', 'Vegan', 'Gluten-Free', 'Keto', 'Paleo', 'Dairy-Free', 'Nut-Free'];
-    const difficulties = ['Easy', 'Medium', 'Hard', 'Expert'];
-    const categories = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Snack', 'Drink'];
+    const dietTypes = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'No Preference'];
+    const difficulties = ['Easy', 'Medium', 'Hard'];
+    const categories = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Snack', 'Beverage', 'Brunch'];
     const prepTimes = ['Under 15 min', '15-30 min', '30-60 min', 'Over 60 min'];
-    const levels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
 
-    const fetchRecipes = useCallback(async () => {
+    const fetchRecipes = useCallback(async (loadMore = false) => {
         try {
-            setLoading(true);
+            if (loadMore) {
+                setLoadingMore(true);
+            } else {
+                // Only show loading on initial load or when search params change
+                if (!initialLoadDone) {
+                    setLoading(true);
+                }
+                setCursor(null);
+                setAllLoaded(false);
+            }
+            
             const query = searchParams.get('q') || "";
             const params = new URLSearchParams();
-            if (query) params.append('q', query);
-            if (filters.diet) params.append('diet', filters.diet);
-            if (filters.difficulty) params.append('difficulty', filters.difficulty);
-            if (filters.level) params.append('level', filters.level);
-            if (filters.category) params.append('category', filters.category);
-            if (filters.prepTime) params.append('prepTime', filters.prepTime);
-
-            const cacheKey = params.toString();
+            params.append('size', '10');
             
-            if (cache.has(cacheKey)) {
-                setItems(cache.get(cacheKey));
-                setLoading(false);
-                return;
+            if (query) params.append('q', query);
+            
+            // Map frontend values to backend enum values
+            const dietMap = { 'Vegetarian': 'VEG', 'Non-Vegetarian': 'NON_VEG', 'Vegan': 'VEGAN', 'No Preference': 'NO_PREFERENCE' };
+            const diffMap = { 'Easy': 'EASY', 'Medium': 'MEDIUM', 'Hard': 'HARD' };
+            const mealMap = { 'Breakfast': 'BREAKFAST', 'Lunch': 'LUNCH', 'Dinner': 'DINNER', 'Dessert': 'DESSERT', 'Snack': 'SNACK', 'Beverage': 'BEVERAGE', 'Brunch': 'BRUNCH' };
+
+            if (filters.dietType && dietMap[filters.dietType]) params.append('dietType', dietMap[filters.dietType]);
+            if (filters.difficulty && diffMap[filters.difficulty]) params.append('difficulty', diffMap[filters.difficulty]);
+            if (filters.mealType && mealMap[filters.mealType]) params.append('mealType', mealMap[filters.mealType]);
+            if (filters.prepTime) {
+                // Map prep time to actual prep time filtering
+                if (filters.prepTime === 'Under 15 min') {
+                    params.append('maxPrepTime', '15');
+                } else if (filters.prepTime === '15-30 min') {
+                    params.append('maxPrepTime', '30');
+                } else if (filters.prepTime === '30-60 min') {
+                    params.append('maxPrepTime', '60');
+                }
+                // "Over 60 min" doesn't need a parameter as it includes everything > 60
             }
+
+            const currentCursor = loadMore ? cursor : null;
+            if (currentCursor) params.append('cursor', currentCursor.toString());
 
             const response = await axios.get(`http://localhost:8080/api/v1/recipes?${params.toString()}`, {
                 timeout: 8000
             });
             const data = response.data.data || [];
+            const message = response.data?.message;
             
-            setCache(prev => new Map(prev).set(cacheKey, data));
-            setItems(data);
+            const newItems = loadMore ? [...items, ...data] : data;
+            setItems(newItems);
+            
+            if (message && message.includes('Found')) {
+                const match = message.match(/Found (\d+) recipes/);
+                if (match) setResultCount(parseInt(match[1]));
+            } else {
+                setResultCount(null);
+            }
+            
+            if (data.length < 10) {
+                setHasMore(false);
+                setAllLoaded(true);
+            } else {
+                setHasMore(true);
+                setCursor(data[data.length - 1]?.id);
+            }
         } catch (error) {
             console.error("Error fetching recipes:", error);
-            setItems([]);
+            if (!loadMore) setItems([]);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
+            if (!loadMore) {
+                setInitialLoadDone(true);
+            }
         }
-    }, [searchParams, cache, filters]);
+    }, [searchParams, filters, cursor, items]);
 
     useEffect(() => {
+        if (preventInitialFetch) {
+            setPreventInitialFetch(false);
+            return;
+        }
         fetchRecipes();
-    }, [fetchRecipes]);
+    }, [searchParams]);
+
+    useEffect(() => {
+        if (!loading && items.length > 0) {
+            sessionStorage.setItem('recipesDataCache', JSON.stringify({
+                searchQuery: location.search,
+                items,
+                cursor,
+                hasMore,
+                allLoaded,
+                resultCount,
+                filters
+            }));
+        }
+    }, [items, loading, cursor, hasMore, allLoaded, resultCount, location.search, filters]);
+
+    // Restore scroll position and silent URL sync after recipes are loaded
+    useEffect(() => {
+        if (!loading && items.length > 0) {
+            const savedPos = sessionStorage.getItem('recipesScrollPos');
+            if (savedPos) {
+                const pos = parseInt(savedPos);
+                setTimeout(() => window.scrollTo(0, pos), 100);
+                // Small delay to ensure all reads of isReturning have completed
+                setTimeout(() => sessionStorage.removeItem('recipesScrollPos'), 200);
+                
+                // Silently correct the address bar if React Router lost the query params on POP
+                if (cachedState && cachedState.searchQuery && cachedState.searchQuery !== location.search) {
+                    window.history.replaceState(null, '', window.location.pathname + cachedState.searchQuery);
+                }
+            }
+        }
+    }, [loading, items]);
 
     const handleSearch = (e) => {
         if (e) e.preventDefault();
         saveRecentSearch(searchQuery);
         const newParams = new URLSearchParams();
         if (searchQuery) newParams.set('q', searchQuery);
-        if (filters.diet) newParams.set('dietType', filters.diet);
+        if (filters.dietType) newParams.set('dietType', filters.dietType);
         if (filters.difficulty) newParams.set('difficulty', filters.difficulty);
-        if (filters.category) newParams.set('category', filters.category);
-        if (filters.prepTime) newParams.set('cookingTime', filters.prepTime);
+        if (filters.mealType) newParams.set('mealType', filters.mealType);
+        if (filters.prepTime) newParams.set('prepTime', filters.prepTime);
         setSearchParams(newParams);
-        setVisibleCount(6);
         setShowDropdown(false);
     };
 
     const handleFilterChange = (filterName, value) => {
-        setFilters(prev => ({ ...prev, [filterName]: value }));
+        const paramMap = {
+            diet: 'dietType',
+            difficulty: 'difficulty',
+            category: 'mealType',
+            prepTime: 'prepTime'
+        };
+        const targetKey = paramMap[filterName] || filterName;
+        setFilters(prev => ({ ...prev, [targetKey]: value }));
     };
 
     const clearFilters = () => {
         setFilters({
-            diet: '',
+            dietType: '',
             difficulty: '',
-            level: '',
-            category: '',
+            mealType: '',
+            cuisineType: '',
             prepTime: ''
         });
         setSearchQuery('');
+        setSearchParams(new URLSearchParams());
     };
 
-    const hasActiveFilters = filters.diet || filters.difficulty || filters.level || filters.category || filters.prepTime || searchQuery;
+    const removeFilterAndSearch = (targetKey) => {
+        const newFilters = { ...filters, [targetKey]: '' };
+        setFilters(newFilters);
+        
+        const newParams = new URLSearchParams();
+        if (searchQuery) newParams.set('q', searchQuery);
+        if (newFilters.dietType) newParams.set('dietType', newFilters.dietType);
+        if (newFilters.difficulty) newParams.set('difficulty', newFilters.difficulty);
+        if (newFilters.mealType) newParams.set('mealType', newFilters.mealType);
+        if (newFilters.prepTime) newParams.set('prepTime', newFilters.prepTime);
+        setSearchParams(newParams);
+    };
+
+    const removeSearchQueryAndSearch = () => {
+        setSearchQuery('');
+        setSuggestions([]);
+        const newParams = new URLSearchParams();
+        if (filters.dietType) newParams.set('dietType', filters.dietType);
+        if (filters.difficulty) newParams.set('difficulty', filters.difficulty);
+        if (filters.mealType) newParams.set('mealType', filters.mealType);
+        if (filters.prepTime) newParams.set('prepTime', filters.prepTime);
+        setSearchParams(newParams);
+    };
+
+    const hasActiveFilters = filters.dietType || filters.difficulty || filters.mealType || filters.prepTime || searchQuery;
     
     return (
         <div className='bg-surface min-h-screen px-4 lg:px-12 py-24 font-body relative overflow-hidden'>
@@ -180,22 +313,20 @@ const Recipes = () => {
 
             <div className="max-w-6xl mx-auto relative z-10">
                 
-                {/* Back Button */}
+                {/* Header & Back Navigation */}
                 <div className="mb-8">
                     <button 
                         onClick={() => navigate('/')}
-                        className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors"
+                        className="group flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors mb-6 text-[10px] font-black uppercase tracking-widest"
                     >
-                        <span className="material-symbols-outlined">arrow_back</span>
-                        <span className="text-sm font-bold">Back to Home</span>
+                        <span className="material-symbols-outlined text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                        Back to Home
                     </button>
-                </div>
-
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="text-2xl font-headline font-black text-on-surface">
+                    
+                    <h1 className="text-4xl md:text-5xl font-headline font-black text-on-surface tracking-tighter">
                         Recipes
-                    </div>
+                    </h1>
+                    <p className="text-on-surface-variant mt-2 font-medium opacity-80">Explore the complete collection of metabolic culinary compositions.</p>
                 </div>
 
                 {/* Search and Filter Bar */}
@@ -214,10 +345,10 @@ const Recipes = () => {
                                         setShowDropdown(true);
                                         if (!value) {
                                             const newParams = new URLSearchParams();
-                                            if (filters.diet) newParams.set('dietType', filters.diet);
+                                            if (filters.dietType) newParams.set('dietType', filters.dietType);
                                             if (filters.difficulty) newParams.set('difficulty', filters.difficulty);
-                                            if (filters.category) newParams.set('category', filters.category);
-                                            if (filters.prepTime) newParams.set('cookingTime', filters.prepTime);
+                                            if (filters.mealType) newParams.set('mealType', filters.mealType);
+                                            if (filters.prepTime) newParams.set('prepTime', filters.prepTime);
                                             setSearchParams(newParams);
                                         }
                                     }}
@@ -227,16 +358,7 @@ const Recipes = () => {
                                 {searchQuery && (
                                     <button 
                                         type="button"
-                                        onClick={() => {
-                                            setSearchQuery('');
-                                            setSuggestions([]);
-                                            const newParams = new URLSearchParams();
-                                            if (filters.diet) newParams.set('dietType', filters.diet);
-                                            if (filters.difficulty) newParams.set('difficulty', filters.difficulty);
-                                            if (filters.category) newParams.set('category', filters.category);
-                                            if (filters.prepTime) newParams.set('cookingTime', filters.prepTime);
-                                            setSearchParams(newParams);
-                                        }}
+                                        onClick={removeSearchQueryAndSearch}
                                         className="text-on-surface-variant hover:text-error"
                                     >
                                         <span className="material-symbols-outlined">close</span>
@@ -332,8 +454,8 @@ const Recipes = () => {
                                             {dietTypes.map(type => (
                                                 <button
                                                     key={type}
-                                                    onClick={() => handleFilterChange('diet', filters.diet === type ? '' : type)}
-                                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filters.diet === type ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10'}`}
+                                                    onClick={() => handleFilterChange('diet', filters.dietType === type ? '' : type)}
+                                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filters.dietType === type ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10'}`}
                                                 >
                                                     {type}
                                                 </button>
@@ -357,31 +479,15 @@ const Recipes = () => {
                                         </div>
                                     </div>
 
-                                    {/* Skill Level */}
-                                    <div>
-                                        <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest block mb-3">Skill Level</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {levels.map(level => (
-                                                <button
-                                                    key={level}
-                                                    onClick={() => handleFilterChange('level', filters.level === level ? '' : level)}
-                                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filters.level === level ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10'}`}
-                                                >
-                                                    {level}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
                                     {/* Category */}
                                     <div>
-                                        <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest block mb-3">Category</label>
+                                        <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest block mb-3">Meal Type</label>
                                         <div className="flex flex-wrap gap-2">
                                             {categories.map(cat => (
                                                 <button
                                                     key={cat}
-                                                    onClick={() => handleFilterChange('category', filters.category === cat ? '' : cat)}
-                                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filters.category === cat ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10'}`}
+                                                    onClick={() => handleFilterChange('category', filters.mealType === cat ? '' : cat)}
+                                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filters.mealType === cat ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10'}`}
                                                 >
                                                     {cat}
                                                 </button>
@@ -423,69 +529,67 @@ const Recipes = () => {
                         {searchQuery && (
                             <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
                                 Search: {searchQuery}
-                                <button onClick={() => setSearchQuery('')} className="hover:text-error">×</button>
+                                <button onClick={removeSearchQueryAndSearch} className="hover:text-error">×</button>
                             </span>
                         )}
-                        {filters.diet && (
+                        {filters.dietType && (
                             <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
-                                {filters.diet}
-                                <button onClick={() => handleFilterChange('diet', '')} className="hover:text-error">×</button>
+                                {filters.dietType}
+                                <button onClick={() => removeFilterAndSearch('dietType')} className="hover:text-error">×</button>
                             </span>
                         )}
                         {filters.difficulty && (
                             <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
                                 {filters.difficulty}
-                                <button onClick={() => handleFilterChange('difficulty', '')} className="hover:text-error">×</button>
+                                <button onClick={() => removeFilterAndSearch('difficulty')} className="hover:text-error">×</button>
                             </span>
                         )}
-                        {filters.level && (
+                        {filters.mealType && (
                             <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
-                                {filters.level}
-                                <button onClick={() => handleFilterChange('level', '')} className="hover:text-error">×</button>
-                            </span>
-                        )}
-                        {filters.category && (
-                            <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
-                                {filters.category}
-                                <button onClick={() => handleFilterChange('category', '')} className="hover:text-error">×</button>
+                                {filters.mealType}
+                                <button onClick={() => removeFilterAndSearch('mealType')} className="hover:text-error">×</button>
                             </span>
                         )}
                         {filters.prepTime && (
                             <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
                                 {filters.prepTime}
-                                <button onClick={() => handleFilterChange('prepTime', '')} className="hover:text-error">×</button>
+                                <button onClick={() => removeFilterAndSearch('prepTime')} className="hover:text-error">×</button>
                             </span>
                         )}
                     </div>
                 )}
 
                 {/* Results Count */}
-                {!loading && items.length > 0 && (
+                {!loading && items.length > 0 && resultCount !== null && (
                     <div className="text-sm text-on-surface-variant mb-6">
-                        Found <span className="font-black text-primary">{items.length}</span> recipe{items.length !== 1 ? 's' : ''}
+                        Found <span className="font-black text-primary">{resultCount}</span> recipe{resultCount !== 1 ? 's' : ''}
                     </div>
                 )}
 
                 {/* Content Section */}
                 <div>
-                        {loading ? (
-                            <HorizontalRecipeListSkeleton count={4} />
+                        {loading && items.length === 0 ? (
+                            <div className="py-20 flex flex-col items-center justify-center">
+                                <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+                                <div className="text-primary font-bold tracking-widest text-sm uppercase">Loading Recipes...</div>
+                            </div>
                         ) : (
                             <div className='flex flex-col items-center gap-10 pb-32'>
                                 {items.length > 0 ? (
                                     <>
-                                        {items.slice(0, visibleCount).map((item) => (
-                                            <div key={item.id || item._id} className="w-full max-w-4xl">
+                                        {items.map((item) => (
+                                            <div key={item.id || item._id} className="w-full max-w-5xl">
                                                 <HorizontalCard item={item} />
                                             </div>
                                         ))}
-                                        {visibleCount < items.length && (
+                                        {hasMore && !allLoaded && (
                                             <div className="flex justify-center mt-8">
                                                 <button 
-                                                    onClick={() => setVisibleCount(v => v + 6)}
-                                                    className="px-8 py-4 rounded-3xl bg-white/60 backdrop-blur-md border border-white/40 hover:border-primary/40 text-on-surface font-black transition-all shadow-sm hover:shadow-md uppercase text-[10px] tracking-widest"
+                                                    onClick={() => fetchRecipes(true)}
+                                                    disabled={loadingMore}
+                                                    className="px-8 py-4 rounded-3xl bg-white/60 backdrop-blur-md border border-white/40 hover:border-primary/40 text-on-surface font-black transition-all shadow-sm hover:shadow-md uppercase text-[10px] tracking-widest disabled:opacity-50"
                                                 >
-                                                    Reveal More
+                                                    {loadingMore ? 'Loading...' : 'Load More'}
                                                 </button>
                                             </div>
                                         )}

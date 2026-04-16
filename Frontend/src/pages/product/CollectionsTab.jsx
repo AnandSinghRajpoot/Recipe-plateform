@@ -8,6 +8,7 @@ const CollectionsTab = () => {
     const [loading, setLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [newTitle, setNewTitle] = useState("");
+    const [dragOverId, setDragOverId] = useState(null);
 
     useEffect(() => {
         fetchCollections();
@@ -50,6 +51,34 @@ const CollectionsTab = () => {
         }
     };
 
+    const handleDragOver = (e) => {
+        e.preventDefault();
+    };
+
+    const handleDragEnter = (id) => {
+        setDragOverId(id);
+    };
+
+    const handleDragLeave = () => {
+        setDragOverId(null);
+    };
+
+    const handleDropOnCollection = async (e, collectionId) => {
+        e.preventDefault();
+        setDragOverId(null);
+        
+        const recipeId = e.dataTransfer.getData('recipeId');
+        if (!recipeId) return;
+        
+        try {
+            await apiClient.post(`/collections/${collectionId}/recipes/${recipeId}/add`);
+            toast.success('Recipe added to collection');
+            fetchCollections();
+        } catch (err) {
+            toast.error(extractErrorMessage(err));
+        }
+    };
+
     if (loading) {
         return <div className="py-20 text-center text-primary font-bold animate-pulse">Loading your collections...</div>;
     }
@@ -59,7 +88,7 @@ const CollectionsTab = () => {
             <header className="flex justify-between items-end border-b border-outline-variant/10 pb-6">
                 <div>
                     <h2 className="text-3xl font-headline font-black tracking-tighter text-on-surface">Curated Collections</h2>
-                    <p className="text-on-surface-variant mt-2 font-medium">Organize recipes matching your exact dietary needs.</p>
+                    <p className="text-on-surface-variant mt-2 font-medium">Organize recipes matching your exact dietary needs. Drag saved recipes here to add them to collections.</p>
                 </div>
                 <button 
                     onClick={() => setIsCreating(!isCreating)}
@@ -98,7 +127,13 @@ const CollectionsTab = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {collections.map(col => (
-                        <div key={col.id} className="bg-surface-container-low rounded-3xl p-6 border border-outline-variant/10 hover:border-primary/30 transition-all group">
+                        <div 
+                            key={col.id} 
+                            onDragOver={handleDragOver}
+                            onDragLeave={() => setDragOverId(null)}
+                            onDrop={(e) => handleDropOnCollection(e, col.id)}
+                            className={`bg-surface-container-low rounded-3xl p-6 border border-outline-variant/10 hover:border-primary/30 transition-all group ${dragOverId === col.id ? 'border-primary bg-primary/5' : ''}`}
+                        >
                             <div className="flex justify-between items-start mb-6">
                                 <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
                                     <span className="material-symbols-outlined font-light text-2xl">folder</span>

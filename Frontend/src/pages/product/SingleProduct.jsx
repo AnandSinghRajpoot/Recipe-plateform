@@ -5,6 +5,7 @@ import apiClient from '../../utils/apiClient'
 import toast from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'
 import generalProfilePic from '../../assets/general-profile-pic.png'
+import ReviewsSection from '../../components/common/ReviewsSection'
 
 const SingleProduct = () => {
     const { id } = useParams();
@@ -286,59 +287,9 @@ const SingleProduct = () => {
                         </div>
                     </div>
 
-                    {/* Interaction - Comments */}
-                    <div className="pt-20 space-y-12">
-                         <div className="flex items-end justify-between">
-                            <h3 className="text-3xl font-headline font-black text-on-surface italic">Community Dialogue</h3>
-                            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{item.comments?.length || 0} Responses</span>
-                         </div>
-
-                         {/* Comment Form */}
-                         <form onSubmit={handleAddComment} className="relative">
-                            <textarea 
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                placeholder="Add your intelligence to this recipe..."
-                                className="w-full bg-surface-container-low rounded-[2rem] border border-outline-variant/10 p-6 min-h-[120px] text-on-surface font-medium focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
-                            />
-                            <button 
-                                type="submit"
-                                className="absolute bottom-4 right-4 vitality-gradient text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-                            >
-                                Publish Response
-                            </button>
-                         </form>
-
-                         {/* Comment List */}
-                         <div className="space-y-8">
-                            <AnimatePresence>
-                                {item.comments?.map((comment) => (
-                                    <motion.div 
-                                        key={comment.id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="flex gap-6 items-start"
-                                    >
-                                        <img 
-                                            src={comment.author?.profilePhoto || generalProfilePic} 
-                                            className="w-12 h-12 rounded-2xl object-cover"
-                                            alt={comment.author?.name}
-                                            onError={(e) => { e.target.src = generalProfilePic; }}
-                                        />
-                                        <div className="flex-grow space-y-2">
-                                            <div className="flex items-center gap-3">
-                                                <p className="font-black text-on-surface">{comment.author?.name}</p>
-                                                <span className="w-1 h-1 bg-on-surface/20 rounded-full" />
-                                                <p className="text-[10px] font-black uppercase tracking-widest opacity-40">{new Date(comment.createdAt).toLocaleDateString()}</p>
-                                            </div>
-                                            <p className="text-on-surface-variant font-medium leading-relaxed bg-surface-container-low/30 p-4 rounded-2xl rounded-tl-none inline-block">
-                                                {comment.content}
-                                            </p>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                         </div>
+                    {/* Reviews & Ratings */}
+                    <div className="pt-20">
+                        <ReviewsSection recipeId={id} />
                     </div>
                 </div>
 
