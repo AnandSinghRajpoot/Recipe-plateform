@@ -16,4 +16,5 @@ public class CommentResponseDto {
     private String content;
     private AuthorDto author;
     private LocalDateTime createdAt;
+    private Integer rating;
 }
