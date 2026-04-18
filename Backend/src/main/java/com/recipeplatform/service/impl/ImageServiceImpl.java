@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @Service
 public class ImageServiceImpl implements ImageService {
-    private static final Set<String> allowedType = Set.of("image/jpg", "image/jpeg", "image/png");
+    private static final Set<String> allowedType = Set.of("image/jpg", "image/jpeg", "image/png", "image/webp");
 
     private final Path root;
 
@@ -37,7 +37,7 @@ public class ImageServiceImpl implements ImageService {
         String fileName = sanitizeImageName(file);
         Path targetPath = root.resolve(fileName);
         try (InputStream is = file.getInputStream()) {
-            Files.copy(is, targetPath);
+            Files.copy(is, targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file", e);
         }
@@ -55,8 +55,8 @@ public class ImageServiceImpl implements ImageService {
             throw new FileValidationException("file is not valid or empty.");
         }
 
-        if (file.getSize() > 2 * 1024 * 1024) {
-            throw new FileValidationException("Image size must be less than 2MB.");
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new FileValidationException("Image size must be less than 5MB.");
         }
 
         System.out.println("Filename: " + file.getOriginalFilename());

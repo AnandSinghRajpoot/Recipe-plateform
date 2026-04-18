@@ -23,7 +23,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry registry) {
+        String absPath = java.nio.file.Paths.get(uploadDir).toAbsolutePath().toUri().toString();
         registry.addResourceHandler("/images/**")
-                .addResourceLocations("file:" + uploadDir + "/", "classpath:/static/images/");
+                .addResourceLocations(absPath, "classpath:/static/images/");
     }
 }

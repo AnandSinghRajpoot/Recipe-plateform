@@ -43,7 +43,15 @@ public class RecipeSpecification {
             }
 
             if (dietType != null) {
-                predicates.add(criteriaBuilder.equal(root.get("dietType"), dietType));
+                if (dietType == DietType.VEG) {
+                    // Vegetarian includes both Veg and Vegan
+                    predicates.add(root.get("dietType").in(DietType.VEG, DietType.VEGAN));
+                } else if (dietType == DietType.VEGAN) {
+                    // Vegan is strict
+                    predicates.add(criteriaBuilder.equal(root.get("dietType"), DietType.VEGAN));
+                } else {
+                    predicates.add(criteriaBuilder.equal(root.get("dietType"), dietType));
+                }
             }
 
             if (mealType != null) {
@@ -55,11 +63,11 @@ public class RecipeSpecification {
             }
 
             if (minCalories != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("calories"), minCalories));
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("nutrition").get("calories"), minCalories));
             }
 
             if (maxCalories != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("calories"), maxCalories));
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("nutrition").get("calories"), maxCalories));
             }
 
             if (maxPrepTime != null) {

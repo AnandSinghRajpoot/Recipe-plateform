@@ -21,6 +21,7 @@ public class RegisterResponse {
     private SkillLevel skillLevel;
     private UserRole role;
     private String profilePhoto;
+    private String bio;
     private Boolean isProfileCompleted;
     private java.time.LocalDateTime createdAt;
 }

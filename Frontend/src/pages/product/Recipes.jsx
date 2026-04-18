@@ -39,6 +39,7 @@ const Recipes = () => {
     const [cursor, setCursor] = useState(cachedState ? cachedState.cursor : null);
     const [allLoaded, setAllLoaded] = useState(cachedState ? cachedState.allLoaded : false);
     const [resultCount, setResultCount] = useState(cachedState ? cachedState.resultCount : null);
+    const [activeTab, setActiveTab] = useState('all'); // 'all' or 'recommended'
     const [preventInitialFetch, setPreventInitialFetch] = useState(!!cachedState);
     const [filters, setFilters] = useState(cachedState && cachedState.filters ? cachedState.filters : {
         dietType: searchParams.get('dietType') || '',
@@ -52,7 +53,72 @@ const Recipes = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [recentSearches, setRecentSearches] = useState([]);
+    const [recommendations, setRecommendations] = useState([]);
+    const [profile, setProfile] = useState(null);
+    const [recLoading, setRecLoading] = useState(false);
     const searchRef = useRef(null);
+
+    useEffect(() => {
+        const fetchPersonalData = async () => {
+            const token = localStorage.getItem('token');
+            setRecLoading(true);
+            
+            try {
+                let userProfile = null;
+                if (token) {
+                    try {
+                        const profileRes = await axios.get('http://localhost:8080/api/v1/health-profile', {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        userProfile = profileRes?.data?.data;
+                        setProfile(userProfile);
+                    } catch (pErr) {
+                        console.warn("Profile fetch failed, using defaults");
+                    }
+                }
+
+                // Fetch recommendations
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const recRes = await axios.get('http://localhost:8080/api/v1/recipes/recommended?limit=6', { headers });
+                
+                let recData = recRes.data.data || [];
+                
+                // If personalized fetch returned nothing but we are logged in, 
+                // we should still show SOMETHING (Popular)
+                if (token && recData.length === 0) {
+                     const fallbackRes = await axios.get('http://localhost:8080/api/v1/recipes/recommended?limit=6');
+                     recData = fallbackRes.data.data || [];
+                }
+
+                if (!token) {
+                    const teaserCard = { id: 'personalization-teaser', isTeaserCard: true };
+                    recData = [teaserCard, ...recData];
+                } else {
+                    // Logged in
+                    if (!userProfile || userProfile.completionPercentage < 100) {
+                        const upgradeCard = { 
+                            id: 'upgrade-personalization', 
+                            isUpgradeCard: true, 
+                            percentage: userProfile?.completionPercentage || 0 
+                        };
+                        recData = [upgradeCard, ...recData];
+                    }
+                }
+                
+                setRecommendations(recData);
+            } catch (err) {
+                console.error("Failed to fetch recommendations:", err);
+                // Last ditch effort: Try to get popular recipes even on total failure
+                try {
+                    const fallbackRes = await axios.get('http://localhost:8080/api/v1/recipes/recommended?limit=6');
+                    setRecommendations(fallbackRes.data.data || []);
+                } catch (e) {}
+            } finally {
+                setRecLoading(false);
+            }
+        };
+        fetchPersonalData();
+    }, []);
 
     useEffect(() => {
         const saved = JSON.parse(localStorage.getItem("recentSearches") || "[]");
@@ -120,7 +186,7 @@ const Recipes = () => {
 
     const dietTypes = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'No Preference'];
     const difficulties = ['Easy', 'Medium', 'Hard'];
-    const categories = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Snack', 'Beverage', 'Brunch'];
+    const categories = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
     const prepTimes = ['Under 15 min', '15-30 min', '30-60 min', 'Over 60 min'];
 
     const fetchRecipes = useCallback(async (loadMore = false) => {
@@ -137,6 +203,11 @@ const Recipes = () => {
             }
             
             const query = searchParams.get('q') || "";
+            const urlDiet = searchParams.get('dietType') || "";
+            const urlDiff = searchParams.get('difficulty') || "";
+            const urlMeal = searchParams.get('mealType') || "";
+            const urlPrep = searchParams.get('prepTime') || "";
+
             const params = new URLSearchParams();
             params.append('size', '10');
             
@@ -145,21 +216,20 @@ const Recipes = () => {
             // Map frontend values to backend enum values
             const dietMap = { 'Vegetarian': 'VEG', 'Non-Vegetarian': 'NON_VEG', 'Vegan': 'VEGAN', 'No Preference': 'NO_PREFERENCE' };
             const diffMap = { 'Easy': 'EASY', 'Medium': 'MEDIUM', 'Hard': 'HARD' };
-            const mealMap = { 'Breakfast': 'BREAKFAST', 'Lunch': 'LUNCH', 'Dinner': 'DINNER', 'Dessert': 'DESSERT', 'Snack': 'SNACK', 'Beverage': 'BEVERAGE', 'Brunch': 'BRUNCH' };
+            const mealMap = { 'Breakfast': 'BREAKFAST', 'Lunch': 'LUNCH', 'Dinner': 'DINNER', 'Snack': 'SNACK' };
 
-            if (filters.dietType && dietMap[filters.dietType]) params.append('dietType', dietMap[filters.dietType]);
-            if (filters.difficulty && diffMap[filters.difficulty]) params.append('difficulty', diffMap[filters.difficulty]);
-            if (filters.mealType && mealMap[filters.mealType]) params.append('mealType', mealMap[filters.mealType]);
-            if (filters.prepTime) {
-                // Map prep time to actual prep time filtering
-                if (filters.prepTime === 'Under 15 min') {
+            if (urlDiet && dietMap[urlDiet]) params.append('dietType', dietMap[urlDiet]);
+            if (urlDiff && diffMap[urlDiff]) params.append('difficulty', diffMap[urlDiff]);
+            if (urlMeal && mealMap[urlMeal]) params.append('mealType', mealMap[urlMeal]);
+            
+            if (urlPrep) {
+                if (urlPrep === 'Under 15 min') {
                     params.append('maxPrepTime', '15');
-                } else if (filters.prepTime === '15-30 min') {
+                } else if (urlPrep === '15-30 min') {
                     params.append('maxPrepTime', '30');
-                } else if (filters.prepTime === '30-60 min') {
+                } else if (urlPrep === '30-60 min') {
                     params.append('maxPrepTime', '60');
                 }
-                // "Over 60 min" doesn't need a parameter as it includes everything > 60
             }
 
             const currentCursor = loadMore ? cursor : null;
@@ -205,6 +275,23 @@ const Recipes = () => {
             setPreventInitialFetch(false);
             return;
         }
+        
+        // Sync filters state from searchParams whenever URL changes
+        const urlDiet = searchParams.get('dietType') || '';
+        const urlDiff = searchParams.get('difficulty') || '';
+        const urlMeal = searchParams.get('mealType') || '';
+        const urlPrep = searchParams.get('prepTime') || '';
+        const urlQ = searchParams.get('q') || '';
+
+        setFilters({
+            dietType: urlDiet,
+            difficulty: urlDiff,
+            mealType: urlMeal,
+            cuisineType: '',
+            prepTime: urlPrep
+        });
+        setSearchQuery(urlQ);
+
         fetchRecipes();
     }, [searchParams]);
 
@@ -329,6 +416,124 @@ const Recipes = () => {
                     <p className="text-on-surface-variant mt-2 font-medium opacity-80">Explore the complete collection of metabolic culinary compositions.</p>
                 </div>
 
+                {/* Personalized Recommendations Section */}
+                <AnimatePresence>
+                    {recommendations.length > 0 && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-16"
+                        >
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl vitality-gradient flex items-center justify-center text-white shadow-lg">
+                                        <span className="material-symbols-outlined text-xl">temp_preferences_custom</span>
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-headline font-black text-on-surface tracking-tight">Top Picks for You</h2>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary">Intelligence Based Selection</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x">
+                                {recommendations.map((rec) => (
+                                    rec.isTeaserCard ? (
+                                         <motion.div 
+                                             key="teaser-card"
+                                             whileHover={{ y: -8 }}
+                                             onClick={() => navigate('/login')}
+                                             className="min-w-[300px] md:min-w-[380px] group cursor-pointer snap-start"
+                                         >
+                                             <div className="h-full bg-on-surface rounded-[2.5rem] p-8 flex flex-col justify-between items-start hover:shadow-2xl hover:shadow-primary/40 transition-all duration-500 relative overflow-hidden">
+                                                 <div className="absolute inset-0 vitality-gradient opacity-10 group-hover:opacity-20 transition-opacity" />
+                                                 <div className="relative z-10 space-y-4">
+                                                     <div className="w-14 h-14 rounded-3xl bg-white/10 backdrop-blur-md text-white flex items-center justify-center shadow-lg border border-white/20">
+                                                         <span className="material-symbols-outlined text-3xl">lock</span>
+                                                     </div>
+                                                     <h3 className="text-2xl font-headline font-black text-white">Unlock Your Personal Profile</h3>
+                                                     <p className="text-sm text-white/60 leading-relaxed">Sign up to get recipes tailored to your metabolic signature, allergens, and health goals.</p>
+                                                 </div>
+                                                 
+                                                 <button className="relative z-10 w-full py-4 bg-white text-on-surface font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all">
+                                                     Personalize Now
+                                                 </button>
+                                             </div>
+                                         </motion.div>
+                                     ) : rec.isUpgradeCard ? (
+                                         <motion.div 
+                                             key="upgrade-card"
+                                             whileHover={{ y: -8 }}
+                                             onClick={() => navigate('/profile/complete')}
+                                             className="min-w-[300px] md:min-w-[380px] group cursor-pointer snap-start"
+                                         >
+                                             <div className="h-full bg-primary/5 rounded-[2.5rem] border-2 border-dashed border-primary/30 p-8 flex flex-col justify-between items-start hover:bg-primary/10 transition-all duration-500">
+                                                 <div className="space-y-4">
+                                                     <div className="w-14 h-14 rounded-3xl bg-primary text-white flex items-center justify-center shadow-lg">
+                                                         <span className="material-symbols-outlined text-3xl">bolt</span>
+                                                     </div>
+                                                     <h3 className="text-2xl font-headline font-black text-on-surface">Improve Your Precision</h3>
+                                                     <p className="text-sm text-on-surface-variant leading-relaxed">Your profile is <span className="text-primary font-black">{rec.percentage}%</span> complete. Fill in more data for 10x better metabolic recommendations.</p>
+                                                 </div>
+                                                 
+                                                 <div className="w-full space-y-4">
+                                                     <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
+                                                         <motion.div 
+                                                             initial={{ width: 0 }}
+                                                             animate={{ width: `${rec.percentage}%` }}
+                                                             className="h-full vitality-gradient"
+                                                         />
+                                                     </div>
+                                                     <button className="w-full py-4 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:shadow-primary/20 transition-all">
+                                                         Upgrade Precision
+                                                     </button>
+                                                 </div>
+                                             </div>
+                                         </motion.div>
+                                     ) : (
+                                         <motion.div 
+                                             key={rec.id}
+                                             whileHover={{ y: -8 }}
+                                             onClick={() => navigate(`/items/${rec.id}`)}
+                                             className="min-w-[300px] md:min-w-[380px] group cursor-pointer snap-start"
+                                         >
+                                             <div className="bg-white rounded-[2.5rem] border border-outline-variant/10 overflow-hidden shadow-sm hover:shadow-2xl hover:border-primary/20 transition-all duration-500">
+                                                 <div className="relative h-64 overflow-hidden">
+                                                     <img 
+                                                         src={rec.coverImageUrl} 
+                                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                         alt={rec.title}
+                                                     />
+                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+                                                     <div className="absolute top-6 left-6 flex gap-2">
+                                                         <span className="px-3 py-1 bg-white/20 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-full border border-white/30">AI Pick</span>
+                                                         <span className="px-3 py-1 bg-primary text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg">{rec.dietType}</span>
+                                                     </div>
+                                                 </div>
+                                                 <div className="p-8">
+                                                     <h3 className="text-xl font-headline font-black text-on-surface mb-3 line-clamp-1 group-hover:text-primary transition-colors">
+                                                         {rec.title}
+                                                     </h3>
+                                                     <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">
+                                                         <div className="flex items-center gap-2">
+                                                             <span className="material-symbols-outlined text-sm">timer</span>
+                                                             {rec.prepTime + rec.cookTime}m
+                                                         </div>
+                                                         <div className="flex items-center gap-2 text-primary">
+                                                             <span className="material-symbols-outlined text-sm">local_fire_department</span>
+                                                             {Math.round(rec.nutrition?.calories || 0)} Kcal
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                         </motion.div>
+                                     )
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {/* Search and Filter Bar */}
                 <div className="mb-8 relative">
                     <form onSubmit={handleSearch} className="flex flex-col lg:flex-row gap-4">
@@ -426,15 +631,6 @@ const Recipes = () => {
                         >
                             Filters {hasActiveFilters && `(${Object.values(filters).filter(Boolean).length + (searchQuery ? 1 : 0)})`}
                         </button>
-                        {hasActiveFilters && (
-                            <button 
-                                type="button"
-                                onClick={clearFilters}
-                                className="px-6 py-4 rounded-2xl bg-error/10 text-error font-bold text-sm hover:bg-error/20 transition-all"
-                            >
-                                Clear
-                            </button>
-                        )}
                     </form>
 
                     {/* Filter Panel */}
@@ -523,104 +719,225 @@ const Recipes = () => {
                     </AnimatePresence>
                 </div>
 
-                {/* Active Filters Display */}
-                {hasActiveFilters && (
-                    <div className="flex flex-wrap gap-2 mb-6">
-                        {searchQuery && (
-                            <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
-                                Search: {searchQuery}
-                                <button onClick={removeSearchQueryAndSearch} className="hover:text-error">×</button>
-                            </span>
-                        )}
-                        {filters.dietType && (
-                            <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
-                                {filters.dietType}
-                                <button onClick={() => removeFilterAndSearch('dietType')} className="hover:text-error">×</button>
-                            </span>
-                        )}
-                        {filters.difficulty && (
-                            <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
-                                {filters.difficulty}
-                                <button onClick={() => removeFilterAndSearch('difficulty')} className="hover:text-error">×</button>
-                            </span>
-                        )}
-                        {filters.mealType && (
-                            <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
-                                {filters.mealType}
-                                <button onClick={() => removeFilterAndSearch('mealType')} className="hover:text-error">×</button>
-                            </span>
-                        )}
-                        {filters.prepTime && (
-                            <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
-                                {filters.prepTime}
-                                <button onClick={() => removeFilterAndSearch('prepTime')} className="hover:text-error">×</button>
-                            </span>
-                        )}
-                    </div>
-                )}
-
-                {/* Results Count */}
-                {!loading && items.length > 0 && resultCount !== null && (
-                    <div className="text-sm text-on-surface-variant mb-6">
-                        Found <span className="font-black text-primary">{resultCount}</span> recipe{resultCount !== 1 ? 's' : ''}
-                    </div>
-                )}
-
-                {/* Content Section */}
-                <div>
-                        {loading && items.length === 0 ? (
-                            <div className="py-20 flex flex-col items-center justify-center">
-                                <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
-                                <div className="text-primary font-bold tracking-widest text-sm uppercase">Loading Recipes...</div>
-                            </div>
-                        ) : (
-                            <div className='flex flex-col items-center gap-10 pb-32'>
-                                {items.length > 0 ? (
-                                    <>
-                                        {items.map((item) => (
-                                            <div key={item.id || item._id} className="w-full max-w-5xl">
-                                                <HorizontalCard item={item} />
-                                            </div>
-                                        ))}
-                                        {hasMore && !allLoaded && (
-                                            <div className="flex justify-center mt-8">
-                                                <button 
-                                                    onClick={() => fetchRecipes(true)}
-                                                    disabled={loadingMore}
-                                                    className="px-8 py-4 rounded-3xl bg-white/60 backdrop-blur-md border border-white/40 hover:border-primary/40 text-on-surface font-black transition-all shadow-sm hover:shadow-md uppercase text-[10px] tracking-widest disabled:opacity-50"
-                                                >
-                                                    {loadingMore ? 'Loading...' : 'Load More'}
-                                                </button>
-                                            </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <motion.div 
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="text-center py-24 bg-white/40 backdrop-blur-xl rounded-[4rem] border border-white/60 space-y-8 overflow-hidden"
-                                    >
-                                        <LottiePlayer 
-                                           animationUrl="https://assets10.lottiefiles.com/packages/lf20_m6cuL6.json" 
-                                           className="w-80 h-80 mx-auto"
-                                        />
-                                        <div className="space-y-3 relative z-10">
-                                            <h3 className="text-4xl font-headline font-black text-on-surface tracking-tight">No Recipes Found.</h3>
-                                            <p className="text-on-surface-variant font-medium opacity-60 max-w-md mx-auto">No recipes were found matching your filters.</p>
-                                            {hasActiveFilters && (
-                                                <button 
-                                                    onClick={clearFilters}
-                                                    className="text-primary font-black text-sm hover:underline"
-                                                >
-                                                    Clear all filters
-                                                </button>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </div>
-                        )}
+                {/* Tab Switcher */}
+                <div className="flex items-center gap-2 mb-10 bg-surface-container-low p-1.5 rounded-3xl w-fit border border-outline-variant/5">
+                    <button 
+                        onClick={() => setActiveTab('all')}
+                        className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'all' ? 'bg-white text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}
+                    >
+                        All Recipes
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('recommended')}
+                        className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'recommended' ? 'bg-white text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}
+                    >
+                        <span className="material-symbols-outlined text-sm">temp_preferences_custom</span>
+                        For You
+                    </button>
                 </div>
+
+                <AnimatePresence mode="wait">
+                    {activeTab === 'all' ? (
+                        <motion.div 
+                            key="all-tab"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                        >
+                            {/* Active Filters Display */}
+                            {hasActiveFilters && (
+                                <div className="flex flex-wrap gap-2 mb-6">
+                                    {searchQuery && (
+                                        <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
+                                            Search: {searchQuery}
+                                            <button onClick={removeSearchQueryAndSearch} className="hover:text-error">×</button>
+                                        </span>
+                                    )}
+                                    {filters.dietType && (
+                                        <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
+                                            {filters.dietType}
+                                            <button onClick={() => removeFilterAndSearch('dietType')} className="hover:text-error">×</button>
+                                        </span>
+                                    )}
+                                    {filters.difficulty && (
+                                        <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
+                                            {filters.difficulty}
+                                            <button onClick={() => removeFilterAndSearch('difficulty')} className="hover:text-error">×</button>
+                                        </span>
+                                    )}
+                                    {filters.mealType && (
+                                        <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
+                                            {filters.mealType}
+                                            <button onClick={() => removeFilterAndSearch('mealType')} className="hover:text-error">×</button>
+                                        </span>
+                                    )}
+                                    {filters.prepTime && (
+                                        <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
+                                            {filters.prepTime}
+                                            <button onClick={() => removeFilterAndSearch('prepTime')} className="hover:text-error">×</button>
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Results Count */}
+                            {!loading && items.length > 0 && resultCount !== null && (
+                                <div className="text-sm text-on-surface-variant mb-6">
+                                    Total <span className="font-black text-primary">{resultCount}</span> recipes found
+                                </div>
+                            )}
+
+                            {/* Main List */}
+                            {loading && items.length === 0 ? (
+                                <div className="py-20 flex flex-col items-center justify-center">
+                                    <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+                                    <div className="text-primary font-bold tracking-widest text-sm uppercase">Loading Catalog...</div>
+                                </div>
+                            ) : (
+                                <div className='flex flex-col items-center gap-8 pb-32'>
+                                    {items.length > 0 ? (
+                                        <>
+                                            {items.map((item) => (
+                                                <div key={item.id || item._id} className="w-full max-w-5xl">
+                                                    <HorizontalCard item={item} />
+                                                </div>
+                                            ))}
+                                            {hasMore && !allLoaded && (
+                                                <div className="flex justify-center mt-8">
+                                                    <button 
+                                                        onClick={() => fetchRecipes(true)}
+                                                        disabled={loadingMore}
+                                                        className="px-8 py-4 rounded-3xl bg-white/60 backdrop-blur-md border border-white/40 hover:border-primary/40 text-on-surface font-black transition-all shadow-sm hover:shadow-md uppercase text-[10px] tracking-widest disabled:opacity-50"
+                                                    >
+                                                        {loadingMore ? 'Loading More...' : 'Explore Further'}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div className="text-center py-24 bg-white/40 backdrop-blur-xl rounded-[4rem] border border-white/60 w-full">
+                                            <h3 className="text-3xl font-headline font-black text-on-surface">No matches found</h3>
+                                            <p className="opacity-60 mb-6">Try adjusting your filters or search terms.</p>
+                                            <button onClick={clearFilters} className="text-primary font-black text-sm uppercase">Reset All</button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </motion.div>
+                    ) : (
+                        <motion.div 
+                            key="recommended-tab"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="pb-32"
+                        >
+                            <div className="mb-10">
+                                <h2 className="text-3xl font-headline font-black text-on-surface tracking-tight">Personalized Selections</h2>
+                                <p className="text-on-surface-variant mt-2 font-medium opacity-60">Hand-picked compositions based on your metabolic signature and preferences.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {recommendations.map((rec) => (
+                                    rec.isTeaserCard ? (
+                                        <motion.div 
+                                            key="teaser-card"
+                                            whileHover={{ y: -8 }}
+                                            onClick={() => navigate('/login')}
+                                            className="group cursor-pointer min-h-[400px]"
+                                        >
+                                            <div className="h-full bg-on-surface rounded-[3rem] p-10 flex flex-col justify-between items-start hover:shadow-2xl hover:shadow-primary/40 transition-all duration-500 relative overflow-hidden">
+                                                <div className="absolute inset-0 vitality-gradient opacity-10 group-hover:opacity-20 transition-opacity" />
+                                                <div className="relative z-10 space-y-6">
+                                                    <div className="w-16 h-16 rounded-3xl bg-white/10 backdrop-blur-md text-white flex items-center justify-center shadow-lg border border-white/20">
+                                                        <span className="material-symbols-outlined text-4xl">lock</span>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <h3 className="text-2xl font-headline font-black text-white leading-tight">Unlock Your Metabolic Profile</h3>
+                                                        <p className="text-sm text-white/60 leading-relaxed">Join now to see recipes perfectly aligned with your dietary needs and health goals.</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <button className="relative z-10 w-full py-5 bg-white text-on-surface font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all">
+                                                    Personalize Now
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    ) : rec.isUpgradeCard ? (
+                                        <motion.div 
+                                            key="upgrade-card"
+                                            whileHover={{ y: -8 }}
+                                            onClick={() => navigate('/profile/complete')}
+                                            className="group cursor-pointer min-h-[400px]"
+                                        >
+                                            <div className="h-full bg-primary/5 rounded-[3rem] border-2 border-dashed border-primary/30 p-10 flex flex-col justify-between items-start hover:bg-primary/10 transition-all duration-500">
+                                                <div className="space-y-6">
+                                                    <div className="w-16 h-16 rounded-3xl bg-primary text-white flex items-center justify-center shadow-lg">
+                                                        <span className="material-symbols-outlined text-4xl">bolt</span>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <h3 className="text-2xl font-headline font-black text-on-surface leading-tight">Improve Your Match</h3>
+                                                        <p className="text-sm text-on-surface-variant leading-relaxed">Your profile is <span className="text-primary font-black">{rec.percentage}%</span> complete. Adding more data improves the metabolic match accuracy.</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="w-full space-y-5">
+                                                    <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
+                                                        <motion.div 
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${rec.percentage}%` }}
+                                                            className="h-full vitality-gradient"
+                                                        />
+                                                    </div>
+                                                    <button className="w-full py-5 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:shadow-primary/20 transition-all">
+                                                        Complete Profile
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div 
+                                            key={rec.id}
+                                            whileHover={{ y: -8 }}
+                                            onClick={() => navigate(`/items/${rec.id}`)}
+                                            className="group cursor-pointer"
+                                        >
+                                            <div className="bg-white rounded-[3rem] border border-outline-variant/10 overflow-hidden shadow-sm hover:shadow-2xl hover:border-primary/20 transition-all duration-500 h-full flex flex-col">
+                                                <div className="relative h-60 overflow-hidden">
+                                                    <img 
+                                                        src={rec.coverImageUrl} 
+                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                        alt={rec.title}
+                                                    />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+                                                    <div className="absolute top-6 left-6 flex gap-2">
+                                                        <span className="px-4 py-1.5 bg-white/20 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-full border border-white/30">Smart Pick</span>
+                                                        <span className="px-4 py-1.5 bg-primary text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg">{rec.dietType}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="p-8 flex-1 flex flex-col justify-between">
+                                                    <h3 className="text-2xl font-headline font-black text-on-surface mb-4 line-clamp-2 group-hover:text-primary transition-colors leading-tight">
+                                                        {rec.title}
+                                                    </h3>
+                                                    <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 pt-4 border-t border-outline-variant/5">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="material-symbols-outlined text-base">timer</span>
+                                                            {rec.prepTime + (rec.cookTime || 0)}m
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-primary">
+                                                            <span className="material-symbols-outlined text-base">local_fire_department</span>
+                                                            {Math.round(rec.nutrition?.calories || 0)} Cal
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

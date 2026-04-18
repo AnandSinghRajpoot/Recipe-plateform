@@ -141,14 +141,9 @@ const SingleProduct = () => {
     const cookTime = item?.cookTime || 0;
     const totalTime = prepTime + cookTime;
     const calories = item?.nutrition?.calories || 450;
-    const servants = item?.servings || 2;
-
     const steps = typeof instructions === "string"
         ? instructions.split(/\d+\.\s*|\n/).filter(s => s.trim() !== "")
         : [];
-
-    const allergens = item?.containsAllergens || [];
-    const safeDiseases = item?.safeForDiseases || [];
 
     return (
         <div className="bg-surface font-body text-on-surface min-h-screen selection:bg-primary/20 py-12 md:py-20 px-4 md:px-8">
@@ -209,9 +204,11 @@ const SingleProduct = () => {
                 {/* Body Content */}
                 <div className="p-8 md:p-16 space-y-16">
                     
-                    {/* Author & Intro Row */}
-                    <div className="flex flex-col md:flex-row gap-10 items-start md:items-center justify-between">
-                        <div className="flex-grow max-w-xl space-y-6">
+                    {/* Header: Interaction Row (Chef, Nutrition, Description) */}
+                    <div className="flex flex-col lg:flex-row gap-12 items-start">
+                        
+                        {/* Left: Engagement Column */}
+                        <div className="flex-grow space-y-8">
                             <Link to={`/chef/${item.author?.id}`} className="inline-flex items-center gap-4 group/author bg-surface-container-low/50 pr-6 pl-2 py-2 rounded-full border border-outline-variant/10 hover:border-primary/40 transition-all">
                                 <img 
                                     src={item.author?.profilePhoto || generalProfilePic} 
@@ -225,18 +222,39 @@ const SingleProduct = () => {
                                 </div>
                             </Link>
 
-                            <p className="text-xl md:text-2xl text-on-surface-variant font-medium leading-relaxed opacity-80 italic">
+                            <p className="text-2xl md:text-3xl text-on-surface font-medium leading-relaxed opacity-90 italic">
                                 "{description}"
                             </p>
                         </div>
-                        <div className="grid grid-cols-2 gap-6 shrink-0 bg-surface-container-low rounded-[2.5rem] p-8 border border-white">
-                            <div className="text-center">
-                                <p className="text-2xl font-black text-primary">{totalTime}m</p>
-                                <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Total Time</p>
+
+                        {/* Right: Metabolic Signature Box */}
+                        <div className="w-full lg:w-[320px] shrink-0 p-8 rounded-[3rem] bg-surface-container-low/40 border border-white shadow-inner space-y-8">
+                            <div className="flex items-center justify-between">
+                                <div className="text-center flex-1 border-r border-outline-variant/10">
+                                    <p className="text-3xl font-black text-primary">{totalTime}m</p>
+                                    <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Duration</p>
+                                </div>
+                                <div className="text-center flex-1">
+                                    <p className="text-3xl font-black text-secondary">{Math.round(calories)}</p>
+                                    <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Calories</p>
+                                </div>
                             </div>
-                            <div className="text-center">
-                                <p className="text-2xl font-black text-secondary">{calories}</p>
-                                <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Calories</p>
+
+                            <div className="h-px bg-outline-variant/10" />
+
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="text-center">
+                                    <p className="text-xl font-headline font-black text-on-surface">{Math.round(item?.nutrition?.protein || 0)}g</p>
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-primary">Protein</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-xl font-headline font-black text-on-surface">{Math.round(item?.nutrition?.carbs || 0)}g</p>
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-primary">Carbs</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-xl font-headline font-black text-on-surface">{Math.round(item?.nutrition?.fat || 0)}g</p>
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-primary">Fat</p>
+                                </div>
                             </div>
                         </div>
                     </div>

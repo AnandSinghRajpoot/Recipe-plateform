@@ -7,8 +7,8 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-request-size: 3MB
-      max-file-size: 2MB
+      max-request-size: 6MB
+      max-file-size: 5MB
 
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/recipe}

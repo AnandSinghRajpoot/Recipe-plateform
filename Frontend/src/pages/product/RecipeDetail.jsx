@@ -23,10 +23,11 @@ const RecipeDetails = () => {
     const fetchRecipe = async () => {
       try {
         const res = await apiClient.get(`/recipes/${id}`);
-        setRecipe(res.data);
-        setLiked(res.data?.isLiked || false);
-        setLikesCount(res.data?.likesCount || 0);
-        setSaved(res.data?.isSaved || false);
+        const recipeData = res.data.data;
+        setRecipe(recipeData);
+        setLiked(recipeData?.isLiked || false);
+        setLikesCount(recipeData?.likesCount || 0);
+        setSaved(recipeData?.isSaved || false);
       } catch (err) {
         const msg = extractErrorMessage(err);
         toast.error(msg);
@@ -142,16 +143,20 @@ const RecipeDetails = () => {
                 <div className="relative rounded-[3.5rem] overflow-hidden botanical-shadow border-8 border-white bg-white aspect-[5/6] md:aspect-auto md:h-[700px]">
                     <img 
                         src={imageUrl} 
-                        alt={recipe.name} 
+                        alt={recipe.title} 
                         className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                    <div className="absolute bottom-10 left-10 right-10 flex gap-6">
+                    <div className="absolute bottom-10 left-10 right-10 flex gap-4 md:gap-6">
                         <div className="flex-1 bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-white">
                             <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Time Profile</p>
                             <p className="text-xl font-headline font-black">{recipe.prepTime || "30"} min</p>
                         </div>
                         <div className="flex-1 bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-white">
+                            <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Energy</p>
+                            <p className="text-xl font-headline font-black">{recipe.nutrition?.calories ? Math.round(recipe.nutrition.calories) : "---"} kcal</p>
+                        </div>
+                        <div className="flex-1 bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-white hidden md:block">
                             <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Complexity</p>
                             <p className="text-xl font-headline font-black">{recipe.difficulty || "Medium"}</p>
                         </div>
@@ -168,18 +173,76 @@ const RecipeDetails = () => {
             >
                 <div className="space-y-6">
                     <span className="text-primary font-black uppercase tracking-widest text-[10px] px-4 py-1.5 bg-primary/10 rounded-full border border-primary/20 inline-block">
-                        Metabolic Intelligence
+                        Nutritional Architecture
                     </span>
                     <h1 className="text-5xl md:text-7xl font-headline font-black text-on-surface tracking-tighter leading-none">
-                        {recipe.name}
+                        {recipe.title}
                     </h1>
+                    
+                    {/* Meta Info Row */}
+                    <div className="flex flex-wrap items-center gap-6 py-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center">
+                                <span className="material-symbols-outlined text-primary text-sm">restaurant</span>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Meal Phase</p>
+                                <p className="text-sm font-bold text-on-surface">{recipe.mealType || "Main"}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 border-l border-outline-variant/30 pl-6">
+                            <div className="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center">
+                                <span className="material-symbols-outlined text-primary text-sm">eco</span>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Dietary Type</p>
+                                <p className="text-sm font-bold text-on-surface">{recipe.dietType || "General"}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 border-l border-outline-variant/30 pl-6">
+                            <div className="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center">
+                                <span className="material-symbols-outlined text-primary text-sm">language</span>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Cuisine</p>
+                                <p className="text-sm font-bold text-on-surface">{recipe.cuisineType || "International"}</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <p className="text-xl text-on-surface-variant font-medium leading-relaxed opacity-80">
                         {recipe.description || "A masterfully crafted composition designed for metabolic optimization and nutritional density."}
                     </p>
                 </div>
 
+                {/* Macro Dashboard */}
+                {recipe.nutrition && (
+                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="p-6 rounded-[2rem] bg-primary text-white space-y-2 shadow-lg shadow-primary/20">
+                            <p className="text-[9px] font-black uppercase tracking-widest opacity-70">Calories</p>
+                            <p className="text-3xl font-headline font-black">{Math.round(recipe.nutrition.calories)}</p>
+                            <p className="text-[10px] font-bold">Total Kcal</p>
+                        </div>
+                        <div className="p-6 rounded-[2rem] bg-white border border-outline-variant/30 space-y-2">
+                   <div className="flex gap-6 overflow-x-auto pb-4 md:pb-0 scrollbar-hide">
+                        <div className="min-w-[100px] flex flex-col items-center gap-2 p-5 rounded-3xl bg-white border border-outline-variant/20 shadow-sm">
+                            <span className="text-2xl font-headline font-black text-primary">{Math.round(recipe.nutrition.protein)}g</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest opacity-50">Protein</span>
+                        </div>
+                        <div className="min-w-[100px] flex flex-col items-center gap-2 p-5 rounded-3xl bg-white border border-outline-variant/20 shadow-sm">
+                            <span className="text-2xl font-headline font-black text-primary">{Math.round(recipe.nutrition.carbs)}g</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest opacity-50">Carbohydrates</span>
+                        </div>
+                        <div className="min-w-[100px] flex flex-col items-center gap-2 p-5 rounded-3xl bg-white border border-outline-variant/20 shadow-sm">
+                            <span className="text-2xl font-headline font-black text-primary">{Math.round(recipe.nutrition.fat)}g</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest opacity-50">Lipids (Fat)</span>
+                        </div>
+                   </div>
+                )}
+
                 {/* Specifics Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Ingredients Section */}
                     <div className="p-8 rounded-[2.5rem] bg-white border border-white shadow-sm space-y-6">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
@@ -190,26 +253,27 @@ const RecipeDetails = () => {
                         <ul className="space-y-4">
                             {recipe.ingredients?.map((ing, idx) => (
                                 <li key={idx} className="flex items-center gap-4 group">
-                                    <div className="w-2 h-2 rounded-full bg-primary/30 group-hover:bg-primary transition-colors"></div>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-primary/30 group-hover:bg-primary transition-colors"></div>
                                     <span className="text-on-surface-variant font-bold text-sm">
-                                        {ing.quantity} {ing.name}
+                                        {ing.quantity} {ing.unit} {ing.name}
                                     </span>
                                 </li>
                             ))}
                         </ul>
                     </div>
 
+                    {/* Procedure Section */}
                     <div className="p-8 rounded-[2.5rem] bg-white border border-white shadow-sm space-y-6">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-secondary-container/20 text-on-secondary-container flex items-center justify-center">
                                 <span className="material-symbols-outlined text-lg">oven_gen</span>
                             </div>
-                            <h4 className="font-headline font-black text-xl text-on-surface">Procedure</h4>
+                            <h4 className="font-headline font-black text-xl text-on-surface">CULINARY PROTOCOL</h4>
                         </div>
                         <div className="space-y-4">
-                            <p className="text-on-surface-variant font-medium leading-relaxed text-sm italic">
-                                "{recipe.instructions || "Refer to the culinary protocol for optimal nutrient preservation."}"
-                            </p>
+                            <div className="text-on-surface-variant font-medium leading-relaxed text-sm whitespace-pre-line">
+                                {recipe.instructions || "Refer to the culinary protocol for optimal nutrient preservation."}
+                            </div>
                         </div>
                     </div>
                 </div>

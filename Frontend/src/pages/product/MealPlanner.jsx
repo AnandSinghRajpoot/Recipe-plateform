@@ -20,10 +20,13 @@ const MealPlanner = () => {
     const [searchResults, setSearchResults] = useState([]);
     const [searching, setSearching] = useState(false);
     const [savedRecipes, setSavedRecipes] = useState([]);
-    const [modalTab, setModalTab] = useState("search"); // "search" or "saved"
+    const [modalTab, setModalTab] = useState("recommended"); // "recommended", "search" or "saved"
+    const [recommendedRecipes, setRecommendedRecipes] = useState([]);
+    const [fetchingRecommended, setFetchingRecommended] = useState(false);
     const [autoFilling, setAutoFilling] = useState(null); // dayName if filling
     const [filters, setFilters] = useState({
         dietType: "",
+        mealType: "",
         difficulty: "",
         maxCalories: "",
         minCalories: ""
@@ -92,6 +95,29 @@ const MealPlanner = () => {
             setAutoFilling(null);
         }
     };
+
+    const fetchRecommendations = async (type) => {
+        setFetchingRecommended(true);
+        try {
+            const res = await apiClient.get("/recipes/recommended", {
+                params: {
+                    limit: 12,
+                    mealType: type || selectedSlot?.type
+                }
+            });
+            setRecommendedRecipes(res.data.data || []);
+        } catch (err) {
+            console.error("Failed to fetch recommendations", err);
+        } finally {
+            setFetchingRecommended(false);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedSlot && modalTab === "recommended") {
+            fetchRecommendations(selectedSlot.type);
+        }
+    }, [selectedSlot, modalTab]);
 
     const addMeal = async (recipeId) => {
         try {
@@ -427,16 +453,22 @@ const MealPlanner = () => {
 
                                 <div className="flex gap-4 mb-8 p-1.5 bg-surface-container-low rounded-2xl shrink-0">
                                     <button 
+                                        onClick={() => setModalTab("recommended")}
+                                        className={`flex-grow py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${modalTab === 'recommended' ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant opacity-40 hover:opacity-100'}`}
+                                    >
+                                        ⭐ Recommended
+                                    </button>
+                                    <button 
                                         onClick={() => setModalTab("search")}
                                         className={`flex-grow py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${modalTab === 'search' ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant opacity-40 hover:opacity-100'}`}
                                     >
-                                        Search Recipes
+                                        Search All
                                     </button>
                                     <button 
                                         onClick={() => setModalTab("saved")}
                                         className={`flex-grow py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${modalTab === 'saved' ? 'bg-white text-secondary shadow-sm' : 'text-on-surface-variant opacity-40 hover:opacity-100'}`}
                                     >
-                                        Saved Library ({savedRecipes.length})
+                                        Favorites ({savedRecipes.length})
                                     </button>
                                 </div>
 
@@ -456,6 +488,65 @@ const MealPlanner = () => {
                                 )}
 
                                 <div className="flex-grow overflow-y-auto space-y-4 pr-2 md:pr-4 custom-scrollbar">
+                                    {modalTab === "recommended" && (
+                                        <>
+                                            {fetchingRecommended ? (
+                                                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                                                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-primary animate-pulse">Personalizing your menu...</p>
+                                                </div>
+                                            ) : recommendedRecipes.length > 0 ? (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
+                                                    {recommendedRecipes.map(recipe => (
+                                                        <button 
+                                                            key={recipe.id}
+                                                            onClick={() => addMeal(recipe.id)}
+                                                            className="w-full p-6 rounded-[3.5rem] bg-surface-container-low hover:bg-primary group transition-all flex flex-col gap-6 text-left border relative shadow-sm hover:shadow-xl hover:shadow-primary/20 h-[320px] border-primary/20 bg-primary/5"
+                                                        >
+                                                            <div className="flex items-start gap-6 w-full">
+                                                                <div className="w-28 h-28 rounded-[2.5rem] overflow-hidden bg-white flex-shrink-0 relative border border-outline-variant/10">
+                                                                    <img 
+                                                                        src={recipe.coverImageUrl || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"} 
+                                                                        alt={recipe.title} 
+                                                                        className="w-full h-full object-cover transition-transform group-hover:scale-110" 
+                                                                    />
+                                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                                                                </div>
+                                                                <div className="flex-grow pt-2">
+                                                                    <p className="font-black text-on-surface group-hover:text-white transition-colors text-xl leading-[1.1] mb-2 line-clamp-2">{recipe.title}</p>
+                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                                        <span className="px-3 py-1 rounded-full bg-primary text-white text-[9px] font-black uppercase tracking-widest">Recommended</span>
+                                                                        {recipe.dietType && <span className="text-[9px] font-black uppercase tracking-widest text-primary-variant group-hover:text-white/80">{recipe.dietType}</span>}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div className="grid grid-cols-3 gap-2 bg-white/60 group-hover:bg-black/10 p-4 rounded-[2rem] transition-colors mt-auto">
+                                                                <div className="text-center">
+                                                                    <p className="text-[8px] font-black text-on-surface-variant opacity-40 uppercase group-hover:text-white/40">Calories</p>
+                                                                    <p className="text-[12px] font-black text-on-surface group-hover:text-white">{recipe.nutrition?.calories?.toFixed(0) || 0}</p>
+                                                                </div>
+                                                                <div className="text-center border-x border-outline-variant/10 group-hover:border-white/10">
+                                                                    <p className="text-[8px] font-black text-on-surface-variant opacity-40 uppercase group-hover:text-white/40">Protein</p>
+                                                                    <p className="text-[12px] font-black text-on-surface group-hover:text-white">{recipe.nutrition?.protein?.toFixed(0) || 0}g</p>
+                                                                </div>
+                                                                <div className="text-center">
+                                                                    <p className="text-[8px] font-black text-on-surface-variant opacity-40 uppercase group-hover:text-white/40">Time</p>
+                                                                    <p className="text-[12px] font-black text-on-surface group-hover:text-white">{recipe.prepTime + recipe.cookTime}m</p>
+                                                                </div>
+                                                            </div>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-24 opacity-30">
+                                                    <span className="material-symbols-outlined text-6xl mb-4">stars</span>
+                                                    <p className="font-black uppercase tracking-widest text-sm">Complete your profile for better suggestions</p>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
                                     {modalTab === "search" ? (
                                         <>
                                             {filteredResults.length > 0 ? (
@@ -541,8 +632,20 @@ const MealPlanner = () => {
                                         </div>
                                     )}
                                 </div>
-                            </div>
 
+                                <div className="p-8 border-t border-outline-variant/10 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-surface-container-low shrink-0">
+                                    <div className="flex items-center gap-4 text-on-surface-variant/40">
+                                        <span className="material-symbols-outlined text-xl">info</span>
+                                        <p className="text-[10px] leading-relaxed font-medium max-w-xl">
+                                            <strong>Safety Disclaimer:</strong> Recommendations are for general guidance and do not constitute medical advice. Please consult a healthcare professional for specific dietary needs.
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                                        <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">AI-Powered Suggestions</span>
+                                    </div>
+                                </div>
+                            </div>
                         </motion.div>
                     </div>
                 )}
