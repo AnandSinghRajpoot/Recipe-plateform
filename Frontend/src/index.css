@@ -59,6 +59,32 @@
   animation: shimmer-premium 2s infinite ease-in-out;
 }
 
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
 @keyframes shimmer-premium {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
