@@ -84,6 +84,7 @@ public class RecipeServiceImpl implements RecipeService {
             recipe.setCoverImageUrl(imageUrl);
         }
 
+        mapComplexRelationships(recipe, dto);
         Recipe savedRecipe = recipeRepository.save(recipe);
         return recipeMapper.toResponseDTO(savedRecipe);
     }
@@ -99,6 +100,7 @@ public class RecipeServiceImpl implements RecipeService {
         }
 
         recipeMapper.updateEntityFromDTO(dto, recipe);
+        mapComplexRelationships(recipe, dto);
         
         if (coverImage != null && !coverImage.isEmpty()) {
             String imageUrl = imageService.saveImage(coverImage);
@@ -241,5 +243,33 @@ public class RecipeServiceImpl implements RecipeService {
         List<RecipeResponseDTO> dtos = recipeMapper.toResponseDTOList(recipeRepository.findByUser(user));
         dtos.forEach(this::populateSocialData);
         return dtos;
+    }
+
+    private void mapComplexRelationships(Recipe recipe, RecipeRequestDto dto) {
+        // Handle Ingredients
+        if (dto.getIngredients() != null) {
+            recipe.getIngredients().clear();
+            dto.getIngredients().forEach(ingDto -> {
+                Ingredient ingredient = ingredientService.getOrCreateIngredientByName(ingDto.getName());
+                RecipeIngredient recipeIngredient = new RecipeIngredient();
+                recipeIngredient.setRecipe(recipe);
+                recipeIngredient.setIngredient(ingredient);
+                recipeIngredient.setQuantity(ingDto.getQuantity());
+                recipeIngredient.setUnit(ingDto.getUnit());
+                recipe.getIngredients().add(recipeIngredient);
+            });
+        }
+
+        // Handle Allergens
+        if (dto.getAllergenIds() != null) {
+            Set<Allergy> allergens = new HashSet<>(allergyRepository.findAllById(dto.getAllergenIds()));
+            recipe.setContainsAllergens(allergens);
+        }
+
+        // Handle Safe Diseases
+        if (dto.getSafeForDiseaseIds() != null) {
+            Set<Disease> diseases = new HashSet<>(diseaseRepository.findAllById(dto.getSafeForDiseaseIds()));
+            recipe.setSafeForDiseases(diseases);
+        }
     }
 }
