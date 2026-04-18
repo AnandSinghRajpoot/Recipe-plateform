@@ -190,9 +190,6 @@ public class DataSeeder implements ApplicationRunner {
                 .protein(data.getNutrition() != null ? data.getNutrition().protein : (data.getProtein() > 0 ? data.getProtein() : 10))
                 .carbs(data.getNutrition() != null ? data.getNutrition().carbs : (data.getCarbs() > 0 ? data.getCarbs() : 20))
                 .fat(data.getNutrition() != null ? data.getNutrition().fat : (data.getFat() > 0 ? data.getFat() : 10))
-                .fiber(data.getNutrition() != null ? data.getNutrition().fiber : 2.0)
-                .sugar(data.getNutrition() != null ? data.getNutrition().sugar : 5.0)
-                .sodium(data.getNutrition() != null ? data.getNutrition().sodium : 300.0)
                 .recipe(r)
                 .build();
             r.setNutrition(nutrition);
@@ -253,6 +250,30 @@ public class DataSeeder implements ApplicationRunner {
                 recipeIngredients.add(ri);
             }
             r.setIngredients(recipeIngredients);
+
+            // --- DEEP DIETARY SCAN (Before saving) ---
+            DietType finalDiet = r.getDietType();
+            
+            // 1. Check for Meats/Eggs (Non-Veg)
+            boolean hasNonVeg = recipeIngredients.stream().anyMatch(ri -> {
+                String name = ri.getIngredient().getName().toLowerCase();
+                return name.contains("egg") || name.contains("beef") || name.contains("mutton") || 
+                       name.contains("chicken") || name.contains("meat") || name.contains("fish") || 
+                       name.contains("shrimp") || name.contains("pork") || name.contains("anchovy");
+            });
+            if (hasNonVeg) finalDiet = DietType.NON_VEG;
+
+            // 2. Check for Dairy/Honey if still Vegan
+            if (finalDiet == DietType.VEGAN) {
+                boolean hasDairyOrHoney = recipeIngredients.stream().anyMatch(ri -> {
+                    String name = ri.getIngredient().getName().toLowerCase();
+                    return name.contains("cheese") || name.contains("milk") || name.contains("butter") || 
+                           name.contains("cream") || name.contains("yogurt") || name.contains("honey") || 
+                           name.contains("feta") || name.contains("paneer");
+                });
+                if (hasDairyOrHoney) finalDiet = DietType.VEG;
+            }
+            r.setDietType(finalDiet);
 
             bulkRecipes.add(r);
             index++;
@@ -316,15 +337,36 @@ public class DataSeeder implements ApplicationRunner {
     }
 
     private DietType determineDietType(String slug) {
-        if (slug.contains("chicken") || slug.contains("mutton") || slug.contains("fish") || 
-            slug.contains("pork") || slug.contains("steak") || slug.contains("salmon") || 
-            slug.contains("shrimp") || slug.contains("seafood") || slug.contains("lobster") ||
-            slug.contains("burger") || slug.contains("biryani") || slug.contains("curry") ||
-            slug.contains("lamb") || slug.contains("bacon") || slug.contains("pepperoni")) return DietType.NON_VEG;
+        String s = slug.toLowerCase();
         
-        if (slug.contains("salad") || slug.contains("toast") || slug.contains("falafel") || 
-            slug.contains("hummus") || slug.contains("dosa") || slug.contains("sorbet") ||
-            slug.contains("quinoa")) return DietType.VEGAN;
+        // 1. Strict Non-Veg indicators (Meats, Fish, Eggs)
+        if (s.contains("chicken") || s.contains("mutton") || s.contains("fish") || 
+            s.contains("pork") || s.contains("steak") || s.contains("salmon") || 
+            s.contains("shrimp") || s.contains("seafood") || s.contains("lobster") ||
+            s.contains("lamb") || s.contains("bacon") || s.contains("pepperoni") ||
+            s.contains("beef") || s.contains("prawn") || s.contains("crab") ||
+            s.contains("egg") || s.contains("omelette") || s.contains("meatballs") ||
+            s.contains("anchovy") || s.contains("salami") || s.contains("turkey") ||
+            s.contains("duck")) {
+            return DietType.NON_VEG;
+        }
+
+        // 2. Strict Veg/Vegan indicators
+        if (s.contains("paneer") || s.contains("dal-") || s.contains("dal_") || 
+            s.contains("soya") || s.contains("mushroom") || s.contains("aloo") || 
+            s.contains("gobi") || s.contains("cheese") || s.contains("milk") || 
+            s.contains("butter-") || s.contains("curd") || s.contains("yogurt") ||
+            s.contains("feta") || s.contains("honey")) {
+            return DietType.VEG;
+        }
+        
+        // 3. Known Vegan keywords
+        if (s.contains("vegan") || s.contains("tofu") || s.contains("falafel") || 
+            s.contains("hummus") || s.contains("quinoa") || s.contains("avocado") ||
+            s.contains("sorbet") || s.contains("guacamole") || s.contains("smoothie") ||
+            s.contains("chia") || s.contains("oats")) {
+            return DietType.VEGAN;
+        }
             
         return DietType.VEG;
     }
@@ -365,12 +407,12 @@ public class DataSeeder implements ApplicationRunner {
             slug.contains("spring-rolls") || slug.contains("nachos") || slug.contains("chips") ||
             slug.contains("chaat")) return MealType.SNACK;
         if (slug.contains("chai") || slug.contains("lassi") || slug.contains("smoothie") ||
-            slug.contains("coffee") || slug.contains("tea")) return MealType.BEVERAGE;
-        if (slug.contains("pie") || slug.contains("cake") || slug.contains("brownie") || 
-            slug.contains("cookie") || slug.contains("gelato") || slug.contains("macarons") ||
-            slug.contains("sorbet") || slug.contains("tiramisu") || slug.contains("churros") ||
-            slug.contains("gulab") || slug.contains("jalebi") || slug.contains("rasgulla") ||
-            slug.contains("cheesecake") || slug.contains("waffle") || slug.contains("muffin")) return MealType.DESSERT;
+            slug.contains("coffee") || slug.contains("tea") || slug.contains("pie") || 
+            slug.contains("cake") || slug.contains("brownie") || slug.contains("cookie") || 
+            slug.contains("gelato") || slug.contains("macarons") || slug.contains("sorbet") || 
+            slug.contains("tiramisu") || slug.contains("churros") || slug.contains("gulab") || 
+            slug.contains("jalebi") || slug.contains("rasgulla") || slug.contains("cheesecake") || 
+            slug.contains("waffle") || slug.contains("muffin")) return MealType.SNACK;
             
         return MealType.DINNER;
     }

@@ -14,7 +14,4 @@ public class NutritionDTO {
     private Double protein;
     private Double carbs;
     private Double fat;
-    private Double fiber;
-    private Double sugar;
-    private Double sodium;
 }
