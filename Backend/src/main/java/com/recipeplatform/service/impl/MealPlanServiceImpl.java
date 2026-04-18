@@ -1,19 +1,24 @@
 package com.recipeplatform.service.impl;
 
 import com.recipeplatform.domain.*;
-import com.recipeplatform.domain.enums.ActivityLevel;
-import com.recipeplatform.domain.enums.Gender;
+import com.recipeplatform.domain.enums.MealPlanGoal;
+import com.recipeplatform.domain.enums.MealType;
 import com.recipeplatform.dto.meal.*;
+import com.recipeplatform.dto.recipe.NutritionDTO;
+import com.recipeplatform.dto.recipe.RecipeResponseDTO;
 import com.recipeplatform.exception.ResourceNotFoundException;
 import com.recipeplatform.repository.*;
 import com.recipeplatform.service.MealPlanService;
-import com.recipeplatform.util.CurrentUser;
+import com.recipeplatform.service.RecommendationEngine;
+import com.recipeplatform.dto.RecipeRecommendationDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.*;
+import java.time.DayOfWeek;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,132 +27,243 @@ import java.util.stream.Collectors;
 public class MealPlanServiceImpl implements MealPlanService {
 
     private final MealPlanRepository mealPlanRepository;
-    private final UserHealthProfileRepository userHealthProfileRepository;
+    private final MealPlanDayRepository mealPlanDayRepository;
+    private final MealSlotRepository mealSlotRepository;
+    private final UserRepository userRepository;
     private final RecipeRepository recipeRepository;
-    private final CurrentUser currentUser;
+    private final RecommendationEngine recommendationEngine;
 
     @Override
     @Transactional
-    public MealPlanResponseDTO addMeal(MealPlanRequestDTO request) {
-        User user = currentUser.getCurrentUser();
-        Recipe recipe = recipeRepository.findById(request.getRecipeId())
+    public MealPlanResponseDTO createPlan(Long userId, String name, String description, String goal) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        MealPlan mealPlan = MealPlan.builder()
+                .name(name)
+                .description(description)
+                .user(user)
+                .goal(goal != null ? MealPlanGoal.valueOf(goal) : null)
+                .isActive(false)
+                .days(new ArrayList<>())
+                .build();
+
+        // Auto-generate 7 days
+        Arrays.stream(DayOfWeek.values()).forEach(dayOfWeek -> {
+            MealPlanDay day = MealPlanDay.builder()
+                    .dayOfWeek(dayOfWeek)
+                    .mealPlan(mealPlan)
+                    .slots(new ArrayList<>())
+                    .build();
+            mealPlan.getDays().add(day);
+        });
+
+        MealPlan savedPlan = mealPlanRepository.save(mealPlan);
+        return mapToDTO(savedPlan);
+    }
+
+    @Override
+    public MealPlanResponseDTO getPlanById(Long planId) {
+        MealPlan plan = mealPlanRepository.findById(planId)
+                .orElseThrow(() -> new ResourceNotFoundException("Plan not found"));
+        return mapToDTO(plan);
+    }
+
+    @Override
+    public List<MealPlanResponseDTO> getUserPlans(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return mealPlanRepository.findByUser(user).stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void deletePlan(Long userId, Long planId) {
+        MealPlan plan = mealPlanRepository.findById(planId)
+                .orElseThrow(() -> new ResourceNotFoundException("Plan not found"));
+        
+        if (!plan.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized to delete this plan");
+        }
+        
+        mealPlanRepository.delete(plan);
+    }
+
+    @Override
+    @Transactional
+    public void activatePlan(Long userId, Long planId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        MealPlan plan = mealPlanRepository.findById(planId)
+                .orElseThrow(() -> new ResourceNotFoundException("Plan not found"));
+
+        if (!plan.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized to activate this plan");
+        }
+
+        // Deactivate all others
+        mealPlanRepository.deactivateAllPlansForUser(user);
+        
+        // Activate this one
+        plan.setIsActive(true);
+        mealPlanRepository.save(plan);
+    }
+
+    @Override
+    @Transactional
+    public MealPlanResponseDTO addMealToSlot(Long userId, Long planId, DayOfWeek dayOfWeek, MealType mealType, Long recipeId) {
+        MealPlan plan = mealPlanRepository.findById(planId)
+                .orElseThrow(() -> new ResourceNotFoundException("Plan not found"));
+
+        if (!plan.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized to modify this plan");
+        }
+
+        MealPlanDay day = mealPlanDayRepository.findByMealPlanIdAndDayOfWeek(planId, dayOfWeek)
+                .orElseThrow(() -> new ResourceNotFoundException("Day not found in plan"));
+
+        Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
 
-        MealPlan mealPlan = new MealPlan();
-        mealPlan.setUser(user);
-        mealPlan.setRecipe(recipe);
-        mealPlan.setMealDate(request.getMealDate());
-        mealPlan.setMealType(request.getMealType());
+        // Check if slot already exists
+        MealSlot slot = mealSlotRepository.findByDayIdAndMealType(day.getId(), mealType)
+                .orElse(MealSlot.builder().day(day).mealType(mealType).build());
 
-        MealPlan saved = mealPlanRepository.save(mealPlan);
-        return mapToDTO(saved);
+        slot.setRecipe(recipe);
+        mealSlotRepository.save(slot);
+
+        return mapToDTO(plan);
     }
 
     @Override
     @Transactional
-    public void removeMeal(Long id) {
-        mealPlanRepository.deleteById(id);
+    public void removeMealFromSlot(Long userId, Long slotId) {
+        MealSlot slot = mealSlotRepository.findById(slotId)
+                .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
+
+        if (!slot.getDay().getMealPlan().getUser().getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized to modify this plan");
+        }
+
+        mealSlotRepository.delete(slot);
     }
 
     @Override
-    public Map<LocalDate, DailyNutrientSummaryDTO> getWeeklyPlan(LocalDate startDate) {
-        User user = currentUser.getCurrentUser();
-        LocalDate endDate = startDate.plusDays(6);
-        
-        List<MealPlan> plans = mealPlanRepository.findByUserAndMealDateBetween(user, startDate, endDate);
-        
-        Map<LocalDate, List<MealPlan>> groupedByDate = plans.stream()
-                .collect(Collectors.groupingBy(MealPlan::getMealDate));
+    @Transactional
+    public MealPlanResponseDTO autoFillDay(Long userId, Long planId, DayOfWeek dayOfWeek) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        Map<LocalDate, DailyNutrientSummaryDTO> weeklySummary = new LinkedHashMap<>();
-        
-        for (int i = 0; i < 7; i++) {
-            LocalDate date = startDate.plusDays(i);
-            List<MealPlan> dayPlans = groupedByDate.getOrDefault(date, new ArrayList<>());
-            weeklySummary.put(date, calculateDailySummary(user, dayPlans));
+        MealPlan plan = mealPlanRepository.findById(planId)
+                .orElseThrow(() -> new ResourceNotFoundException("Plan not found"));
+
+        if (!plan.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized to modify this plan");
         }
 
-        return weeklySummary;
-    }
+        MealPlanDay day = mealPlanDayRepository.findByMealPlanIdAndDayOfWeek(planId, dayOfWeek)
+                .orElseThrow(() -> new ResourceNotFoundException("Day not found in plan"));
 
-    @Override
-    public DailyNutrientSummaryDTO getDailySummary(LocalDate date) {
-        User user = currentUser.getCurrentUser();
-        List<MealPlan> dayPlans = mealPlanRepository.findByUserAndMealDate(user, date);
-        return calculateDailySummary(user, dayPlans);
-    }
+        // To avoid duplicates in the same day and prioritize unique ones across the week
+        java.util.Set<Long> dayRecipeIds = day.getSlots().stream()
+                .map(slot -> slot.getRecipe() != null ? slot.getRecipe().getId() : null)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
 
-    private DailyNutrientSummaryDTO calculateDailySummary(User user, List<MealPlan> meals) {
-        Optional<UserHealthProfile> profileOpt = userHealthProfileRepository.findByUserId(user.getId());
-        
-        double targetCals = 2000.0; // Default
-        double targetProt = 150.0;
-        double targetCarbs = 250.0;
-        double targetFat = 70.0;
+        // Get all recipe IDs in the entire plan to avoid week-wide repetition if possible
+        java.util.Set<Long> entirePlanRecipeIds = plan.getDays().stream()
+                .flatMap(d -> d.getSlots().stream())
+                .map(slot -> slot.getRecipe() != null ? slot.getRecipe().getId() : null)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
 
-        if (profileOpt.isPresent()) {
-            UserHealthProfile profile = profileOpt.get();
-            targetCals = calculateTDEE(profile);
-            // Macro targets based on common ratios (30/45/25)
-            targetProt = (targetCals * 0.30) / 4;
-            targetCarbs = (targetCals * 0.45) / 4;
-            targetFat = (targetCals * 0.25) / 9;
+        for (MealType type : MealType.values()) {
+            boolean slotExists = day.getSlots().stream().anyMatch(s -> s.getMealType() == type && s.getRecipe() != null);
+            if (!slotExists) {
+                // Get a larger pool of recommendations
+                List<RecipeRecommendationDTO> recs = recommendationEngine.getByMealType(userId, type, 20);
+                
+                // Shuffle the pool for variety
+                java.util.Collections.shuffle(recs);
+
+                // Priority 1: Not in entire plan
+                RecipeRecommendationDTO selected = recs.stream()
+                        .filter(r -> !entirePlanRecipeIds.contains(r.getId()))
+                        .findFirst()
+                        .orElse(null);
+
+                // Priority 2: Fallback to not in current day if no new ones available
+                if (selected == null) {
+                    selected = recs.stream()
+                        .filter(r -> !dayRecipeIds.contains(r.getId()))
+                        .findFirst()
+                        .orElse(null);
+                }
+
+                if (selected != null) {
+                    Recipe recipe = recipeRepository.findById(selected.getId()).orElse(null);
+                    if (recipe != null) {
+                        MealSlot slot = mealSlotRepository.findByDayIdAndMealType(day.getId(), type)
+                                .orElse(MealSlot.builder().day(day).mealType(type).build());
+                        slot.setRecipe(recipe);
+                        mealSlotRepository.save(slot);
+                        dayRecipeIds.add(recipe.getId());
+                        entirePlanRecipeIds.add(recipe.getId());
+                    }
+                }
+            }
         }
 
-        double plannedCals = meals.stream().mapToDouble(m -> m.getRecipe().getCalories() != null ? m.getRecipe().getCalories() : 0).sum();
-        double plannedProt = meals.stream().mapToDouble(m -> m.getRecipe().getProtein() != null ? m.getRecipe().getProtein() : 0).sum();
-        double plannedCarbs = meals.stream().mapToDouble(m -> m.getRecipe().getCarbs() != null ? m.getRecipe().getCarbs() : 0).sum();
-        double plannedFat = meals.stream().mapToDouble(m -> m.getRecipe().getFat() != null ? m.getRecipe().getFat() : 0).sum();
+        return mapToDTO(plan);
+    }
 
-        String status = "Balanced";
-        if (plannedCals > targetCals + 100) status = "Over";
-        else if (plannedCals < targetCals - 100) status = "Under";
-
-        return DailyNutrientSummaryDTO.builder()
-                .targetCalories(targetCals)
-                .plannedCalories(plannedCals)
-                .targetProtein(targetProt)
-                .plannedProtein(plannedProt)
-                .targetCarbs(targetCarbs)
-                .plannedCarbs(plannedCarbs)
-                .targetFat(targetFat)
-                .plannedFat(plannedFat)
-                .status(status)
-                .meals(meals.stream().map(this::mapToDTO).collect(Collectors.toList()))
+    private MealPlanResponseDTO mapToDTO(MealPlan plan) {
+        return MealPlanResponseDTO.builder()
+                .id(plan.getId())
+                .name(plan.getName())
+                .description(plan.getDescription())
+                .goal(plan.getGoal())
+                .isActive(plan.getIsActive())
+                .createdAt(plan.getCreatedAt())
+                .days(plan.getDays().stream().map(this::mapDayToDTO).collect(Collectors.toList()))
                 .build();
     }
 
-    private double calculateTDEE(UserHealthProfile profile) {
-        if (profile.getWeight() == null || profile.getHeight() == null || profile.getAge() == null) return 2000.0;
-        
-        double bmr;
-        if (profile.getGender() == Gender.MALE) {
-            bmr = (10 * profile.getWeight()) + (6.25 * profile.getHeight()) - (5 * profile.getAge()) + 5;
-        } else {
-            bmr = (10 * profile.getWeight()) + (6.25 * profile.getHeight()) - (5 * profile.getAge()) - 161;
-        }
-
-        double multiplier = 1.2;
-        if (profile.getActivityLevel() == ActivityLevel.LIGHTLY_ACTIVE) multiplier = 1.375;
-        else if (profile.getActivityLevel() == ActivityLevel.MODERATELY_ACTIVE) multiplier = 1.55;
-        else if (profile.getActivityLevel() == ActivityLevel.VERY_ACTIVE) multiplier = 1.725;
-        else if (profile.getActivityLevel() == ActivityLevel.EXTREMELY_ACTIVE) multiplier = 1.9;
-
-        return bmr * multiplier;
+    private MealPlanDayDTO mapDayToDTO(MealPlanDay day) {
+        return MealPlanDayDTO.builder()
+                .id(day.getId())
+                .dayOfWeek(day.getDayOfWeek())
+                .slots(day.getSlots().stream().map(this::mapSlotToDTO).collect(Collectors.toList()))
+                .build();
     }
 
-    private MealPlanResponseDTO mapToDTO(MealPlan meal) {
-        return MealPlanResponseDTO.builder()
-                .id(meal.getId())
-                .recipeId(meal.getRecipe().getId())
-                .recipeTitle(meal.getRecipe().getTitle())
-                .recipeImage(meal.getRecipe().getCoverImageUrl())
-                .calories(meal.getRecipe().getCalories())
-                .protein(meal.getRecipe().getProtein())
-                .carbs(meal.getRecipe().getCarbs())
-                .fat(meal.getRecipe().getFat())
-                .mealDate(meal.getMealDate())
-                .mealType(meal.getMealType())
+    private MealSlotDTO mapSlotToDTO(MealSlot slot) {
+        return MealSlotDTO.builder()
+                .id(slot.getId())
+                .mealType(slot.getMealType())
+                .recipe(mapRecipeToDTO(slot.getRecipe()))
+                .build();
+    }
+
+    private RecipeResponseDTO mapRecipeToDTO(Recipe recipe) {
+        if (recipe == null) return null;
+        return RecipeResponseDTO.builder()
+                .id(recipe.getId())
+                .title(recipe.getTitle())
+                .coverImageUrl(recipe.getCoverImageUrl())
+                .prepTime(recipe.getPrepTime())
+                .cookTime(recipe.getCookTime())
+                .difficulty(recipe.getDifficulty())
+                .dietType(recipe.getDietType())
+                .nutrition(recipe.getNutrition() != null ? NutritionDTO.builder()
+                        .calories(recipe.getNutrition().getCalories())
+                        .protein(recipe.getNutrition().getProtein())
+                        .carbs(recipe.getNutrition().getCarbs())
+                        .fat(recipe.getNutrition().getFat())
+                        .build() : null)
                 .build();
     }
 }
