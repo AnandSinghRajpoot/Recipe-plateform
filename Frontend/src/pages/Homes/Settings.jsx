@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import apiClient from "../../utils/apiClient";
+import generalProfilePic from "../../assets/general-profile-pic.png";
+import { resolveImageUrl } from "../../utils/imageUtils";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -12,6 +16,8 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
   
   // Notification toggles
   const [notifications, setNotifications] = useState({
@@ -28,9 +34,7 @@ const Settings = () => {
       return;
     }
 
-    axios.get("http://localhost:8080/api/v1/auth/profile", {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    apiClient.get("/auth/profile")
     .then(res => {
       setProfile(res.data);
       setLoading(false);
@@ -81,11 +85,9 @@ const Settings = () => {
     setSuccess("");
 
     try {
-      await axios.post("http://localhost:8080/api/v1/auth/change-password", {
+      await apiClient.post("/auth/change-password", {
         currentPassword: passwords.currentPassword,
         newPassword: passwords.newPassword
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       setSuccess("Password updated successfully!");
       setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
@@ -93,6 +95,29 @@ const Settings = () => {
       setError(err.response?.data?.message || "Failed to update password");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePhotoClick = () => fileInputRef.current?.click();
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("profilePhoto", file);
+
+    setUploading(true);
+    try {
+      const res = await apiClient.post("/auth/profile/photo", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setProfile(prev => ({ ...prev, profilePhoto: res.data }));
+      toast.success("Photo updated successfully!");
+    } catch (err) {
+      toast.error("Failed to update photo");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -146,6 +171,39 @@ const Settings = () => {
         {/* Account Tab */}
         {activeTab === "account" && (
           <div className="space-y-6">
+            {/* Profile Photo Section */}
+            <div className="bg-white rounded-[2rem] p-6 shadow-lg">
+              <h2 className="font-headline font-black text-xl mb-6">Profile Photo</h2>
+              
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-2xl overflow-hidden bg-surface-container-low border-2 border-white shadow-lg">
+                    <img 
+                      src={profile?.profilePhoto ? resolveImageUrl(profile.profilePhoto) : generalProfilePic} 
+                      className="w-full h-full object-cover" 
+                      alt="Profile" 
+                    />
+                  </div>
+                  {uploading && (
+                    <div className="absolute inset-0 bg-white/60 flex items-center justify-center rounded-2xl">
+                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-grow">
+                  <button
+                    onClick={handlePhotoClick}
+                    disabled={uploading}
+                    className="bg-surface-container-low hover:bg-surface-container-high text-on-surface px-6 py-3 rounded-2xl font-bold transition-all flex items-center gap-2 disabled:opacity-50"
+                  >
+                    Change Photo
+                  </button>
+                  <p className="text-xs text-on-surface-variant mt-2">JPG, PNG or GIF. Max 5MB.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Change Password Section */}
             <div className="bg-white rounded-[2rem] p-6 shadow-lg">
               <h2 className="font-headline font-black text-xl mb-6">Change Password</h2>
               
@@ -328,6 +386,7 @@ const Settings = () => {
         </button>
       </div>
 
+      <input type="file" ref={fileInputRef} onChange={handlePhotoChange} className="hidden" accept="image/*" />
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         .animate-shake { animation: shake 0.2s ease-in-out 0s 2; }
