@@ -14,7 +14,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
@@ -72,12 +74,21 @@ public class User {
 
     private String instagramLink;
     private String youtubeLink;
+
     private String websiteLink;
 
     @Column(name = "content_intent", length = 100)
     private String contentIntent;
 
     private Boolean isProfileCompleted;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "user_health_conditions",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "disease_id")
+    )
+    private Set<Disease> healthConditions = new HashSet<>();
 
     private LocalDateTime createdAt;
 

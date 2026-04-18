@@ -40,9 +40,11 @@ const Profile = () => {
     const [savingPassword, setSavingPassword] = useState(false);
     const [passwordSuccess, setPasswordSuccess] = useState("");
     const [passwordError, setPasswordError] = useState("");
-    const [settingsFileInputRef, setSettingsFileInputRef] = useState(null);
+    const settingsFileInputRef = useRef(null);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [activeSettingsTab, setActiveSettingsTab] = useState("account");
+    const [editProfileForm, setEditProfileForm] = useState({ name: "", bio: "", dietType: "NON_VEG", skillLevel: "BEGINNER" });
+    const [savingProfile, setSavingProfile] = useState(false);
     const [notifications, setNotifications] = useState({
         emailRecipes: true,
         emailNews: false,
@@ -79,6 +81,12 @@ const Profile = () => {
             try {
                 const res = await apiClient.get("/auth/profile");
                 setProfile(res.data);
+                setEditProfileForm({ 
+                    name: res.data.name || "", 
+                    bio: res.data.bio || "",
+                    dietType: res.data.dietType || "NON_VEG",
+                    skillLevel: res.data.skillLevel || "BEGINNER"
+                });
                 
                 // Fetch health profile for completion tracking
                 try {
@@ -131,7 +139,29 @@ const Profile = () => {
         return Math.round((filledFields / totalFields) * 100);
     };
 
+    const getMissingItems = () => {
+        if (!profile) return [];
+        const missing = [];
+        if (!profile.name) missing.push("Full Name");
+        if (!profile.profilePhoto || profile.profilePhoto.includes("general-profile-pic")) missing.push("Profile Photo");
+        if (!profile.bio) missing.push("Bio");
+        if (!profile.dietType) missing.push("Diet Preference");
+        if (!profile.skillLevel) missing.push("Skill Level");
+
+        if (!healthProfile) {
+            missing.push("Health Metrics (Age, Weight, etc.)");
+        } else {
+            if (!healthProfile.age) missing.push("Age");
+            if (!healthProfile.gender) missing.push("Gender");
+            if (!healthProfile.weight) missing.push("Weight");
+            if (!healthProfile.height) missing.push("Height");
+            if (!healthProfile.activityLevel) missing.push("Activity Level");
+        }
+        return missing;
+    };
+
     const completionPercentage = calculateCompletion();
+    const missingItems = getMissingItems();
 
     // Settings functions
     const getPasswordStrength = (pwd) => {
@@ -184,6 +214,20 @@ const Profile = () => {
             setPasswordError(err.response?.data?.message || "Failed to update password");
         } finally {
             setSavingPassword(false);
+        }
+    };
+
+    const handleUpdateProfile = async (e) => {
+        e.preventDefault();
+        setSavingProfile(true);
+        try {
+            await apiClient.put("/auth/profile", editProfileForm);
+            setProfile(prev => ({ ...prev, ...editProfileForm }));
+            toast.success("Profile updated successfully!");
+        } catch (err) {
+            toast.error("Failed to update profile details");
+        } finally {
+            setSavingProfile(false);
         }
     };
 
@@ -343,7 +387,7 @@ const Profile = () => {
                             transition={{ duration: 0.3, ease: "easeOut" }}
                         >
                             {activeTab === 'overview' && (
-                                <div className="space-y-10">
+                                <div className="space-y-12">
                                     <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                                         <div>
                                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-2">Welcome Back,</p>
@@ -351,95 +395,154 @@ const Profile = () => {
                                                 {profile?.name || profile?.email?.split('@')[0] || "..."}
                                             </h1>
                                         </div>
-                                                                            </header>
+                                    </header>
 
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                        {/* Profile Card */}
-                                        <div className="lg:col-span-1 space-y-6">
-                                            <div className="bg-white p-8 rounded-[3rem] border border-white shadow-sm botanical-shadow">
-                                                <div className="flex flex-col items-center mb-8">
-                                                    <div className="w-24 h-24 rounded-[2rem] overflow-hidden mb-4 shadow-xl border-2 border-white relative">
-                                                        <img src={profile?.profilePhoto ? resolveImageUrl(profile.profilePhoto) : generalProfilePic} className="w-full h-full object-cover" alt="Profile" />
-                                                    </div>
-                                                    <h3 className="text-xl font-headline font-black">{profile?.name}</h3>
-                                                    <p className="text-xs text-on-surface-variant font-medium opacity-60 italic">{profile?.email}</p>
+                                    {/* Dashboard Grid */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                                        
+                                        {/* Profile Card - Spans 4 columns */}
+                                        <div className="lg:col-span-4 bg-white p-8 rounded-[3rem] border border-white shadow-sm botanical-shadow flex flex-col items-center">
+                                            <div className="w-24 h-24 rounded-[2rem] overflow-hidden mb-4 shadow-xl border-2 border-white relative">
+                                                <img 
+                                                    src={profile?.profilePhoto ? resolveImageUrl(profile.profilePhoto) : generalProfilePic} 
+                                                    className="w-full h-full object-cover" 
+                                                    alt="Profile" 
+                                                />
+                                            </div>
+                                            <h3 className="text-xl font-headline font-black text-center">{profile?.name}</h3>
+                                            <p className="text-xs text-on-surface-variant font-medium opacity-60 italic mb-6 text-center">{profile?.email}</p>
+                                            
+                                            <div className="w-full space-y-3 pt-6 border-t border-outline-variant/10">
+                                                <div className="flex justify-between items-center bg-surface-container-low/50 p-4 rounded-2xl">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Diet</span>
+                                                    <span className="text-xs font-bold text-primary capitalize">
+                                                        {profile?.dietType === 'NON_VEG' ? 'Non-Vegetarian' : 
+                                                         profile?.dietType === 'VEG' ? 'Vegetarian' :
+                                                         profile?.dietType === 'VEGAN' ? 'Vegan' :
+                                                         profile?.dietType === 'NO_PREFERENCE' ? 'No Preference' :
+                                                         'Not Set'}
+                                                    </span>
                                                 </div>
-                                                <div className="space-y-4 pt-4 border-t border-outline-variant/5">
-                                                    <div className="flex justify-between items-center bg-surface-container-low/50 p-4 rounded-2xl">
-                                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Diet Preference</span>
-                                                        <span className="text-xs font-bold text-primary capitalize">
-                                                            {profile?.dietType ? 
-                                                                profile.dietType.replace('_', ' ') : 
-                                                                'Not Specified'
-                                                            }
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center bg-surface-container-low/50 p-4 rounded-2xl">
-                                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Skill Level</span>
-                                                        <span className="text-xs font-bold text-secondary capitalize">
-                                                            {profile?.skillLevel || 'Not Specified'}
-                                                        </span>
-                                                    </div>
+                                                <div className="flex justify-between items-center bg-surface-container-low/50 p-4 rounded-2xl">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Skill</span>
+                                                    <span className="text-xs font-bold text-secondary capitalize">{profile?.skillLevel || 'Not Set'}</span>
                                                 </div>
                                             </div>
+                                        </div>
 
-                                            <div className="bg-on-surface text-white p-8 rounded-[3rem] shadow-2xl relative overflow-hidden">
-                                                <div className="relative z-10">
-                                                    <div className="flex justify-between items-end mb-4">
-                                                        <div>
-                                                            <h4 className="text-xl font-headline font-black">Profile Status</h4>
-                                                            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
-                                                                {completionPercentage === 100 ? 'Master Chef' : 'Culinary Seedling'}
+                                        {/* Profile Status & Action - Spans 8 columns */}
+                                        <div className="lg:col-span-8 bg-on-surface text-white p-10 rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col justify-center">
+                                            <div className="relative z-10">
+                                                <div className="flex justify-between items-end mb-6">
+                                                    <div>
+                                                        <h4 className="text-2xl md:text-3xl font-headline font-black">Profile Completion</h4>
+                                                        <p className="text-xs font-black uppercase tracking-[0.2em] opacity-40 mt-1">
+                                                            {completionPercentage === 100 ? 'Master Chef Status' : 'Culinary Seedling'}
+                                                        </p>
+                                                    </div>
+                                                    <span className="text-4xl md:text-5xl font-headline font-black text-primary">{completionPercentage}%</span>
+                                                </div>
+                                                
+                                                <div className="w-full h-4 bg-white/10 rounded-full overflow-hidden mb-8">
+                                                    <motion.div 
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${completionPercentage}%` }}
+                                                        transition={{ duration: 1.5, ease: "easeOut" }}
+                                                        className="h-full vitality-gradient shadow-[0_0_20px_rgba(var(--primary-rgb),0.5)]"
+                                                    />
+                                                </div>
+
+                                                <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
+                                                    <div className="max-w-md">
+                                                        {completionPercentage < 100 ? (
+                                                            <div className="space-y-4">
+                                                                <p className="text-base text-white/60 font-medium leading-relaxed">
+                                                                    Complete these details to reach 100% and unlock precision tracking:
+                                                                </p>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {missingItems.slice(0, 4).map((item, i) => (
+                                                                        <span key={i} className="bg-white/10 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-primary border border-primary/20">
+                                                                            {item}
+                                                                        </span>
+                                                                    ))}
+                                                                    {missingItems.length > 4 && (
+                                                                        <span className="bg-white/5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white/40">
+                                                                            +{missingItems.length - 4} More
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-base text-white/60 font-medium leading-relaxed">
+                                                                Your profile is fully optimized. We're using your metabolic data to provide the best recipe matches.
                                                             </p>
-                                                        </div>
-                                                        <span className="text-3xl font-headline font-black text-primary">{completionPercentage}%</span>
+                                                        )}
                                                     </div>
                                                     
-                                                    {/* Progress Bar Container */}
-                                                    <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden mb-8">
-                                                        <motion.div 
-                                                            initial={{ width: 0 }}
-                                                            animate={{ width: `${completionPercentage}%` }}
-                                                            transition={{ duration: 1.5, ease: "easeOut" }}
-                                                            className="h-full vitality-gradient"
-                                                        />
-                                                    </div>
-
                                                     {completionPercentage < 100 ? (
-                                                        <>
-                                                            <p className="text-sm text-white/50 mb-6 font-medium leading-relaxed">Complete your health profile to unlock personalized AI-driven meal plans.</p>
-                                                            <button 
-                                                                onClick={() => navigate('/profile/complete')}
-                                                                className="bg-white text-on-surface px-8 py-3 rounded-2xl font-black text-xs hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/20"
-                                                            >
-                                                                Finish Setup
-                                                            </button>
-                                                        </>
+                                                        <button 
+                                                            onClick={() => navigate('/profile/complete')}
+                                                            className="bg-white text-on-surface px-10 py-4 rounded-2xl font-black text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/40 whitespace-nowrap self-center md:self-end"
+                                                        >
+                                                            Resume Setup
+                                                        </button>
                                                     ) : (
-                                                        <div className="flex items-center gap-2 text-primary">
-                                                            <span className="material-symbols-outlined font-black">verified</span>
-                                                            <span className="text-xs font-black uppercase tracking-widest">Optimized for You</span>
+                                                        <div className="flex items-center gap-3 bg-primary/20 px-6 py-3 rounded-2xl border border-primary/30 self-center md:self-end">
+                                                            <span className="material-symbols-outlined font-black text-primary">verified</span>
+                                                            <span className="text-sm font-black uppercase tracking-widest text-primary">Fully Optimized</span>
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-primary/20 rounded-full blur-[80px]"></div>
                                             </div>
-                                        </div>
-
-                                        {/* Content */}
-                                        <div className="lg:col-span-2 space-y-10">
-                                            <div className="space-y-6">
-                                                <h2 className="text-2xl font-headline font-black flex items-center gap-3">
-                                                    Your Profile
-                                                </h2>
-                                                <div className="bg-white/40 rounded-[3rem] p-8 border border-dashed border-outline-variant/30">
-                                                    <p className="text-on-surface-variant font-medium">Your profile information is displayed below. Use the Settings tab to manage your preferences.</p>
-                                                </div>
-                                            </div>
+                                            <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-primary/10 rounded-full blur-[100px]"></div>
                                         </div>
                                     </div>
+
+                                    {/* Recommendations Section */}
+                                    {recommendations.length > 0 && (
+                                        <div className="space-y-8 pt-4">
+                                            <div className="flex items-center justify-between">
+                                                <h2 className="text-3xl font-headline font-black flex items-center gap-3">
+                                                    Recommended For You
+                                                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                                                </h2>
+                                                <button onClick={() => navigate('/recipes')} className="text-xs font-black uppercase tracking-widest text-primary hover:underline">View All</button>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                                {recommendations.map(recipe => (
+                                                    <motion.div 
+                                                        key={recipe.id}
+                                                        whileHover={{ y: -8 }}
+                                                        onClick={() => navigate(`/items/${recipe.id}`)}
+                                                        className="group bg-white rounded-[2.5rem] overflow-hidden border border-white shadow-sm hover:shadow-xl transition-all cursor-pointer"
+                                                    >
+                                                        <div className="h-48 overflow-hidden relative">
+                                                            <img 
+                                                                src={resolveImageUrl(recipe.coverImageUrl)} 
+                                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                                alt={recipe.title}
+                                                            />
+                                                            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                                                                {recipe.difficulty}
+                                                            </div>
+                                                        </div>
+                                                        <div className="p-6">
+                                                            <h4 className="font-bold text-lg mb-2 line-clamp-1">{recipe.title}</h4>
+                                                            <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">
+                                                                <span>{recipe.prepTime} Min</span>
+                                                                <span className="w-1 h-1 bg-current rounded-full"></span>
+                                                                <span>{recipe.cuisineType}</span>
+                                                            </div>
+                                                        </div>
+                                                    </motion.div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
+
 
                             {activeTab === 'planner' && (
                                 <div className="space-y-6">
@@ -468,6 +571,7 @@ const Profile = () => {
                                     <div className="flex gap-2 overflow-x-auto pb-2">
                                         {[
                                             { id: "account", label: "Account", icon: "person" },
+                                            { id: "health", label: "Health & Lifestyle", icon: "monitor_heart" },
                                             { id: "notifications", label: "Notifications", icon: "notifications" },
                                             { id: "privacy", label: "Privacy", icon: "security" }
                                         ].map(tab => (
@@ -485,6 +589,93 @@ const Profile = () => {
                                             </button>
                                         ))}
                                     </div>
+
+                                    {/* Health Tab */}
+                                    {activeSettingsTab === "health" && (
+                                        <div className="space-y-6">
+                                            <div className="bg-on-surface text-white rounded-[2rem] p-8 shadow-xl relative overflow-hidden">
+                                                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                                    <div>
+                                                        <h2 className="font-headline font-black text-2xl mb-2">Metabolic Profile</h2>
+                                                        <p className="text-white/60 text-sm">Manage your caloric requirements and health constraints.</p>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => navigate('/profile/complete')}
+                                                        className="bg-primary text-white px-8 py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg flex items-center gap-2"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">edit_note</span>
+                                                        Re-run Setup Wizard
+                                                    </button>
+                                                </div>
+                                                <div className="absolute -right-10 -top-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl"></div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                <div className="bg-white rounded-[2rem] p-6 shadow-lg border border-surface-container-low">
+                                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+                                                        <span className="material-symbols-outlined">fitness_center</span>
+                                                    </div>
+                                                    <h3 className="font-black text-sm uppercase tracking-widest text-on-surface-variant mb-4">Physical</h3>
+                                                    <div className="space-y-3">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm font-medium opacity-60">Weight</span>
+                                                            <span className="text-sm font-bold">{healthProfile?.weight || '--'} kg</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm font-medium opacity-60">Height</span>
+                                                            <span className="text-sm font-bold">{healthProfile?.height || '--'} cm</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm font-medium opacity-60">Age</span>
+                                                            <span className="text-sm font-bold">{healthProfile?.age || '--'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-white rounded-[2rem] p-6 shadow-lg border border-surface-container-low">
+                                                    <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary mb-4">
+                                                        <span className="material-symbols-outlined">bolt</span>
+                                                    </div>
+                                                    <h3 className="font-black text-sm uppercase tracking-widest text-on-surface-variant mb-4">Activity</h3>
+                                                    <div className="space-y-3">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs font-black text-secondary uppercase mb-1">{healthProfile?.activityLevel?.replace(/_/g, ' ') || 'NOT SET'}</span>
+                                                            <span className="text-[10px] opacity-40 leading-tight">Daily energy expenditure level based on your routine.</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-white rounded-[2rem] p-6 shadow-lg border border-surface-container-low">
+                                                    <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center text-error mb-4">
+                                                        <span className="material-symbols-outlined">medical_information</span>
+                                                    </div>
+                                                    <h3 className="font-black text-sm uppercase tracking-widest text-on-surface-variant mb-4">Medical</h3>
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <span className="text-[10px] font-black opacity-40 block mb-2 uppercase">Conditions</span>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {healthProfile?.diseases?.length > 0 ? (
+                                                                    healthProfile.diseases.map((d, i) => (
+                                                                        <span key={i} className="text-[9px] bg-surface-container text-on-surface px-2 py-0.5 rounded-full font-bold">{d.diseaseName}</span>
+                                                                    ))
+                                                                ) : <span className="text-[10px] font-bold opacity-30 italic">None reported</span>}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-[10px] font-black opacity-40 block mb-2 uppercase">Allergies</span>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {healthProfile?.allergies?.length > 0 ? (
+                                                                    healthProfile.allergies.map((a, i) => (
+                                                                        <span key={i} className="text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">{a.allergyName}</span>
+                                                                    ))
+                                                                ) : <span className="text-[10px] font-bold opacity-30 italic">None reported</span>}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Account Tab */}
                                     {activeSettingsTab === "account" && (
@@ -521,10 +712,96 @@ const Profile = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Change Password Section */}
+                                            {/* Personal Information Section */}
+                                             <div className="bg-white rounded-[2rem] p-6 shadow-lg">
+                                                 <h2 className="font-headline font-black text-xl mb-6">Personal Information</h2>
+                                                 <form onSubmit={handleUpdateProfile} className="space-y-6">
+                                                     <div className="space-y-2">
+                                                         <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant ml-2">Display Name</label>
+                                                         <input
+                                                             type="text"
+                                                             value={editProfileForm.name}
+                                                             onChange={(e) => setEditProfileForm({ ...editProfileForm, name: e.target.value })}
+                                                             className="w-full px-6 py-4 bg-surface-container-low rounded-2xl font-bold"
+                                                             placeholder="Your name"
+                                                         />
+                                                     </div>
+                                                     <div className="space-y-2">
+                                                         <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant ml-2">Bio</label>
+                                                         <textarea
+                                                             value={editProfileForm.bio}
+                                                             onChange={(e) => setEditProfileForm({ ...editProfileForm, bio: e.target.value })}
+                                                             className="w-full px-6 py-4 bg-surface-container-low rounded-2xl font-bold min-h-[120px] resize-none"
+                                                             placeholder="Tell us about yourself..."
+                                                         />
+                                                     </div>
+                                                     <button
+                                                         type="submit"
+                                                         disabled={savingProfile}
+                                                         className="vibrant-gradient text-white px-8 py-4 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all w-full flex items-center justify-center gap-2"
+                                                     >
+                                                         {savingProfile ? (
+                                                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                         ) : (
+                                                             <>
+                                                                 <span className="material-symbols-outlined text-sm">save</span>
+                                                                 Save Profile Details
+                                                             </>
+                                                         )}
+                                                     </button>
+                                                 </form>
+                                             </div>
+
+                                             {/* Cooking Preferences Section */}
+                                             <div className="bg-white rounded-[2rem] p-6 shadow-lg">
+                                                 <h2 className="font-headline font-black text-xl mb-6">Cooking Preferences</h2>
+                                                 <form onSubmit={handleUpdateProfile} className="space-y-6">
+                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                         <div className="space-y-2">
+                                                             <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant ml-2">Dietary Preference</label>
+                                                             <select
+                                                                 value={editProfileForm.dietType}
+                                                                 onChange={(e) => setEditProfileForm({ ...editProfileForm, dietType: e.target.value })}
+                                                                 className="w-full px-6 py-4 bg-surface-container-low rounded-2xl font-bold appearance-none"
+                                                             >
+                                                                 <option value="VEG">Vegetarian</option>
+                                                                 <option value="NON_VEG">Non-Vegetarian</option>
+                                                                 <option value="VEGAN">Vegan</option>
+                                                                 <option value="NO_PREFERENCE">No Preference</option>
+                                                             </select>
+                                                         </div>
+                                                         <div className="space-y-2">
+                                                             <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant ml-2">Skill Level</label>
+                                                             <select
+                                                                 value={editProfileForm.skillLevel}
+                                                                 onChange={(e) => setEditProfileForm({ ...editProfileForm, skillLevel: e.target.value })}
+                                                                 className="w-full px-6 py-4 bg-surface-container-low rounded-2xl font-bold appearance-none"
+                                                             >
+                                                                 <option value="BEGINNER">Beginner</option>
+                                                                 <option value="INTERMEDIATE">Intermediate</option>
+                                                                 <option value="EXPERT">Expert</option>
+                                                             </select>
+                                                         </div>
+                                                     </div>
+                                                     <button
+                                                         type="submit"
+                                                         disabled={savingProfile}
+                                                         className="bg-surface-container-low hover:bg-surface-container-high text-on-surface px-8 py-4 rounded-xl font-bold transition-all w-full flex items-center justify-center gap-2"
+                                                     >
+                                                         {savingProfile ? (
+                                                             <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                                         ) : (
+                                                             <>
+                                                                 <span className="material-symbols-outlined text-sm">update</span>
+                                                                 Update Preferences
+                                                             </>
+                                                         )}
+                                                     </button>
+                                                 </form>
+                                             </div>
+
                                             <div className="bg-white rounded-[2rem] p-6 shadow-lg">
                                                 <h2 className="font-headline font-black text-xl mb-6">Change Password</h2>
-                                                
                                                 {passwordSuccess && (
                                                     <div className="mb-6 p-4 bg-primary/10 border border-primary/20 text-primary rounded-2xl flex items-center gap-2">
                                                         <span className="material-symbols-outlined">check_circle</span>
@@ -689,7 +966,7 @@ const Profile = () => {
             </main>
 
             <input type="file" ref={fileInputRef} onChange={handlePhotoChange} className="hidden" accept="image/*" />
-            <input type="file" ref={setSettingsFileInputRef} onChange={handleSettingsPhotoChange} className="hidden" accept="image/*" />
+            <input type="file" ref={settingsFileInputRef} onChange={handleSettingsPhotoChange} className="hidden" accept="image/*" />
         </div>
     );
 };

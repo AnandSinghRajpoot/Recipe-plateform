@@ -29,7 +29,7 @@ const ProfileComplete = () => {
         allergyNames: [],
 
         // Phase 4: Cooking Preferences
-        dietType: "OMNIVORE",
+        dietType: "NON_VEG",
         skillLevel: "BEGINNER"
     });
 
@@ -45,7 +45,7 @@ const ProfileComplete = () => {
                 ]);
 
                 const userData = userRes.status === 'fulfilled' ? userRes.value.data : {};
-                const healthData = healthRes.status === 'fulfilled' ? healthRes.value.data?.data : {};
+                const healthData = (healthRes.status === 'fulfilled' ? healthRes.value.data?.data : null) || {};
 
                 setProfile(prev => ({
                     ...prev,
@@ -65,7 +65,7 @@ const ProfileComplete = () => {
                     diseaseNames: healthData.diseases?.map(d => d.diseaseName) || [],
                     allergyNames: healthData.allergies?.map(a => a.allergyName) || [],
                     // User profile data
-                    dietType: userData.dietType || "OMNIVORE",
+                    dietType: userData.dietType || "NON_VEG",
                     skillLevel: userData.skillLevel || "BEGINNER"
                 }));
                 
@@ -141,14 +141,8 @@ const ProfileComplete = () => {
 
         setLoading(true);
         try {
-            // Extract user profile data (dietType, skillLevel) from profile
-            const userProfileData = {
-                dietType: profile.dietType,
-                skillLevel: profile.skillLevel
-            };
-
-            // Extract health profile data (everything else)
-            const healthProfileData = {
+            // Combine all profile data into a single request object
+            const completionData = {
                 age: profile.age,
                 gender: profile.gender,
                 height: profile.height,
@@ -162,14 +156,12 @@ const ProfileComplete = () => {
                 smokingHabit: profile.smokingHabit,
                 alcoholHabit: profile.alcoholHabit,
                 diseaseNames: profile.diseaseNames,
-                allergyNames: profile.allergyNames
+                allergyNames: profile.allergyNames,
+                dietType: profile.dietType,
+                skillLevel: profile.skillLevel
             };
 
-            // Save both profiles in parallel
-            await Promise.all([
-                apiClient.post("/auth/complete-profile", healthProfileData),
-                apiClient.put("/auth/profile", userProfileData)
-            ]);
+            await apiClient.post("/auth/complete-profile", completionData);
 
             toast.success(isEditMode ? "Profile successfully updated!" : "Profile successfully completed!");
             navigate("/profile");
@@ -572,14 +564,10 @@ const ProfileComplete = () => {
                                                     onChange={handleInputChange} 
                                                     className="w-full bg-surface-container-low border-2 border-transparent rounded-2xl px-6 py-5 focus:border-primary/40 focus:bg-white transition-all outline-none font-bold text-lg appearance-none"
                                                 >
-                                                    <option value="OMNIVORE">Omnivore</option>
-                                                    <option value="VEGETARIAN">Vegetarian</option>
+                                                    <option value="NON_VEG">Non-Vegetarian</option>
+                                                    <option value="VEG">Vegetarian</option>
                                                     <option value="VEGAN">Vegan</option>
-                                                    <option value="PESCATARIAN">Pescatarian</option>
-                                                    <option value="KETO">Keto</option>
-                                                    <option value="PALEO">Paleo</option>
-                                                    <option value="MEDITERRANEAN">Mediterranean</option>
-                                                    <option value="GLUTEN_FREE">Gluten-Free</option>
+                                                    <option value="NO_PREFERENCE">No Preference</option>
                                                 </select>
                                                 <span className="material-symbols-outlined absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant group-focus-within:text-primary transition-colors">expand_more</span>
                                             </div>
@@ -596,7 +584,6 @@ const ProfileComplete = () => {
                                                 >
                                                     <option value="BEGINNER">Beginner</option>
                                                     <option value="INTERMEDIATE">Intermediate</option>
-                                                    <option value="ADVANCED">Advanced</option>
                                                     <option value="EXPERT">Expert</option>
                                                 </select>
                                                 <span className="material-symbols-outlined absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant group-focus-within:text-primary transition-colors">expand_more</span>

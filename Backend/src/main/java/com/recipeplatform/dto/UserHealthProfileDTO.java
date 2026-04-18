@@ -52,4 +52,6 @@ public class UserHealthProfileDTO {
 
     @Builder.Default
     private List<UserAllergyDTO> allergies = new ArrayList<>();
+
+    private Integer completionPercentage;
 }

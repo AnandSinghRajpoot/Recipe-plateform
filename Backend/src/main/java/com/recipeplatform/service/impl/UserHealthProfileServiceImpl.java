@@ -28,7 +28,11 @@ public class UserHealthProfileServiceImpl implements UserHealthProfileService {
     @Override
     public UserHealthProfileDTO getProfileByUserId(Long userId) {
         return userHealthProfileRepository.findByUserId(userId)
-                .map(userHealthProfileMapper::toDTO)
+                .map(profile -> {
+                    UserHealthProfileDTO dto = userHealthProfileMapper.toDTO(profile);
+                    dto.setCompletionPercentage(calculateCompletion(profile));
+                    return dto;
+                })
                 .orElse(null);
     }
 
@@ -49,9 +53,39 @@ public class UserHealthProfileServiceImpl implements UserHealthProfileService {
         profile.setWeight(profileDTO.getWeight());
         profile.setHeight(profileDTO.getHeight());
         profile.setActivityLevel(profileDTO.getActivityLevel());
+        profile.setWorkType(profileDTO.getWorkType());
+        profile.setTravelFrequency(profileDTO.getTravelFrequency());
+        profile.setEatingPattern(profileDTO.getEatingPattern());
+        profile.setSleepDuration(profileDTO.getSleepDuration());
+        profile.setWaterIntakeGlasses(profileDTO.getWaterIntakeGlasses());
+        profile.setSmokingHabit(profileDTO.getSmokingHabit());
+        profile.setAlcoholHabit(profileDTO.getAlcoholHabit());
 
         UserHealthProfile savedProfile = userHealthProfileRepository.save(profile);
-        return userHealthProfileMapper.toDTO(savedProfile);
+        UserHealthProfileDTO savedDto = userHealthProfileMapper.toDTO(savedProfile);
+        savedDto.setCompletionPercentage(calculateCompletion(savedProfile));
+        return savedDto;
+    }
+
+    private Integer calculateCompletion(UserHealthProfile profile) {
+        if (profile == null) return 0;
+        int filledFields = 0;
+        int totalFields = 12;
+
+        if (profile.getAge() != null) filledFields++;
+        if (profile.getGender() != null) filledFields++;
+        if (profile.getWeight() != null) filledFields++;
+        if (profile.getHeight() != null) filledFields++;
+        if (profile.getActivityLevel() != null) filledFields++;
+        if (profile.getWorkType() != null) filledFields++;
+        if (profile.getTravelFrequency() != null) filledFields++;
+        if (profile.getEatingPattern() != null) filledFields++;
+        if (profile.getSleepDuration() != null) filledFields++;
+        if (profile.getWaterIntakeGlasses() != null) filledFields++;
+        if (profile.getSmokingHabit() != null) filledFields++;
+        if (profile.getAlcoholHabit() != null) filledFields++;
+
+        return (filledFields * 100) / totalFields;
     }
 
     @Override
