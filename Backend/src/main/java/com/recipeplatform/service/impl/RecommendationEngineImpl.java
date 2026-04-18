@@ -12,6 +12,7 @@ import com.recipeplatform.exception.ResourceNotFoundException;
 import com.recipeplatform.repository.RecipeRepository;
 import com.recipeplatform.repository.UserHealthProfileRepository;
 import com.recipeplatform.repository.UserRepository;
+import com.recipeplatform.dto.recipe.NutritionDTO;
 import com.recipeplatform.service.RecommendationEngine;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -140,8 +141,8 @@ public class RecommendationEngineImpl implements RecommendationEngine {
         }
 
         // 3. Caloric Match (±15% of target)
-        if (recipe.getCalories() != null) {
-            double calDiff = Math.abs(recipe.getCalories() - targetCalories);
+        if (recipe.getNutrition() != null && recipe.getNutrition().getCalories() != null) {
+            double calDiff = Math.abs(recipe.getNutrition().getCalories() - targetCalories);
             double percentageDiff = calDiff / targetCalories;
             if (percentageDiff <= 0.15) {
                 score += 20.0;
@@ -163,20 +164,22 @@ public class RecommendationEngineImpl implements RecommendationEngine {
                 .id(recipe.getId())
                 .title(recipe.getTitle())
                 .description(recipe.getDescription())
-                .cuisine(recipe.getCuisineType() != null ? recipe.getCuisineType().name() : recipe.getCuisine())
+                .cuisine(recipe.getCuisineType() != null ? recipe.getCuisineType().name() : "INTERNATIONAL")
                 .coverImageUrl(recipe.getCoverImageUrl())
                 .dietType(recipe.getDietType())
                 .mealType(recipe.getMealType())
                 .prepTime(recipe.getPrepTime())
                 .cookTime(recipe.getCookTime())
                 .servings(recipe.getServings())
-                .calories(recipe.getCalories())
-                .protein(recipe.getProtein())
-                .carbs(recipe.getCarbs())
-                .fat(recipe.getFat())
-                .fiber(recipe.getFiber())
-                .sugar(recipe.getSugar())
-                .sodium(recipe.getSodium())
+                .nutrition(recipe.getNutrition() != null ? NutritionDTO.builder()
+                        .calories(recipe.getNutrition().getCalories())
+                        .protein(recipe.getNutrition().getProtein())
+                        .carbs(recipe.getNutrition().getCarbs())
+                        .fat(recipe.getNutrition().getFat())
+                        .fiber(recipe.getNutrition().getFiber())
+                        .sugar(recipe.getNutrition().getSugar())
+                        .sodium(recipe.getNutrition().getSodium())
+                        .build() : null)
                 .score(score)
                 .safetyScore(safetyScore)
                 .matchReason(primaryReason)

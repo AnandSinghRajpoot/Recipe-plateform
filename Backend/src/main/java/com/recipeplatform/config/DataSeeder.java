@@ -180,13 +180,22 @@ public class DataSeeder implements ApplicationRunner {
             r.setPrepTime(data.getPrepTime() > 0 ? data.getPrepTime() : 15);
             r.setCookTime(data.getCookTime() > 0 ? data.getCookTime() : 15);
             r.setServings(data.getServings() > 0 ? data.getServings() : 4);
-            r.setCalories(data.getCalories() > 0 ? data.getCalories() : 200);
-            r.setProtein(data.getProtein() > 0 ? data.getProtein() : 10);
-            r.setCarbs(data.getCarbs() > 0 ? data.getCarbs() : 20);
-            r.setFat(data.getFat() > 0 ? data.getFat() : 10);
             r.setDifficulty(difficulty);
             r.setIsPublished(true);
             r.setCoverImageUrl("http://localhost:8080/images/" + entry.getKey() + ".jpg");
+
+            // Create Nutrition entity
+            Nutrition nutrition = Nutrition.builder()
+                .calories(data.getNutrition() != null ? data.getNutrition().calories : (data.getCalories() > 0 ? data.getCalories() : 200))
+                .protein(data.getNutrition() != null ? data.getNutrition().protein : (data.getProtein() > 0 ? data.getProtein() : 10))
+                .carbs(data.getNutrition() != null ? data.getNutrition().carbs : (data.getCarbs() > 0 ? data.getCarbs() : 20))
+                .fat(data.getNutrition() != null ? data.getNutrition().fat : (data.getFat() > 0 ? data.getFat() : 10))
+                .fiber(data.getNutrition() != null ? data.getNutrition().fiber : 2.0)
+                .sugar(data.getNutrition() != null ? data.getNutrition().sugar : 5.0)
+                .sodium(data.getNutrition() != null ? data.getNutrition().sodium : 300.0)
+                .recipe(r)
+                .build();
+            r.setNutrition(nutrition);
 
             // Add ingredients from JSON
             List<RecipeIngredient> recipeIngredients = new ArrayList<>();
@@ -270,10 +279,24 @@ public class DataSeeder implements ApplicationRunner {
                 rd.setPrepTime((Integer) val.get("prepTime"));
                 rd.setCookTime((Integer) val.get("cookTime"));
                 rd.setServings((Integer) val.get("servings"));
-                rd.setCalories(((Number) val.get("calories")).doubleValue());
-                rd.setProtein(((Number) val.get("protein")).doubleValue());
-                rd.setCarbs(((Number) val.get("carbs")).doubleValue());
-                rd.setFat(((Number) val.get("fat")).doubleValue());
+                
+                if (val.containsKey("nutrition")) {
+                    Map<String, Object> nut = (Map<String, Object>) val.get("nutrition");
+                    NutritionData nd = new NutritionData();
+                    nd.calories = ((Number) nut.get("calories")).doubleValue();
+                    nd.protein = ((Number) nut.get("protein")).doubleValue();
+                    nd.carbs = ((Number) nut.get("carbs")).doubleValue();
+                    nd.fat = ((Number) nut.get("fat")).doubleValue();
+                    if (nut.containsKey("fiber")) nd.fiber = ((Number) nut.get("fiber")).doubleValue();
+                    if (nut.containsKey("sugar")) nd.sugar = ((Number) nut.get("sugar")).doubleValue();
+                    if (nut.containsKey("sodium")) nd.sodium = ((Number) nut.get("sodium")).doubleValue();
+                    rd.setNutrition(nd);
+                } else {
+                    rd.setCalories(((Number) val.get("calories")).doubleValue());
+                    rd.setProtein(((Number) val.get("protein")).doubleValue());
+                    rd.setCarbs(((Number) val.get("carbs")).doubleValue());
+                    rd.setFat(((Number) val.get("fat")).doubleValue());
+                }
                 rd.setUnit((String) val.get("unit"));
                 map.put(entry.getKey(), rd);
             }
@@ -462,5 +485,18 @@ public class DataSeeder implements ApplicationRunner {
         public void setFat(double fat) { this.fat = fat; }
         public String getUnit() { return unit; }
         public void setUnit(String unit) { this.unit = unit; }
+        private NutritionData nutrition;
+        public NutritionData getNutrition() { return nutrition; }
+        public void setNutrition(NutritionData nutrition) { this.nutrition = nutrition; }
+    }
+
+    static class NutritionData {
+        private double calories;
+        private double protein;
+        private double carbs;
+        private double fat;
+        private double fiber;
+        private double sugar;
+        private double sodium;
     }
 }

@@ -27,9 +27,9 @@ public class UserHealthProfileServiceImpl implements UserHealthProfileService {
 
     @Override
     public UserHealthProfileDTO getProfileByUserId(Long userId) {
-        UserHealthProfile profile = userHealthProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Health profile not found for user id: " + userId));
-        return userHealthProfileMapper.toDTO(profile);
+        return userHealthProfileRepository.findByUserId(userId)
+                .map(userHealthProfileMapper::toDTO)
+                .orElse(null);
     }
 
     @Override

@@ -67,10 +67,12 @@
     "prepTime": 15,
     "cookTime": 25,
     "servings": 4,
-    "calories": 180,
-    "protein": 5,
-    "carbs": 25,
-    "fat": 8
+    "nutrition": {
+      "calories": 180,
+      "protein": 5,
+      "carbs": 25,
+      "fat": 8
+    }
   },
   "apple-pie": {
     "title": "Apple Pie",
@@ -119,10 +121,12 @@
     "prepTime": 30,
     "cookTime": 45,
     "servings": 8,
-    "calories": 320,
-    "protein": 2,
-    "carbs": 48,
-    "fat": 14
+    "nutrition": {
+      "calories": 320,
+      "protein": 2,
+      "carbs": 48,
+      "fat": 14
+    }
   },
   "avocado-toast": {
     "title": "Avocado Toast",
@@ -169,10 +173,12 @@
     "prepTime": 5,
     "cookTime": 3,
     "servings": 2,
-    "calories": 250,
-    "protein": 4,
-    "carbs": 22,
-    "fat": 18
+    "nutrition": {
+      "calories": 250,
+      "protein": 4,
+      "carbs": 22,
+      "fat": 18
+    }
   },
   "baingan-bharta": {
     "title": "Baingan Bharta",
@@ -242,10 +248,12 @@
     "prepTime": 15,
     "cookTime": 30,
     "servings": 4,
-    "calories": 150,
-    "protein": 3,
-    "carbs": 18,
-    "fat": 8
+    "nutrition": {
+      "calories": 150,
+      "protein": 3,
+      "carbs": 18,
+      "fat": 8
+    }
   },
   "brownies": {
     "title": "Chocolate Brownies",
@@ -298,10 +306,12 @@
     "prepTime": 15,
     "cookTime": 30,
     "servings": 16,
-    "calories": 180,
-    "protein": 2,
-    "carbs": 24,
-    "fat": 10
+    "nutrition": {
+      "calories": 180,
+      "protein": 2,
+      "carbs": 24,
+      "fat": 10
+    }
   },
   "burritos": {
     "title": "Chicken Burritos",
@@ -359,10 +369,12 @@
     "prepTime": 20,
     "cookTime": 20,
     "servings": 4,
-    "calories": 420,
-    "protein": 28,
-    "carbs": 45,
-    "fat": 16
+    "nutrition": {
+      "calories": 420,
+      "protein": 28,
+      "carbs": 45,
+      "fat": 16
+    }
   },
   "butter-chicken": {
     "title": "Butter Chicken",
@@ -432,10 +444,12 @@
     "prepTime": 30,
     "cookTime": 30,
     "servings": 4,
-    "calories": 450,
-    "protein": 32,
-    "carbs": 15,
-    "fat": 32
+    "nutrition": {
+      "calories": 450,
+      "protein": 32,
+      "carbs": 15,
+      "fat": 32
+    }
   },
   "caesar-salad": {
     "title": "Caesar Salad",
@@ -482,10 +496,12 @@
     "prepTime": 15,
     "cookTime": 0,
     "servings": 4,
-    "calories": 180,
-    "protein": 6,
-    "carbs": 8,
-    "fat": 14
+    "nutrition": {
+      "calories": 180,
+      "protein": 6,
+      "carbs": 8,
+      "fat": 14
+    }
   },
   "cheesecake": {
     "title": "New York Cheesecake",
@@ -540,10 +556,12 @@
     "prepTime": 20,
     "cookTime": 60,
     "servings": 12,
-    "calories": 380,
-    "protein": 7,
-    "carbs": 32,
-    "fat": 26
+    "nutrition": {
+      "calories": 380,
+      "protein": 7,
+      "carbs": 32,
+      "fat": 26
+    }
   },
   "chicken-65": {
     "title": "Chicken 65",
@@ -606,10 +624,12 @@
     "prepTime": 20,
     "cookTime": 15,
     "servings": 4,
-    "calories": 320,
-    "protein": 28,
-    "carbs": 12,
-    "fat": 20
+    "nutrition": {
+      "calories": 320,
+      "protein": 28,
+      "carbs": 12,
+      "fat": 20
+    }
   },
   "chicken-biryani": {
     "title": "Chicken Biryani",
@@ -689,10 +709,12 @@
     "prepTime": 40,
     "cookTime": 45,
     "servings": 6,
-    "calories": 520,
-    "protein": 30,
-    "carbs": 55,
-    "fat": 22
+    "nutrition": {
+      "calories": 520,
+      "protein": 30,
+      "carbs": 55,
+      "fat": 22
+    }
   },
   "chicken-curry": {
     "title": "Chicken Curry",
@@ -761,10 +783,12 @@
     "prepTime": 15,
     "cookTime": 30,
     "servings": 4,
-    "calories": 380,
-    "protein": 30,
-    "carbs": 12,
-    "fat": 26
+    "nutrition": {
+      "calories": 380,
+      "protein": 30,
+      "carbs": 12,
+      "fat": 26
+    }
   },
   "chicken-fried-rice": {
     "title": "Chicken Fried Rice",
@@ -822,10 +846,12 @@
     "prepTime": 15,
     "cookTime": 10,
     "servings": 3,
-    "calories": 380,
-    "protein": 22,
-    "carbs": 42,
-    "fat": 14
+    "nutrition": {
+      "calories": 380,
+      "protein": 22,
+      "carbs": 42,
+      "fat": 14
+    }
   },
   "chicken-manchurian": {
     "title": "Chicken Manchurian",
@@ -899,10 +925,12 @@
     "prepTime": 20,
     "cookTime": 15,
     "servings": 4,
-    "calories": 340,
-    "protein": 24,
-    "carbs": 22,
-    "fat": 20
+    "nutrition": {
+      "calories": 340,
+      "protein": 24,
+      "carbs": 22,
+      "fat": 20
+    }
   },
   "chicken-shawarma": {
     "title": "Chicken Shawarma",
@@ -960,10 +988,12 @@
     "prepTime": 15,
     "cookTime": 15,
     "servings": 4,
-    "calories": 360,
-    "protein": 28,
-    "carbs": 30,
-    "fat": 16
+    "nutrition": {
+      "calories": 360,
+      "protein": 28,
+      "carbs": 30,
+      "fat": 16
+    }
   },
   "chicken-tikka-masala": {
     "title": "Chicken Tikka Masala",
@@ -1027,10 +1057,12 @@
     "prepTime": 30,
     "cookTime": 25,
     "servings": 4,
-    "calories": 420,
-    "protein": 32,
-    "carbs": 14,
-    "fat": 30
+    "nutrition": {
+      "calories": 420,
+      "protein": 32,
+      "carbs": 14,
+      "fat": 30
+    }
   },
   "chocolate-chip-cookies": {
     "title": "Chocolate Chip Cookies",
@@ -1089,10 +1121,12 @@
     "prepTime": 15,
     "cookTime": 12,
     "servings": 24,
-    "calories": 210,
-    "protein": 2,
-    "carbs": 28,
-    "fat": 11
+    "nutrition": {
+      "calories": 210,
+      "protein": 2,
+      "carbs": 28,
+      "fat": 11
+    }
   },
   "churros": {
     "title": "Churros",
@@ -1147,10 +1181,12 @@
     "prepTime": 15,
     "cookTime": 15,
     "servings": 6,
-    "calories": 280,
-    "protein": 4,
-    "carbs": 32,
-    "fat": 16
+    "nutrition": {
+      "calories": 280,
+      "protein": 4,
+      "carbs": 32,
+      "fat": 16
+    }
   },
   "dal-makhani": {
     "title": "Dal Makhani",
@@ -1215,10 +1251,12 @@
     "prepTime": 20,
     "cookTime": 40,
     "servings": 6,
-    "calories": 280,
-    "protein": 12,
-    "carbs": 35,
-    "fat": 12
+    "nutrition": {
+      "calories": 280,
+      "protein": 12,
+      "carbs": 35,
+      "fat": 12
+    }
   },
   "dal-tadka": {
     "title": "Dal Tadka",
@@ -1287,10 +1325,12 @@
     "prepTime": 10,
     "cookTime": 25,
     "servings": 4,
-    "calories": 200,
-    "protein": 10,
-    "carbs": 30,
-    "fat": 6
+    "nutrition": {
+      "calories": 200,
+      "protein": 10,
+      "carbs": 30,
+      "fat": 6
+    }
   },
   "dhokla": {
     "title": "Dhokla",
@@ -1355,10 +1395,12 @@
     "prepTime": 15,
     "cookTime": 15,
     "servings": 6,
-    "calories": 160,
-    "protein": 5,
-    "carbs": 26,
-    "fat": 4
+    "nutrition": {
+      "calories": 160,
+      "protein": 5,
+      "carbs": 26,
+      "fat": 4
+    }
   },
   "double-patty-cheese-burger": {
     "title": "Double Patty Cheese Burger",
@@ -1421,10 +1463,12 @@
     "prepTime": 15,
     "cookTime": 10,
     "servings": 2,
-    "calories": 520,
-    "protein": 32,
-    "carbs": 36,
-    "fat": 30
+    "nutrition": {
+      "calories": 520,
+      "protein": 32,
+      "carbs": 36,
+      "fat": 30
+    }
   },
   "egg-benedict": {
     "title": "Eggs Benedict",
@@ -1479,10 +1523,12 @@
     "prepTime": 15,
     "cookTime": 15,
     "servings": 2,
-    "calories": 480,
-    "protein": 20,
-    "carbs": 28,
-    "fat": 34
+    "nutrition": {
+      "calories": 480,
+      "protein": 20,
+      "carbs": 28,
+      "fat": 34
+    }
   },
   "enchiladas": {
     "title": "Chicken Enchiladas",
@@ -1541,10 +1587,12 @@
     "prepTime": 20,
     "cookTime": 20,
     "servings": 4,
-    "calories": 420,
-    "protein": 24,
-    "carbs": 32,
-    "fat": 22
+    "nutrition": {
+      "calories": 420,
+      "protein": 24,
+      "carbs": 32,
+      "fat": 22
+    }
   },
   "falafel": {
     "title": "Falafel",
@@ -1601,10 +1649,12 @@
     "prepTime": 30,
     "cookTime": 15,
     "servings": 6,
-    "calories": 220,
-    "protein": 8,
-    "carbs": 24,
-    "fat": 12
+    "nutrition": {
+      "calories": 220,
+      "protein": 8,
+      "carbs": 24,
+      "fat": 12
+    }
   },
   "fish-and-chips": {
     "title": "Fish and Chips",
@@ -1657,10 +1707,12 @@
     "prepTime": 20,
     "cookTime": 20,
     "servings": 4,
-    "calories": 380,
-    "protein": 24,
-    "carbs": 38,
-    "fat": 18
+    "nutrition": {
+      "calories": 380,
+      "protein": 24,
+      "carbs": 38,
+      "fat": 18
+    }
   },
   "fish-curry": {
     "title": "Fish Curry",
@@ -1724,10 +1776,12 @@
     "prepTime": 15,
     "cookTime": 20,
     "servings": 4,
-    "calories": 280,
-    "protein": 28,
-    "carbs": 10,
-    "fat": 16
+    "nutrition": {
+      "calories": 280,
+      "protein": 28,
+      "carbs": 10,
+      "fat": 16
+    }
   },
   "french-fries": {
     "title": "French Fries",
@@ -1761,10 +1815,12 @@
     "prepTime": 15,
     "cookTime": 15,
     "servings": 4,
-    "calories": 320,
-    "protein": 4,
-    "carbs": 48,
-    "fat": 14
+    "nutrition": {
+      "calories": 320,
+      "protein": 4,
+      "carbs": 48,
+      "fat": 14
+    }
   },
   "french-toast": {
     "title": "French Toast",
@@ -1817,10 +1873,12 @@
     "prepTime": 5,
     "cookTime": 10,
     "servings": 2,
-    "calories": 280,
-    "protein": 10,
-    "carbs": 34,
-    "fat": 12
+    "nutrition": {
+      "calories": 280,
+      "protein": 10,
+      "carbs": 34,
+      "fat": 12
+    }
   },
   "fruit-salad": {
     "title": "Fruit Salad",
@@ -1878,10 +1936,12 @@
     "prepTime": 15,
     "cookTime": 0,
     "servings": 4,
-    "calories": 120,
-    "protein": 2,
-    "carbs": 30,
-    "fat": 0
+    "nutrition": {
+      "calories": 120,
+      "protein": 2,
+      "carbs": 30,
+      "fat": 0
+    }
   },
   "garlic-naan": {
     "title": "Garlic Naan",
@@ -1934,10 +1994,12 @@
     "prepTime": 20,
     "cookTime": 10,
     "servings": 4,
-    "calories": 220,
-    "protein": 6,
-    "carbs": 38,
-    "fat": 6
+    "nutrition": {
+      "calories": 220,
+      "protein": 6,
+      "carbs": 38,
+      "fat": 6
+    }
   },
   "gelato": {
     "title": "Gelato",
@@ -1980,10 +2042,12 @@
     "prepTime": 20,
     "cookTime": 15,
     "servings": 8,
-    "calories": 280,
-    "protein": 4,
-    "carbs": 24,
-    "fat": 18
+    "nutrition": {
+      "calories": 280,
+      "protein": 4,
+      "carbs": 24,
+      "fat": 18
+    }
   },
   "gobi-manchurian": {
     "title": "Gobi Manchurian",
@@ -2047,10 +2111,12 @@
     "prepTime": 20,
     "cookTime": 15,
     "servings": 4,
-    "calories": 260,
-    "protein": 6,
-    "carbs": 28,
-    "fat": 14
+    "nutrition": {
+      "calories": 260,
+      "protein": 6,
+      "carbs": 28,
+      "fat": 14
+    }
   },
   "greek-salad": {
     "title": "Greek Salad",
@@ -2108,10 +2174,12 @@
     "prepTime": 15,
     "cookTime": 0,
     "servings": 4,
-    "calories": 180,
-    "protein": 8,
-    "carbs": 8,
-    "fat": 14
+    "nutrition": {
+      "calories": 180,
+      "protein": 8,
+      "carbs": 8,
+      "fat": 14
+    }
   },
   "green-thai-curry": {
     "title": "Green Thai Curry",
@@ -2170,10 +2238,12 @@
     "prepTime": 15,
     "cookTime": 20,
     "servings": 4,
-    "calories": 340,
-    "protein": 22,
-    "carbs": 12,
-    "fat": 24
+    "nutrition": {
+      "calories": 340,
+      "protein": 22,
+      "carbs": 12,
+      "fat": 24
+    }
   },
   "grilled-salmon": {
     "title": "Grilled Salmon",
@@ -2220,10 +2290,12 @@
     "prepTime": 20,
     "cookTime": 10,
     "servings": 4,
-    "calories": 280,
-    "protein": 34,
-    "carbs": 0,
-    "fat": 16
+    "nutrition": {
+      "calories": 280,
+      "protein": 34,
+      "carbs": 0,
+      "fat": 16
+    }
   },
   "gulab-jamun": {
     "title": "Gulab Jamun",
@@ -2281,10 +2353,12 @@
     "prepTime": 30,
     "cookTime": 20,
     "servings": 10,
-    "calories": 220,
-    "protein": 4,
-    "carbs": 32,
-    "fat": 10
+    "nutrition": {
+      "calories": 220,
+      "protein": 4,
+      "carbs": 32,
+      "fat": 10
+    }
   },
   "hakka-noodles": {
     "title": "Hakka Noodles",
@@ -2337,10 +2411,12 @@
     "prepTime": 15,
     "cookTime": 15,
     "servings": 4,
-    "calories": 340,
-    "protein": 8,
-    "carbs": 52,
-    "fat": 12
+    "nutrition": {
+      "calories": 340,
+      "protein": 8,
+      "carbs": 52,
+      "fat": 12
+    }
   },
   "hummus": {
     "title": "Hummus",
@@ -2393,10 +2469,12 @@
     "prepTime": 10,
     "cookTime": 0,
     "servings": 8,
-    "calories": 160,
-    "protein": 6,
-    "carbs": 16,
-    "fat": 10
+    "nutrition": {
+      "calories": 160,
+      "protein": 6,
+      "carbs": 16,
+      "fat": 10
+    }
   },
   "hyderabadi-haleem": {
     "title": "Hyderabadi Haleem",
@@ -2455,10 +2533,12 @@
     "prepTime": 30,
     "cookTime": 180,
     "servings": 6,
-    "calories": 380,
-    "protein": 28,
-    "carbs": 32,
-    "fat": 18
+    "nutrition": {
+      "calories": 380,
+      "protein": 28,
+      "carbs": 32,
+      "fat": 18
+    }
   },
   "idli-sambar": {
     "title": "Idli Sambar",
@@ -2517,10 +2597,12 @@
     "prepTime": 30,
     "cookTime": 30,
     "servings": 6,
-    "calories": 220,
-    "protein": 10,
-    "carbs": 38,
-    "fat": 4
+    "nutrition": {
+      "calories": 220,
+      "protein": 10,
+      "carbs": 38,
+      "fat": 4
+    }
   },
   "jalebi": {
     "title": "Jalebi",
@@ -2573,10 +2655,12 @@
     "prepTime": 20,
     "cookTime": 20,
     "servings": 8,
-    "calories": 260,
-    "protein": 3,
-    "carbs": 42,
-    "fat": 10
+    "nutrition": {
+      "calories": 260,
+      "protein": 3,
+      "carbs": 42,
+      "fat": 10
+    }
   },
   "jeera-rice": {
     "title": "Jeera Rice",
@@ -2624,10 +2708,12 @@
     "prepTime": 10,
     "cookTime": 20,
     "servings": 4,
-    "calories": 240,
-    "protein": 4,
-    "carbs": 42,
-    "fat": 6
+    "nutrition": {
+      "calories": 240,
+      "protein": 4,
+      "carbs": 42,
+      "fat": 6
+    }
   },
   "kadai-paneer": {
     "title": "Kadai Paneer",
@@ -2690,10 +2776,12 @@
     "prepTime": 15,
     "cookTime": 20,
     "servings": 4,
-    "calories": 320,
-    "protein": 16,
-    "carbs": 14,
-    "fat": 24
+    "nutrition": {
+      "calories": 320,
+      "protein": 16,
+      "carbs": 14,
+      "fat": 24
+    }
   },
   "kung-pao-chicken": {
     "title": "Kung Pao Chicken",
@@ -2757,10 +2845,12 @@
     "prepTime": 20,
     "cookTime": 15,
     "servings": 4,
-    "calories": 340,
-    "protein": 26,
-    "carbs": 14,
-    "fat": 22
+    "nutrition": {
+      "calories": 340,
+      "protein": 26,
+      "carbs": 14,
+      "fat": 22
+    }
   },
   "lassi": {
     "title": "Mango Lassi",
@@ -2802,10 +2892,12 @@
     "prepTime": 5,
     "cookTime": 0,
     "servings": 2,
-    "calories": 180,
-    "protein": 6,
-    "carbs": 32,
-    "fat": 4
+    "nutrition": {
+      "calories": 180,
+      "protein": 6,
+      "carbs": 32,
+      "fat": 4
+    }
   },
   "lobster-bisque": {
     "title": "Lobster Bisque",
@@ -2864,10 +2956,12 @@
     "prepTime": 20,
     "cookTime": 45,
     "servings": 6,
-    "calories": 280,
-    "protein": 18,
-    "carbs": 10,
-    "fat": 20
+    "nutrition": {
+      "calories": 280,
+      "protein": 18,
+      "carbs": 10,
+      "fat": 20
+    }
   },
   "macarons": {
     "title": "French Macarons",
@@ -2916,10 +3010,12 @@
     "prepTime": 30,
     "cookTime": 15,
     "servings": 20,
-    "calories": 120,
-    "protein": 3,
-    "carbs": 14,
-    "fat": 6
+    "nutrition": {
+      "calories": 120,
+      "protein": 3,
+      "carbs": 14,
+      "fat": 6
+    }
   },
   "malai-kofta": {
     "title": "Malai Kofta",
@@ -2983,10 +3079,12 @@
     "prepTime": 30,
     "cookTime": 25,
     "servings": 4,
-    "calories": 380,
-    "protein": 14,
-    "carbs": 22,
-    "fat": 28
+    "nutrition": {
+      "calories": 380,
+      "protein": 14,
+      "carbs": 22,
+      "fat": 28
+    }
   },
   "margherita-pizza": {
     "title": "Margherita Pizza",
@@ -3039,10 +3137,12 @@
     "prepTime": 30,
     "cookTime": 15,
     "servings": 4,
-    "calories": 320,
-    "protein": 14,
-    "carbs": 38,
-    "fat": 14
+    "nutrition": {
+      "calories": 320,
+      "protein": 14,
+      "carbs": 38,
+      "fat": 14
+    }
   },
   "masala-chai": {
     "title": "Masala Chai",
@@ -3099,10 +3199,12 @@
     "prepTime": 5,
     "cookTime": 10,
     "servings": 2,
-    "calories": 140,
-    "protein": 4,
-    "carbs": 22,
-    "fat": 4
+    "nutrition": {
+      "calories": 140,
+      "protein": 4,
+      "carbs": 22,
+      "fat": 4
+    }
   },
   "masala-dosa": {
     "title": "Masala Dosa",
@@ -3161,10 +3263,12 @@
     "prepTime": 30,
     "cookTime": 20,
     "servings": 4,
-    "calories": 280,
-    "protein": 6,
-    "carbs": 48,
-    "fat": 8
+    "nutrition": {
+      "calories": 280,
+      "protein": 6,
+      "carbs": 48,
+      "fat": 8
+    }
   },
   "masala-omelette": {
     "title": "Masala Omelette",
@@ -3222,10 +3326,12 @@
     "prepTime": 10,
     "cookTime": 5,
     "servings": 1,
-    "calories": 280,
-    "protein": 18,
-    "carbs": 6,
-    "fat": 22
+    "nutrition": {
+      "calories": 280,
+      "protein": 18,
+      "carbs": 6,
+      "fat": 22
+    }
   },
   "methi-thepla": {
     "title": "Methi Thepla",
@@ -3278,10 +3384,12 @@
     "prepTime": 20,
     "cookTime": 15,
     "servings": 6,
-    "calories": 180,
-    "protein": 5,
-    "carbs": 28,
-    "fat": 6
+    "nutrition": {
+      "calories": 180,
+      "protein": 5,
+      "carbs": 28,
+      "fat": 6
+    }
   },
   "miso-soup": {
     "title": "Miso Soup",
@@ -3325,10 +3433,12 @@
     "prepTime": 10,
     "cookTime": 10,
     "servings": 4,
-    "calories": 60,
-    "protein": 4,
-    "carbs": 8,
-    "fat": 2
+    "nutrition": {
+      "calories": 60,
+      "protein": 4,
+      "carbs": 8,
+      "fat": 2
+    }
   },
   "mutton-biryani": {
     "title": "Mutton Biryani",
@@ -3393,10 +3503,12 @@
     "prepTime": 45,
     "cookTime": 60,
     "servings": 6,
-    "calories": 540,
-    "protein": 32,
-    "carbs": 52,
-    "fat": 24
+    "nutrition": {
+      "calories": 540,
+      "protein": 32,
+      "carbs": 52,
+      "fat": 24
+    }
   },
   "nachos-with-cheese": {
     "title": "Nachos with Cheese",
@@ -3443,10 +3555,12 @@
     "prepTime": 10,
     "cookTime": 10,
     "servings": 4,
-    "calories": 380,
-    "protein": 12,
-    "carbs": 32,
-    "fat": 24
+    "nutrition": {
+      "calories": 380,
+      "protein": 12,
+      "carbs": 32,
+      "fat": 24
+    }
   },
   "oatmeal-with-berries": {
     "title": "Oatmeal with Berries",
@@ -3493,10 +3607,12 @@
     "prepTime": 5,
     "cookTime": 10,
     "servings": 2,
-    "calories": 280,
-    "protein": 10,
-    "carbs": 42,
-    "fat": 8
+    "nutrition": {
+      "calories": 280,
+      "protein": 10,
+      "carbs": 42,
+      "fat": 8
+    }
   },
   "pad-thai": {
     "title": "Pad Thai",
@@ -3554,10 +3670,12 @@
     "prepTime": 20,
     "cookTime": 15,
     "servings": 4,
-    "calories": 380,
-    "protein": 22,
-    "carbs": 48,
-    "fat": 14
+    "nutrition": {
+      "calories": 380,
+      "protein": 22,
+      "carbs": 48,
+      "fat": 14
+    }
   },
   "palak-paneer": {
     "title": "Palak Paneer",
@@ -3621,10 +3739,12 @@
     "prepTime": 15,
     "cookTime": 20,
     "servings": 4,
-    "calories": 320,
-    "protein": 16,
-    "carbs": 12,
-    "fat": 24
+    "nutrition": {
+      "calories": 320,
+      "protein": 16,
+      "carbs": 12,
+      "fat": 24
+    }
   },
   "pancakes": {
     "title": "Pancakes",
@@ -3678,10 +3798,12 @@
     "prepTime": 10,
     "cookTime": 15,
     "servings": 4,
-    "calories": 280,
-    "protein": 7,
-    "carbs": 38,
-    "fat": 10
+    "nutrition": {
+      "calories": 280,
+      "protein": 7,
+      "carbs": 38,
+      "fat": 10
+    }
   },
   "paneer-65": {
     "title": "Paneer 65",
@@ -3738,10 +3860,12 @@
     "prepTime": 15,
     "cookTime": 15,
     "servings": 4,
-    "calories": 300,
-    "protein": 16,
-    "carbs": 16,
-    "fat": 20
+    "nutrition": {
+      "calories": 300,
+      "protein": 16,
+      "carbs": 16,
+      "fat": 20
+    }
   },
   "paneer-butter-masala": {
     "title": "Paneer Butter Masala",
@@ -3800,10 +3924,12 @@
     "prepTime": 15,
     "cookTime": 20,
     "servings": 4,
-    "calories": 380,
-    "protein": 16,
-    "carbs": 14,
-    "fat": 30
+    "nutrition": {
+      "calories": 380,
+      "protein": 16,
+      "carbs": 14,
+      "fat": 30
+    }
   },
   "pani-puri": {
     "title": "Pani Puri",
@@ -3861,10 +3987,12 @@
     "prepTime": 30,
     "cookTime": 0,
     "servings": 4,
-    "calories": 200,
-    "protein": 6,
-    "carbs": 32,
-    "fat": 8
+    "nutrition": {
+      "calories": 200,
+      "protein": 6,
+      "carbs": 32,
+      "fat": 8
+    }
   },
   "pasta-alfredo": {
     "title": "Pasta Alfredo",
@@ -3917,10 +4045,12 @@
     "prepTime": 10,
     "cookTime": 15,
     "servings": 4,
-    "calories": 480,
-    "protein": 16,
-    "carbs": 52,
-    "fat": 24
+    "nutrition": {
+      "calories": 480,
+      "protein": 16,
+      "carbs": 52,
+      "fat": 24
+    }
   },
   "pasta-carbonara": {
     "title": "Pasta Carbonara",
@@ -3974,10 +4104,12 @@
     "prepTime": 10,
     "cookTime": 15,
     "servings": 4,
-    "calories": 520,
-    "protein": 24,
-    "carbs": 48,
-    "fat": 26
+    "nutrition": {
+      "calories": 520,
+      "protein": 24,
+      "carbs": 48,
+      "fat": 26
+    }
   },
   "pav-bhaji": {
     "title": "Pav Bhaji",
@@ -4036,10 +4168,12 @@
     "prepTime": 25,
     "cookTime": 30,
     "servings": 4,
-    "calories": 340,
-    "protein": 10,
-    "carbs": 48,
-    "fat": 14
+    "nutrition": {
+      "calories": 340,
+      "protein": 10,
+      "carbs": 48,
+      "fat": 14
+    }
   },
   "pepperoni-pizza": {
     "title": "Pepperoni Pizza",
@@ -4087,10 +4221,12 @@
     "prepTime": 30,
     "cookTime": 15,
     "servings": 4,
-    "calories": 380,
-    "protein": 16,
-    "carbs": 40,
-    "fat": 18
+    "nutrition": {
+      "calories": 380,
+      "protein": 16,
+      "carbs": 40,
+      "fat": 18
+    }
   },
   "quesadillas": {
     "title": "Quesadillas",
@@ -4139,10 +4275,12 @@
     "prepTime": 10,
     "cookTime": 10,
     "servings": 4,
-    "calories": 340,
-    "protein": 18,
-    "carbs": 28,
-    "fat": 18
+    "nutrition": {
+      "calories": 340,
+      "protein": 18,
+      "carbs": 28,
+      "fat": 18
+    }
   },
   "quinoa-salad": {
     "title": "Quinoa Salad",
@@ -4195,10 +4333,12 @@
     "prepTime": 15,
     "cookTime": 15,
     "servings": 4,
-    "calories": 220,
-    "protein": 8,
-    "carbs": 26,
-    "fat": 10
+    "nutrition": {
+      "calories": 220,
+      "protein": 8,
+      "carbs": 26,
+      "fat": 10
+    }
   },
   "rasgulla": {
     "title": "Rasgulla",
@@ -4241,10 +4381,12 @@
     "prepTime": 30,
     "cookTime": 30,
     "servings": 10,
-    "calories": 180,
-    "protein": 5,
-    "carbs": 30,
-    "fat": 4
+    "nutrition": {
+      "calories": 180,
+      "protein": 5,
+      "carbs": 30,
+      "fat": 4
+    }
   },
   "samosa": {
     "title": "Samosa",
@@ -4298,10 +4440,12 @@
     "prepTime": 40,
     "cookTime": 20,
     "servings": 8,
-    "calories": 240,
-    "protein": 4,
-    "carbs": 28,
-    "fat": 14
+    "nutrition": {
+      "calories": 240,
+      "protein": 4,
+      "carbs": 28,
+      "fat": 14
+    }
   },
   "scrambled-eggs": {
     "title": "Scrambled Eggs",
@@ -4344,10 +4488,12 @@
     "prepTime": 5,
     "cookTime": 5,
     "servings": 2,
-    "calories": 220,
-    "protein": 14,
-    "carbs": 2,
-    "fat": 18
+    "nutrition": {
+      "calories": 220,
+      "protein": 14,
+      "carbs": 2,
+      "fat": 18
+    }
   },
   "shakshuka": {
     "title": "Shakshuka",
@@ -4406,10 +4552,12 @@
     "prepTime": 10,
     "cookTime": 20,
     "servings": 4,
-    "calories": 180,
-    "protein": 12,
-    "carbs": 10,
-    "fat": 12
+    "nutrition": {
+      "calories": 180,
+      "protein": 12,
+      "carbs": 10,
+      "fat": 12
+    }
   },
   "sorbet": {
     "title": "Fruit Sorbet",
@@ -4447,10 +4595,12 @@
     "prepTime": 15,
     "cookTime": 10,
     "servings": 6,
-    "calories": 140,
-    "protein": 1,
-    "carbs": 36,
-    "fat": 0
+    "nutrition": {
+      "calories": 140,
+      "protein": 1,
+      "carbs": 36,
+      "fat": 0
+    }
   },
   "spring-rolls": {
     "title": "Spring Rolls",
@@ -4493,10 +4643,12 @@
     "prepTime": 20,
     "cookTime": 15,
     "servings": 6,
-    "calories": 200,
-    "protein": 4,
-    "carbs": 24,
-    "fat": 10
+    "nutrition": {
+      "calories": 200,
+      "protein": 4,
+      "carbs": 24,
+      "fat": 10
+    }
   },
   "sushi-roll": {
     "title": "Sushi Roll",
@@ -4551,10 +4703,12 @@
     "prepTime": 30,
     "cookTime": 20,
     "servings": 4,
-    "calories": 320,
-    "protein": 18,
-    "carbs": 48,
-    "fat": 10
+    "nutrition": {
+      "calories": 320,
+      "protein": 18,
+      "carbs": 48,
+      "fat": 10
+    }
   },
   "tacos": {
     "title": "Tacos",
@@ -4612,10 +4766,12 @@
     "prepTime": 15,
     "cookTime": 15,
     "servings": 4,
-    "calories": 360,
-    "protein": 20,
-    "carbs": 24,
-    "fat": 20
+    "nutrition": {
+      "calories": 360,
+      "protein": 20,
+      "carbs": 24,
+      "fat": 20
+    }
   },
   "tandoori-chicken": {
     "title": "Tandoori Chicken",
@@ -4673,10 +4829,12 @@
     "prepTime": 30,
     "cookTime": 40,
     "servings": 6,
-    "calories": 280,
-    "protein": 34,
-    "carbs": 6,
-    "fat": 14
+    "nutrition": {
+      "calories": 280,
+      "protein": 34,
+      "carbs": 6,
+      "fat": 14
+    }
   },
   "tiramisu": {
     "title": "Tiramisu",
@@ -4736,10 +4894,12 @@
     "prepTime": 30,
     "cookTime": 0,
     "servings": 8,
-    "calories": 380,
-    "protein": 6,
-    "carbs": 32,
-    "fat": 26
+    "nutrition": {
+      "calories": 380,
+      "protein": 6,
+      "carbs": 32,
+      "fat": 26
+    }
   },
   "vada-pav": {
     "title": "Vada Pav",
@@ -4788,10 +4948,12 @@
     "prepTime": 20,
     "cookTime": 15,
     "servings": 4,
-    "calories": 320,
-    "protein": 8,
-    "carbs": 42,
-    "fat": 14
+    "nutrition": {
+      "calories": 320,
+      "protein": 8,
+      "carbs": 42,
+      "fat": 14
+    }
   },
   "veg-biryani": {
     "title": "Vegetable Biryani",
@@ -4855,10 +5017,12 @@
     "prepTime": 30,
     "cookTime": 40,
     "servings": 6,
-    "calories": 380,
-    "protein": 10,
-    "carbs": 58,
-    "fat": 14
+    "nutrition": {
+      "calories": 380,
+      "protein": 10,
+      "carbs": 58,
+      "fat": 14
+    }
   },
   "veg-burger": {
     "title": "Veggie Burger",
@@ -4922,10 +5086,12 @@
     "prepTime": 20,
     "cookTime": 15,
     "servings": 4,
-    "calories": 280,
-    "protein": 12,
-    "carbs": 42,
-    "fat": 10
+    "nutrition": {
+      "calories": 280,
+      "protein": 12,
+      "carbs": 42,
+      "fat": 10
+    }
   },
   "veg-fried-rice": {
     "title": "Vegetable Fried Rice",
@@ -4979,10 +5145,12 @@
     "prepTime": 10,
     "cookTime": 10,
     "servings": 3,
-    "calories": 320,
-    "protein": 10,
-    "carbs": 48,
-    "fat": 12
+    "nutrition": {
+      "calories": 320,
+      "protein": 10,
+      "carbs": 48,
+      "fat": 12
+    }
   },
   "waffles": {
     "title": "Waffles",
@@ -5031,9 +5199,11 @@
     "prepTime": 10,
     "cookTime": 15,
     "servings": 4,
-    "calories": 320,
-    "protein": 8,
-    "carbs": 40,
-    "fat": 14
+    "nutrition": {
+      "calories": 320,
+      "protein": 8,
+      "carbs": 40,
+      "fat": 14
+    }
   }
 }
