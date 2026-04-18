@@ -140,7 +140,7 @@ const SingleProduct = () => {
     const prepTime = item?.prepTime || 0;
     const cookTime = item?.cookTime || 0;
     const totalTime = prepTime + cookTime;
-    const calories = item?.calories || 450;
+    const calories = item?.nutrition?.calories || 450;
     const servants = item?.servings || 2;
 
     const steps = typeof instructions === "string"

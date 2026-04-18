@@ -197,7 +197,7 @@ const SavedRecipesTab = () => {
                                 <h3 className="font-extrabold text-lg text-on-surface truncate pr-8">{recipe.title}</h3>
                                 <div className="flex gap-4 text-xs font-bold text-on-surface-variant opacity-70">
                                     <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">timer</span> {recipe.prepTime + recipe.cookTime}m</span>
-                                    <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">local_fire_department</span> {recipe.calories} kcal</span>
+                                    <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">local_fire_department</span> {recipe.nutrition?.calories} kcal</span>
                                 </div>
                             </div>
                             
