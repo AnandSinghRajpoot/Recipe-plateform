@@ -15,15 +15,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = {NutritionMapper.class})
 public interface RecipeMapper {
 
+    @Mapping(target = "ingredients", ignore = true)
     @Mapping(target = "containsAllergens", ignore = true)
     @Mapping(target = "safeForDiseases", ignore = true)
     Recipe toEntity(RecipeRequestDto dto);
 
     List<RecipeResponseDTO> toResponseDTOList(List<Recipe> recipes);
 
+    @Mapping(target = "ingredients", ignore = true)
     @Mapping(target = "containsAllergens", ignore = true)
     @Mapping(target = "safeForDiseases", ignore = true)
     void updateEntityFromDTO(RecipeRequestDto dto, @MappingTarget Recipe recipe);
@@ -52,7 +54,7 @@ public interface RecipeMapper {
         return ingredients.stream()
                 .map(i -> new RecipeIngredientResponseDto(
                         i.getId(),
-                        i.getIngredient().getName(),
+                        (i.getIngredient() != null) ? i.getIngredient().getName() : "Unknown Ingredient",
                         i.getQuantity(),
                         i.getUnit()))
                 .collect(Collectors.toList());
