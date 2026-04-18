@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import apiClient from "../utils/apiClient";
 
 const ProfileComplete = () => {
     const navigate = useNavigate();
@@ -26,43 +26,65 @@ const ProfileComplete = () => {
 
         // Phase 3: Health & Medical
         diseaseNames: [],
-        allergyNames: []
+        allergyNames: [],
+
+        // Phase 4: Cooking Preferences
+        dietType: "OMNIVORE",
+        skillLevel: "BEGINNER"
     });
 
-    React.useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            axios.get("http://localhost:8080/api/health-profile", {
-                headers: { Authorization: `Bearer ${token}` }
-            }).then(res => {
-                const data = res.data?.data;
-                if (data) {
-                    setProfile(prev => ({
-                        ...prev,
-                        age: data.age || "",
-                        gender: data.gender || "",
-                        height: data.height || "",
-                        weight: data.weight || "",
-                        activityLevel: data.activityLevel || "MODERATELY_ACTIVE",
-                        workType: data.workType || "MIXED",
-                        travelFrequency: data.travelFrequency || "RARE",
-                        eatingPattern: data.eatingPattern || "FIXED_MEALS",
-                        sleepDuration: data.sleepDuration || "SIX_TO_EIGHT",
-                        waterIntakeGlasses: data.waterIntakeGlasses !== undefined ? data.waterIntakeGlasses : 8,
-                        smokingHabit: data.smokingHabit || "NONE",
-                        alcoholHabit: data.alcoholHabit || "NONE",
-                        diseaseNames: data.diseases?.map(d => d.diseaseName) || [],
-                        allergyNames: data.allergies?.map(a => a.allergyName) || []
-                    }));
-                }
-            }).catch(err => {
-                console.error("No previous health profile found:", err.response?.data || err.message);
-            });
-        }
+    useEffect(() => {
+        const fetchProfileData = async () => {
+            try {
+                setFetchLoading(true);
+                
+                // Fetch both user profile and health profile
+                const [userRes, healthRes] = await Promise.allSettled([
+                    apiClient.get("/auth/profile"),
+                    apiClient.get("/health-profile")
+                ]);
+
+                const userData = userRes.status === 'fulfilled' ? userRes.value.data : {};
+                const healthData = healthRes.status === 'fulfilled' ? healthRes.value.data?.data : {};
+
+                setProfile(prev => ({
+                    ...prev,
+                    // Health profile data
+                    age: healthData.age || "",
+                    gender: healthData.gender || "",
+                    height: healthData.height || "",
+                    weight: healthData.weight || "",
+                    activityLevel: healthData.activityLevel || "MODERATELY_ACTIVE",
+                    workType: healthData.workType || "MIXED",
+                    travelFrequency: healthData.travelFrequency || "RARE",
+                    eatingPattern: healthData.eatingPattern || "FIXED_MEALS",
+                    sleepDuration: healthData.sleepDuration || "SIX_TO_EIGHT",
+                    waterIntakeGlasses: healthData.waterIntakeGlasses !== undefined ? healthData.waterIntakeGlasses : 8,
+                    smokingHabit: healthData.smokingHabit || "NONE",
+                    alcoholHabit: healthData.alcoholHabit || "NONE",
+                    diseaseNames: healthData.diseases?.map(d => d.diseaseName) || [],
+                    allergyNames: healthData.allergies?.map(a => a.allergyName) || [],
+                    // User profile data
+                    dietType: userData.dietType || "OMNIVORE",
+                    skillLevel: userData.skillLevel || "BEGINNER"
+                }));
+                
+                setIsEditMode(true);
+            } catch (err) {
+                console.error("Profile fetch error:", err.message);
+                toast.error("Failed to load existing profile data");
+            } finally {
+                setFetchLoading(false);
+            }
+        };
+
+        fetchProfileData();
     }, []);
 
     const [loading, setLoading] = useState(false);
+    const [fetchLoading, setFetchLoading] = useState(true);
     const [error, setError] = useState("");
+    const [isEditMode, setIsEditMode] = useState(false);
 
     const handleInputChange = (e) => {
         const { name, value, type } = e.target;
@@ -88,14 +110,15 @@ const ProfileComplete = () => {
         });
     };
 
-    const nextStep = () => setStep(prev => Math.min(prev + 1, 3));
+    const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
     const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
     
     // Unified Color Palette (Green/Primary) for all Phases
     const phaseColor = {
         1: { border: 'border-primary', bg: 'bg-primary', text: 'text-primary', gradient: 'vibrant-gradient', overlay: 'from-primary/80' },
         2: { border: 'border-primary', bg: 'bg-primary', text: 'text-primary', gradient: 'vibrant-gradient', overlay: 'from-primary/80' },
-        3: { border: 'border-primary', bg: 'bg-primary', text: 'text-primary', gradient: 'vibrant-gradient', overlay: 'from-primary/80' }
+        3: { border: 'border-primary', bg: 'bg-primary', text: 'text-primary', gradient: 'vibrant-gradient', overlay: 'from-primary/80' },
+        4: { border: 'border-primary', bg: 'bg-primary', text: 'text-primary', gradient: 'vibrant-gradient', overlay: 'from-primary/80' }
     };
     const currentTheme = phaseColor[step] || phaseColor[1];
 
@@ -103,7 +126,7 @@ const ProfileComplete = () => {
         e.preventDefault();
         
         // Safety Guard: Only allow submission on the final step
-        if (step < 3) {
+        if (step < 4) {
             nextStep();
             return;
         }
@@ -118,18 +141,56 @@ const ProfileComplete = () => {
 
         setLoading(true);
         try {
-            await axios.post("http://localhost:8080/api/v1/auth/complete-profile", profile, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            toast.success("Profile successfully updated!");
-            navigate("/"); // redirect on success
+            // Extract user profile data (dietType, skillLevel) from profile
+            const userProfileData = {
+                dietType: profile.dietType,
+                skillLevel: profile.skillLevel
+            };
+
+            // Extract health profile data (everything else)
+            const healthProfileData = {
+                age: profile.age,
+                gender: profile.gender,
+                height: profile.height,
+                weight: profile.weight,
+                activityLevel: profile.activityLevel,
+                workType: profile.workType,
+                travelFrequency: profile.travelFrequency,
+                eatingPattern: profile.eatingPattern,
+                sleepDuration: profile.sleepDuration,
+                waterIntakeGlasses: profile.waterIntakeGlasses,
+                smokingHabit: profile.smokingHabit,
+                alcoholHabit: profile.alcoholHabit,
+                diseaseNames: profile.diseaseNames,
+                allergyNames: profile.allergyNames
+            };
+
+            // Save both profiles in parallel
+            await Promise.all([
+                apiClient.post("/auth/complete-profile", healthProfileData),
+                apiClient.put("/auth/profile", userProfileData)
+            ]);
+
+            toast.success(isEditMode ? "Profile successfully updated!" : "Profile successfully completed!");
+            navigate("/profile");
         } catch (err) {
             setError(err.response?.data?.message || err.message);
-            toast.error("Failed to update profile.");
+            toast.error("Failed to save profile.");
         } finally {
             setLoading(false);
         }
     };
+
+    if (fetchLoading) {
+        return (
+            <div className="bg-surface font-body text-on-surface min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-on-surface-variant font-bold">Loading your profile data...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-surface font-body text-on-surface min-h-screen pb-24 selection:bg-primary/20">
@@ -138,14 +199,19 @@ const ProfileComplete = () => {
                 {/* Dynamic Header & Stepper */}
                 <div className="mb-12 text-center">
                     <h1 className="font-headline text-4xl md:text-5xl font-extrabold tracking-tight text-primary mb-4">
-                        {step === 1 && "Start with the basics"}
-                        {step === 2 && "Tell us about your day"}
-                        {step === 3 && "Your health matters"}
+                        {isEditMode ? "Edit your profile" : (
+                            step === 1 ? "Start with basics" :
+                            step === 2 ? "Tell us about your day" :
+                            step === 3 ? "Your health matters" :
+                            "Cooking preferences"
+                        )}
                     </h1>
                     <p className="text-on-surface-variant max-w-lg mx-auto text-lg">
-                        {step === 1 && "A few simple details to help us calculate your health profile foundation."}
-                        {step === 2 && "Understanding your daily rhythm helps us tailor recipes for your energy needs."}
-                        {step === 3 && "Critical information to ensure every recommendation is safe and healthy for you."}
+                        {isEditMode ? "Update your health information below. Changes will be saved when you submit." : 
+                         (step === 1 ? "A few simple details to help us calculate your health profile foundation." :
+                          step === 2 ? "Understanding your daily rhythm helps us tailor recipes for your energy needs." :
+                          step === 3 ? "Critical information to ensure every recommendation is safe and healthy for you." :
+                          "Tell us about your dietary needs and cooking experience.")}
                     </p>
                 </div>
                 
@@ -155,11 +221,11 @@ const ProfileComplete = () => {
                     <div className="absolute top-6 left-10 right-10 h-2 bg-surface-container-high rounded-full -z-0 overflow-hidden border border-outline-variant/10 shadow-inner">
                         <div 
                             className={`h-full ${currentTheme.gradient} transition-all duration-700 ease-in-out shadow-lg rounded-full`} 
-                            style={{ width: `${(step - 1) * 50}%` }}
+                            style={{ width: `${(step - 1) * 33.33}%` }}
                         ></div>
                     </div>
                     
-                    {[1, 2, 3].map((num) => (
+                    {[1, 2, 3, 4].map((num) => (
                         <div key={num} className="flex flex-col items-center gap-4 relative z-10">
                             <div className={`w-14 h-14 rounded-full flex items-center justify-center font-headline font-extrabold transition-all duration-500 border-4 ${
                                 step === num 
@@ -181,6 +247,7 @@ const ProfileComplete = () => {
                                     {num === 1 && "Foundation"}
                                     {num === 2 && "Lifestyle"}
                                     {num === 3 && "Health"}
+                                    {num === 4 && "Cooking"}
                                 </span>
                                 {step === num && (
                                     <div className={`w-1.5 h-1.5 rounded-full ${currentTheme.bg} mt-2 animate-bounce`}></div>
@@ -487,6 +554,72 @@ const ProfileComplete = () => {
                                 </div>
                             )}
 
+                            {/* PHASE 4: COOKING PREFERENCES */}
+                            {step === 4 && (
+                                <div className="space-y-10 animate-fade-in-right text-left pt-6">
+                                    <div className="flex items-center gap-4 mb-2">
+                                        <div className="w-1 bg-primary h-8 rounded-full"></div>
+                                        <h2 className="font-headline text-2xl font-extrabold text-on-surface">Cooking Preferences</h2>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-4">
+                                            <label className="block text-sm font-bold text-on-surface-variant ml-2">Dietary Preference</label>
+                                            <div className="relative group">
+                                                <select 
+                                                    name="dietType" 
+                                                    value={profile.dietType} 
+                                                    onChange={handleInputChange} 
+                                                    className="w-full bg-surface-container-low border-2 border-transparent rounded-2xl px-6 py-5 focus:border-primary/40 focus:bg-white transition-all outline-none font-bold text-lg appearance-none"
+                                                >
+                                                    <option value="OMNIVORE">Omnivore</option>
+                                                    <option value="VEGETARIAN">Vegetarian</option>
+                                                    <option value="VEGAN">Vegan</option>
+                                                    <option value="PESCATARIAN">Pescatarian</option>
+                                                    <option value="KETO">Keto</option>
+                                                    <option value="PALEO">Paleo</option>
+                                                    <option value="MEDITERRANEAN">Mediterranean</option>
+                                                    <option value="GLUTEN_FREE">Gluten-Free</option>
+                                                </select>
+                                                <span className="material-symbols-outlined absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant group-focus-within:text-primary transition-colors">expand_more</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <label className="block text-sm font-bold text-on-surface-variant ml-2">Cooking Skill Level</label>
+                                            <div className="relative group">
+                                                <select 
+                                                    name="skillLevel" 
+                                                    value={profile.skillLevel} 
+                                                    onChange={handleInputChange} 
+                                                    className="w-full bg-surface-container-low border-2 border-transparent rounded-2xl px-6 py-5 focus:border-primary/40 focus:bg-white transition-all outline-none font-bold text-lg appearance-none"
+                                                >
+                                                    <option value="BEGINNER">Beginner</option>
+                                                    <option value="INTERMEDIATE">Intermediate</option>
+                                                    <option value="ADVANCED">Advanced</option>
+                                                    <option value="EXPERT">Expert</option>
+                                                </select>
+                                                <span className="material-symbols-outlined absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant group-focus-within:text-primary transition-colors">expand_more</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="h-px w-full bg-outline-variant/30 my-10"></div>
+
+                                    <div className="p-8 bg-surface-container-low rounded-[2rem] border-2 border-primary/10 border-dashed">
+                                        <div className="flex items-start gap-5">
+                                            <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center shrink-0 text-primary">
+                                                <span className="material-symbols-outlined text-3xl">restaurant</span>
+                                            </div>
+                                            <div>
+                                                <h4 className="font-headline font-bold text-on-surface mb-2">Personalized Recipe Experience</h4>
+                                                <p className="text-sm text-on-surface-variant leading-relaxed">Your dietary preferences and cooking skill level help us recommend recipes that match your lifestyle and expertise. We'll filter content and adjust difficulty levels accordingly.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Persistent Footer Navigation - ALIGNED & RENAMED */}
                             <div className="pt-10 flex flex-row items-center gap-4">
                                 {step > 1 && (
@@ -500,7 +633,7 @@ const ProfileComplete = () => {
                                 )}
                                 
                                 <div className="flex-1 flex gap-4">
-                                    {step < 3 ? (
+                                    {step < 4 ? (
                                         <button 
                                             key="btn-next"
                                             type="button"
@@ -583,7 +716,7 @@ const ProfileComplete = () => {
                     -moz-appearance: none;
                     appearance: none;
                 }
-            `}} />
+            ` }} />
         </div>
     );
 };
