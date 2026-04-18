@@ -20,11 +20,33 @@ import java.util.List;
 public class RecipeController {
 
     private final RecipeService recipeService;
+    private final com.recipeplatform.service.RecommendationService recommendationService;
     private final CurrentUser currentUser;
 
-    public RecipeController(RecipeService recipeService, CurrentUser currentUser) {
+    public RecipeController(RecipeService recipeService, 
+                            com.recipeplatform.service.RecommendationService recommendationService,
+                            CurrentUser currentUser) {
         this.recipeService = recipeService;
+        this.recommendationService = recommendationService;
         this.currentUser = currentUser;
+    }
+
+    @GetMapping("/recommended")
+    public ResponseEntity<ApiResponse<List<RecipeResponseDTO>>> getRecommendedRecipes(
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) String mealType,
+            @RequestParam(required = false) String dietType
+    ) {
+        java.util.Map<String, String> filters = new java.util.HashMap<>();
+        if (mealType != null) filters.put("mealType", mealType);
+        if (dietType != null) filters.put("dietType", dietType);
+
+        List<RecipeResponseDTO> recipes = recommendationService.getRecommendedRecipes(limit, filters);
+        ApiResponse<List<RecipeResponseDTO>> response = new ApiResponse<>(
+                "Personalized recommendations fetched successfully",
+                recipes,
+                HttpStatus.OK.value());
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

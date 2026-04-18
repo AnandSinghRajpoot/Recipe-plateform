@@ -59,14 +59,4 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long>, JpaSpecif
         WHERE d.id IN :diseaseIds AND r.isPublished = true AND r.deletedAt IS NULL
     """)
     List<Recipe> findPublishedRecipesSafeForDiseases(@Param("diseaseIds") Set<Long> diseaseIds);
-
-    /**
-     * Legacy ingredient-based hard filter (kept for backward compatibility).
-     */
-    @Query("SELECT DISTINCT r FROM Recipe r " +
-            "WHERE r.id NOT IN (" +
-            "    SELECT ri.recipe.id FROM RecipeIngredient ri " +
-            "    WHERE ri.ingredient.id IN :ingredientIds" +
-            ")")
-    List<Recipe> findRecipesNotContainingIngredients(@Param("ingredientIds") List<Long> ingredientIds);
 }
