@@ -99,27 +99,9 @@ public class Recipe {
     )
     private Set<Disease> safeForDiseases = new HashSet<>();
 
-    // === Nutritional Information ===
-    @Column(name = "calories")
-    private Double calories;
-
-    @Column(name = "protein")
-    private Double protein;
-
-    @Column(name = "carbs")
-    private Double carbs;
-
-    @Column(name = "fat")
-    private Double fat;
-
-    @Column(name = "fiber")
-    private Double fiber;
-
-    @Column(name = "sugar")
-    private Double sugar;
-
-    @Column(name = "sodium")
-    private Double sodium;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "nutrition_id", referencedColumnName = "id")
+    private Nutrition nutrition;
 
     // === Rating Information ===
     @Column(name = "average_rating")
@@ -127,11 +109,6 @@ public class Recipe {
 
     @Column(name = "review_count")
     private Long reviewCount = 0L;
-
-    // Legacy cuisine text field
-    @Size(max = 50, message = "Cuisine must not exceed 50 characters")
-    @Column(name = "cuisine", length = 50)
-    private String cuisine;
 
     // === Publication Status ===
     @Column(name = "is_published", nullable = false)
