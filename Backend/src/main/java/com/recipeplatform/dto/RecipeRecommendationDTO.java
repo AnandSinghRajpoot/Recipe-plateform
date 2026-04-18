@@ -2,6 +2,7 @@ package com.recipeplatform.dto;
 
 import com.recipeplatform.domain.enums.DietType;
 import com.recipeplatform.domain.enums.MealType;
+import com.recipeplatform.dto.recipe.NutritionDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,13 +33,7 @@ public class RecipeRecommendationDTO {
     private Integer servings;
 
     // Nutritional information
-    private Double calories;
-    private Double protein;
-    private Double carbs;
-    private Double fat;
-    private Double fiber;
-    private Double sugar;
-    private Double sodium;
+    private NutritionDTO nutrition;
 
     // Recommendation metadata
     private Double score;

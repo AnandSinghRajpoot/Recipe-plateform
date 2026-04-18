@@ -46,13 +46,7 @@ public class RecipeResponseDTO {
     private Set<String> safeForDiseases;
 
     // Nutritional info
-    private Double calories;
-    private Double protein;
-    private Double carbs;
-    private Double fat;
-    private Double fiber;
-    private Double sugar;
-    private Double sodium;
+    private NutritionDTO nutrition;
 
     // Publication
     private Boolean isPublished;

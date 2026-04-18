@@ -54,10 +54,7 @@ public class RecipeRequestDto {
     private CuisineType cuisineType;
 
     // Nutritional info
-    private Double calories;
-    private Double protein;
-    private Double carbs;
-    private Double fat;
+    private NutritionDTO nutrition;
 
     // Health tagging — IDs of allergens this recipe contains
     private Set<Long> allergenIds;
