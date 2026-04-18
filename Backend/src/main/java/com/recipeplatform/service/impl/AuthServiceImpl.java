@@ -84,6 +84,8 @@ public class AuthServiceImpl implements AuthService {
 
     }
 
+    @Override
+    @org.springframework.transaction.annotation.Transactional
     public User register(RegisterRequest registerRequest, MultipartFile profilePhoto) {
         // 1. Password Confirmation Check
         if (registerRequest.getConfirmPassword() != null && 
@@ -148,8 +150,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public String completeProfile(com.recipeplatform.dto.auth.ProfileCompletionRequest request) {
-        User user = currentUser.getCurrentUser();
+        User principal = currentUser.getCurrentUser();
+        User user = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
         
         // Update basic user preferences
         if (request.getDietType() != null) user.setDietType(request.getDietType());
@@ -209,6 +214,7 @@ public class AuthServiceImpl implements AuthService {
 
         // Map Diseases
         profile.getDiseases().clear();
+        user.getHealthConditions().clear(); // Sync with direct User relation too
         if (request.getDiseaseNames() != null) {
             for (String dName : request.getDiseaseNames()) {
                 diseaseRepository.findByNameContainingIgnoreCase(dName).stream().findFirst().ifPresent(disease -> {
@@ -216,6 +222,7 @@ public class AuthServiceImpl implements AuthService {
                     ud.setDisease(disease);
                     ud.setUserHealthProfile(profile);
                     profile.getDiseases().add(ud);
+                    user.getHealthConditions().add(disease); // Add to User entity ManyToMany
                 });
             }
         }
@@ -239,8 +246,12 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public String updateProfilePhoto(org.springframework.web.multipart.MultipartFile profilePhoto) {
-        User user = currentUser.getCurrentUser();
+        User principal = currentUser.getCurrentUser();
+        User user = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+                
         if (profilePhoto != null && !profilePhoto.isEmpty()) {
             String imageUrl = imageService.saveImage(profilePhoto);
             user.setProfilePhoto(imageUrl);
@@ -248,6 +259,21 @@ public class AuthServiceImpl implements AuthService {
             return imageUrl;
         }
         return user.getProfilePhoto();
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public String updateProfile(com.recipeplatform.dto.auth.UserProfileUpdateRequest request) {
+        User principal = currentUser.getCurrentUser();
+        User user = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (request.getName() != null) user.setName(request.getName());
+        if (request.getBio() != null) user.setBio(request.getBio());
+        if (request.getDietType() != null) user.setDietType(request.getDietType());
+        if (request.getSkillLevel() != null) user.setSkillLevel(request.getSkillLevel());
+        userRepository.save(user);
+        return "Profile updated successfully";
     }
 
     @Override

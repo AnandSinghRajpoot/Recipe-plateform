@@ -38,8 +38,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         // Reference data — public (no JWT needed for profile wizard & chef form)
                         .requestMatchers(HttpMethod.GET, "/api/v1/reference/**").permitAll()
-                        // Recommendations require login
-                        .requestMatchers("/api/v1/recommendations/**").authenticated()
+                        // Recommendations are public (with login teasers for guests)
+                        .requestMatchers("/api/v1/recommendations/**").permitAll()
                         // Recipe mutations require login
                         .requestMatchers(HttpMethod.POST, "/api/v1/recipes").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/recipes/**").authenticated()

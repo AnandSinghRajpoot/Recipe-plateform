@@ -56,6 +56,11 @@ public class AuthController {
         return userMapper.toDto(user);
     }
 
+    @PutMapping("/profile")
+    public String updateProfile(@RequestBody com.recipeplatform.dto.auth.UserProfileUpdateRequest request) {
+        return authService.updateProfile(request);
+    }
+
     @GetMapping("/profile/{id}")
     public RegisterResponse getUserProfile(@PathVariable Long id) {
         User user = authService.getUserById(id);
