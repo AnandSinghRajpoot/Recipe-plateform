@@ -13,12 +13,22 @@ const Recipes = () => {
 
     const isReturning = !!sessionStorage.getItem('recipesScrollPos');
 
+    // Bump this version whenever backend data changes (e.g. re-seed, image URL fixes)
+    // so stale cached image URLs are never served.
+    const CACHE_VERSION = 'v3';
+
     const getCachedState = () => {
         try {
             const cached = sessionStorage.getItem('recipesDataCache');
             if (cached) {
                 const parsed = JSON.parse(cached);
-                
+
+                // Invalidate cache if version doesn't match
+                if (parsed.version !== CACHE_VERSION) {
+                    sessionStorage.removeItem('recipesDataCache');
+                    return null;
+                }
+
                 const norm = (s) => decodeURIComponent(s || '').replace(/\+/g, ' ').trim();
                 
                 if (isReturning || norm(parsed.searchQuery) === norm(location.search)) {
@@ -39,7 +49,8 @@ const Recipes = () => {
     const [cursor, setCursor] = useState(cachedState ? cachedState.cursor : null);
     const [allLoaded, setAllLoaded] = useState(cachedState ? cachedState.allLoaded : false);
     const [resultCount, setResultCount] = useState(cachedState ? cachedState.resultCount : null);
-    const [activeTab, setActiveTab] = useState('all'); // 'all' or 'recommended'
+    const initialTab = searchParams.get('tab') || 'all';
+    const [activeTab, setActiveTab] = useState(initialTab); // 'all' or 'recommended'
     const [preventInitialFetch, setPreventInitialFetch] = useState(!!cachedState);
     const [filters, setFilters] = useState(cachedState && cachedState.filters ? cachedState.filters : {
         dietType: searchParams.get('dietType') || '',
@@ -226,9 +237,13 @@ const Recipes = () => {
                 if (urlPrep === 'Under 15 min') {
                     params.append('maxPrepTime', '15');
                 } else if (urlPrep === '15-30 min') {
+                    params.append('minPrepTime', '15');
                     params.append('maxPrepTime', '30');
                 } else if (urlPrep === '30-60 min') {
+                    params.append('minPrepTime', '30');
                     params.append('maxPrepTime', '60');
+                } else if (urlPrep === 'Over 60 min') {
+                    params.append('minPrepTime', '61');
                 }
             }
 
@@ -296,8 +311,16 @@ const Recipes = () => {
     }, [searchParams]);
 
     useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab && tab !== activeTab) {
+            setActiveTab(tab);
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
         if (!loading && items.length > 0) {
             sessionStorage.setItem('recipesDataCache', JSON.stringify({
+                version: CACHE_VERSION,
                 searchQuery: location.search,
                 items,
                 cursor,
@@ -402,12 +425,12 @@ const Recipes = () => {
                 
                 {/* Header & Back Navigation */}
                 <div className="mb-8">
-                    <button 
+                    <button
                         onClick={() => navigate('/')}
                         className="group flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors mb-6 text-[10px] font-black uppercase tracking-widest"
                     >
                         <span className="material-symbols-outlined text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
-                        Back to Home
+                        Back
                     </button>
                     
                     <h1 className="text-4xl md:text-5xl font-headline font-black text-on-surface tracking-tighter">
@@ -416,123 +439,6 @@ const Recipes = () => {
                     <p className="text-on-surface-variant mt-2 font-medium opacity-80">Explore the complete collection of metabolic culinary compositions.</p>
                 </div>
 
-                {/* Personalized Recommendations Section */}
-                <AnimatePresence>
-                    {recommendations.length > 0 && (
-                        <motion.div 
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mb-16"
-                        >
-                            <div className="flex items-center justify-between mb-8">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-2xl vitality-gradient flex items-center justify-center text-white shadow-lg">
-                                        <span className="material-symbols-outlined text-xl">temp_preferences_custom</span>
-                                    </div>
-                                    <div>
-                                        <h2 className="text-2xl font-headline font-black text-on-surface tracking-tight">Top Picks for You</h2>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary">Intelligence Based Selection</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x">
-                                {recommendations.map((rec) => (
-                                    rec.isTeaserCard ? (
-                                         <motion.div 
-                                             key="teaser-card"
-                                             whileHover={{ y: -8 }}
-                                             onClick={() => navigate('/login')}
-                                             className="min-w-[300px] md:min-w-[380px] group cursor-pointer snap-start"
-                                         >
-                                             <div className="h-full bg-on-surface rounded-[2.5rem] p-8 flex flex-col justify-between items-start hover:shadow-2xl hover:shadow-primary/40 transition-all duration-500 relative overflow-hidden">
-                                                 <div className="absolute inset-0 vitality-gradient opacity-10 group-hover:opacity-20 transition-opacity" />
-                                                 <div className="relative z-10 space-y-4">
-                                                     <div className="w-14 h-14 rounded-3xl bg-white/10 backdrop-blur-md text-white flex items-center justify-center shadow-lg border border-white/20">
-                                                         <span className="material-symbols-outlined text-3xl">lock</span>
-                                                     </div>
-                                                     <h3 className="text-2xl font-headline font-black text-white">Unlock Your Personal Profile</h3>
-                                                     <p className="text-sm text-white/60 leading-relaxed">Sign up to get recipes tailored to your metabolic signature, allergens, and health goals.</p>
-                                                 </div>
-                                                 
-                                                 <button className="relative z-10 w-full py-4 bg-white text-on-surface font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all">
-                                                     Personalize Now
-                                                 </button>
-                                             </div>
-                                         </motion.div>
-                                     ) : rec.isUpgradeCard ? (
-                                         <motion.div 
-                                             key="upgrade-card"
-                                             whileHover={{ y: -8 }}
-                                             onClick={() => navigate('/profile/complete')}
-                                             className="min-w-[300px] md:min-w-[380px] group cursor-pointer snap-start"
-                                         >
-                                             <div className="h-full bg-primary/5 rounded-[2.5rem] border-2 border-dashed border-primary/30 p-8 flex flex-col justify-between items-start hover:bg-primary/10 transition-all duration-500">
-                                                 <div className="space-y-4">
-                                                     <div className="w-14 h-14 rounded-3xl bg-primary text-white flex items-center justify-center shadow-lg">
-                                                         <span className="material-symbols-outlined text-3xl">bolt</span>
-                                                     </div>
-                                                     <h3 className="text-2xl font-headline font-black text-on-surface">Improve Your Precision</h3>
-                                                     <p className="text-sm text-on-surface-variant leading-relaxed">Your profile is <span className="text-primary font-black">{rec.percentage}%</span> complete. Fill in more data for 10x better metabolic recommendations.</p>
-                                                 </div>
-                                                 
-                                                 <div className="w-full space-y-4">
-                                                     <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
-                                                         <motion.div 
-                                                             initial={{ width: 0 }}
-                                                             animate={{ width: `${rec.percentage}%` }}
-                                                             className="h-full vitality-gradient"
-                                                         />
-                                                     </div>
-                                                     <button className="w-full py-4 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:shadow-primary/20 transition-all">
-                                                         Upgrade Precision
-                                                     </button>
-                                                 </div>
-                                             </div>
-                                         </motion.div>
-                                     ) : (
-                                         <motion.div 
-                                             key={rec.id}
-                                             whileHover={{ y: -8 }}
-                                             onClick={() => navigate(`/items/${rec.id}`)}
-                                             className="min-w-[300px] md:min-w-[380px] group cursor-pointer snap-start"
-                                         >
-                                             <div className="bg-white rounded-[2.5rem] border border-outline-variant/10 overflow-hidden shadow-sm hover:shadow-2xl hover:border-primary/20 transition-all duration-500">
-                                                 <div className="relative h-64 overflow-hidden">
-                                                     <img 
-                                                         src={rec.coverImageUrl} 
-                                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                                         alt={rec.title}
-                                                     />
-                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
-                                                     <div className="absolute top-6 left-6 flex gap-2">
-                                                         <span className="px-3 py-1 bg-white/20 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-full border border-white/30">AI Pick</span>
-                                                         <span className="px-3 py-1 bg-primary text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg">{rec.dietType}</span>
-                                                     </div>
-                                                 </div>
-                                                 <div className="p-8">
-                                                     <h3 className="text-xl font-headline font-black text-on-surface mb-3 line-clamp-1 group-hover:text-primary transition-colors">
-                                                         {rec.title}
-                                                     </h3>
-                                                     <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">
-                                                         <div className="flex items-center gap-2">
-                                                             <span className="material-symbols-outlined text-sm">timer</span>
-                                                             {rec.prepTime + rec.cookTime}m
-                                                         </div>
-                                                         <div className="flex items-center gap-2 text-primary">
-                                                             <span className="material-symbols-outlined text-sm">local_fire_department</span>
-                                                             {Math.round(rec.nutrition?.calories || 0)} Kcal
-                                                         </div>
-                                                     </div>
-                                                 </div>
-                                             </div>
-                                         </motion.div>
-                                     )
-                                ))}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
 
                 {/* Search and Filter Bar */}
                 <div className="mb-8 relative">
@@ -722,13 +628,25 @@ const Recipes = () => {
                 {/* Tab Switcher */}
                 <div className="flex items-center gap-2 mb-10 bg-surface-container-low p-1.5 rounded-3xl w-fit border border-outline-variant/5">
                     <button 
-                        onClick={() => setActiveTab('all')}
+                        onClick={() => {
+                            setActiveTab('all');
+                            setSearchParams(prev => {
+                                prev.set('tab', 'all');
+                                return prev;
+                            });
+                        }}
                         className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'all' ? 'bg-white text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}
                     >
                         All Recipes
                     </button>
                     <button 
-                        onClick={() => setActiveTab('recommended')}
+                        onClick={() => {
+                            setActiveTab('recommended');
+                            setSearchParams(prev => {
+                                prev.set('tab', 'recommended');
+                                return prev;
+                            });
+                        }}
                         className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'recommended' ? 'bg-white text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}
                     >
                         <span className="material-symbols-outlined text-sm">temp_preferences_custom</span>
@@ -837,101 +755,68 @@ const Recipes = () => {
                                 <p className="text-on-surface-variant mt-2 font-medium opacity-60">Hand-picked compositions based on your metabolic signature and preferences.</p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            <div className="flex flex-col items-center gap-10">
                                 {recommendations.map((rec) => (
                                     rec.isTeaserCard ? (
-                                        <motion.div 
-                                            key="teaser-card"
-                                            whileHover={{ y: -8 }}
-                                            onClick={() => navigate('/login')}
-                                            className="group cursor-pointer min-h-[400px]"
-                                        >
-                                            <div className="h-full bg-on-surface rounded-[3rem] p-10 flex flex-col justify-between items-start hover:shadow-2xl hover:shadow-primary/40 transition-all duration-500 relative overflow-hidden">
-                                                <div className="absolute inset-0 vitality-gradient opacity-10 group-hover:opacity-20 transition-opacity" />
-                                                <div className="relative z-10 space-y-6">
-                                                    <div className="w-16 h-16 rounded-3xl bg-white/10 backdrop-blur-md text-white flex items-center justify-center shadow-lg border border-white/20">
-                                                        <span className="material-symbols-outlined text-4xl">lock</span>
+                                        <div key="teaser-card" className="w-full max-w-5xl">
+                                            <motion.div 
+                                                whileHover={{ y: -5 }}
+                                                onClick={() => navigate('/login')}
+                                                className="group cursor-pointer"
+                                            >
+                                                <div className="bg-on-surface rounded-[2.5rem] p-10 flex flex-col md:flex-row justify-between items-center gap-8 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-500 relative overflow-hidden">
+                                                    <div className="absolute inset-0 vitality-gradient opacity-10 group-hover:opacity-20 transition-opacity" />
+                                                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+                                                        <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-md text-white flex items-center justify-center shadow-lg border border-white/20">
+                                                            <span className="material-symbols-outlined text-5xl">lock</span>
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <h3 className="text-3xl font-headline font-black text-white leading-tight">Unlock Your Metabolic Profile</h3>
+                                                            <p className="text-white/60 font-medium">Join now to see recipes perfectly aligned with your dietary needs and health goals.</p>
+                                                        </div>
                                                     </div>
-                                                    <div className="space-y-2">
-                                                        <h3 className="text-2xl font-headline font-black text-white leading-tight">Unlock Your Metabolic Profile</h3>
-                                                        <p className="text-sm text-white/60 leading-relaxed">Join now to see recipes perfectly aligned with your dietary needs and health goals.</p>
-                                                    </div>
+                                                    
+                                                    <button className="relative z-10 px-10 py-5 bg-white text-on-surface font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-[1.05] active:scale-[0.95] transition-all whitespace-nowrap">
+                                                        Personalize Now
+                                                    </button>
                                                 </div>
-                                                
-                                                <button className="relative z-10 w-full py-5 bg-white text-on-surface font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all">
-                                                    Personalize Now
-                                                </button>
-                                            </div>
-                                        </motion.div>
+                                            </motion.div>
+                                        </div>
                                     ) : rec.isUpgradeCard ? (
-                                        <motion.div 
-                                            key="upgrade-card"
-                                            whileHover={{ y: -8 }}
-                                            onClick={() => navigate('/profile/complete')}
-                                            className="group cursor-pointer min-h-[400px]"
-                                        >
-                                            <div className="h-full bg-primary/5 rounded-[3rem] border-2 border-dashed border-primary/30 p-10 flex flex-col justify-between items-start hover:bg-primary/10 transition-all duration-500">
-                                                <div className="space-y-6">
-                                                    <div className="w-16 h-16 rounded-3xl bg-primary text-white flex items-center justify-center shadow-lg">
-                                                        <span className="material-symbols-outlined text-4xl">bolt</span>
+                                        <div key="upgrade-card" className="w-full max-w-5xl">
+                                            <motion.div 
+                                                whileHover={{ y: -5 }}
+                                                onClick={() => navigate('/profile/complete')}
+                                                className="group cursor-pointer"
+                                            >
+                                                <div className="bg-primary/5 rounded-[2.5rem] border-2 border-dashed border-primary/30 p-10 flex flex-col md:flex-row justify-between items-center gap-8 hover:bg-primary/10 transition-all duration-500">
+                                                    <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left flex-1">
+                                                        <div className="w-20 h-20 rounded-3xl bg-primary text-white flex items-center justify-center shadow-lg">
+                                                            <span className="material-symbols-outlined text-5xl">bolt</span>
+                                                        </div>
+                                                        <div className="space-y-4 flex-1">
+                                                            <h3 className="text-3xl font-headline font-black text-on-surface leading-tight">Improve Your Match</h3>
+                                                            <p className="text-on-surface-variant font-medium">Your profile is <span className="text-primary font-black">{rec.percentage}%</span> complete. Adding more data improves accuracy.</p>
+                                                            <div className="w-full max-w-md h-3 bg-surface-container-high rounded-full overflow-hidden">
+                                                                <motion.div 
+                                                                    initial={{ width: 0 }}
+                                                                    animate={{ width: `${rec.percentage}%` }}
+                                                                    className="h-full vitality-gradient"
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div className="space-y-2">
-                                                        <h3 className="text-2xl font-headline font-black text-on-surface leading-tight">Improve Your Match</h3>
-                                                        <p className="text-sm text-on-surface-variant leading-relaxed">Your profile is <span className="text-primary font-black">{rec.percentage}%</span> complete. Adding more data improves the metabolic match accuracy.</p>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="w-full space-y-5">
-                                                    <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
-                                                        <motion.div 
-                                                            initial={{ width: 0 }}
-                                                            animate={{ width: `${rec.percentage}%` }}
-                                                            className="h-full vitality-gradient"
-                                                        />
-                                                    </div>
-                                                    <button className="w-full py-5 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:shadow-primary/20 transition-all">
+                                                    
+                                                    <button className="px-10 py-5 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:shadow-primary/20 transition-all whitespace-nowrap">
                                                         Complete Profile
                                                     </button>
                                                 </div>
-                                            </div>
-                                        </motion.div>
+                                            </motion.div>
+                                        </div>
                                     ) : (
-                                        <motion.div 
-                                            key={rec.id}
-                                            whileHover={{ y: -8 }}
-                                            onClick={() => navigate(`/items/${rec.id}`)}
-                                            className="group cursor-pointer"
-                                        >
-                                            <div className="bg-white rounded-[3rem] border border-outline-variant/10 overflow-hidden shadow-sm hover:shadow-2xl hover:border-primary/20 transition-all duration-500 h-full flex flex-col">
-                                                <div className="relative h-60 overflow-hidden">
-                                                    <img 
-                                                        src={rec.coverImageUrl} 
-                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                                        alt={rec.title}
-                                                    />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
-                                                    <div className="absolute top-6 left-6 flex gap-2">
-                                                        <span className="px-4 py-1.5 bg-white/20 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-full border border-white/30">Smart Pick</span>
-                                                        <span className="px-4 py-1.5 bg-primary text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg">{rec.dietType}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="p-8 flex-1 flex flex-col justify-between">
-                                                    <h3 className="text-2xl font-headline font-black text-on-surface mb-4 line-clamp-2 group-hover:text-primary transition-colors leading-tight">
-                                                        {rec.title}
-                                                    </h3>
-                                                    <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 pt-4 border-t border-outline-variant/5">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="material-symbols-outlined text-base">timer</span>
-                                                            {rec.prepTime + (rec.cookTime || 0)}m
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-primary">
-                                                            <span className="material-symbols-outlined text-base">local_fire_department</span>
-                                                            {Math.round(rec.nutrition?.calories || 0)} Cal
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </motion.div>
+                                        <div key={rec.id} className="w-full max-w-5xl">
+                                            <HorizontalCard item={rec} isPersonalized={true} />
+                                        </div>
                                     )
                                 ))}
                             </div>

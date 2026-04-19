@@ -21,6 +21,7 @@ public class RecipeSpecification {
             CuisineType cuisineType,
             Double minCalories,
             Double maxCalories,
+            Integer minPrepTime,
             Integer maxPrepTime
     ) {
         return (root, criteriaQuery, criteriaBuilder) -> {
@@ -43,15 +44,7 @@ public class RecipeSpecification {
             }
 
             if (dietType != null) {
-                if (dietType == DietType.VEG) {
-                    // Vegetarian includes both Veg and Vegan
-                    predicates.add(root.get("dietType").in(DietType.VEG, DietType.VEGAN));
-                } else if (dietType == DietType.VEGAN) {
-                    // Vegan is strict
-                    predicates.add(criteriaBuilder.equal(root.get("dietType"), DietType.VEGAN));
-                } else {
-                    predicates.add(criteriaBuilder.equal(root.get("dietType"), dietType));
-                }
+                predicates.add(criteriaBuilder.equal(root.get("dietType"), dietType));
             }
 
             if (mealType != null) {
@@ -70,10 +63,22 @@ public class RecipeSpecification {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("nutrition").get("calories"), maxCalories));
             }
 
-            if (maxPrepTime != null) {
+            if (minPrepTime != null || maxPrepTime != null) {
                 Expression<Integer> prep = criteriaBuilder.coalesce(root.get("prepTime"), 0);
                 Expression<Integer> cook = criteriaBuilder.coalesce(root.get("cookTime"), 0);
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(criteriaBuilder.sum(prep, cook), maxPrepTime));
+                Expression<Integer> totalTime = criteriaBuilder.sum(prep, cook);
+                if (minPrepTime != null) {
+                    predicates.add(criteriaBuilder.greaterThanOrEqualTo(totalTime, minPrepTime));
+                }
+                if (maxPrepTime != null) {
+                    if (minPrepTime != null) {
+                        // Range: inclusive
+                        predicates.add(criteriaBuilder.lessThanOrEqualTo(totalTime, maxPrepTime));
+                    } else {
+                        // Under: exclusive
+                        predicates.add(criteriaBuilder.lessThan(totalTime, maxPrepTime));
+                    }
+                }
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
