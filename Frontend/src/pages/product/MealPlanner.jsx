@@ -154,6 +154,49 @@ const MealPlanner = () => {
         }
     };
 
+    const generateShoppingList = async () => {
+        if (!plan) return;
+
+        // Collect all recipe IDs from the plan
+        const recipeIds = [];
+        plan.days.forEach(day => {
+            day.slots.forEach(slot => {
+                if (slot.recipe?.id) {
+                    recipeIds.push(slot.recipe.id);
+                }
+            });
+        });
+
+        if (recipeIds.length === 0) {
+            toast.error("No recipes in the plan to generate shopping list");
+            return;
+        }
+
+        try {
+            // Generate the list
+            const generateRes = await apiClient.post('/shopping-lists/generate', { recipeIds });
+            const listData = generateRes.data.data;
+
+            // Save the list
+            const saveRes = await apiClient.post('/shopping-lists/save', {
+                name: `${plan.name} Shopping List`,
+                items: listData.items.map(item => ({
+                    ingredientName: item.ingredientName,
+                    quantity: item.quantity,
+                    unit: item.unit,
+                    category: item.category,
+                    ingredientId: item.ingredientId
+                }))
+            });
+
+            toast.success("Shopping list generated!");
+            navigate(`/shopping-list/${saveRes.data.data.id}`);
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to generate shopping list");
+        }
+    };
+
     const getSlotAt = (dayName, typeName) => {
         if (!plan) return null;
         const day = plan.days.find(d => d.dayOfWeek === dayName);
@@ -228,15 +271,26 @@ const MealPlanner = () => {
                         <p className="text-on-surface-variant mt-6 font-medium opacity-70 max-w-2xl text-lg leading-relaxed">{plan?.description || "Organizing your weekly meals..."}</p>
                     </div>
 
-                    {!plan?.isActive && (
-                        <button 
-                            onClick={activatePlan}
-                            className="px-10 py-5 rounded-[2rem] vitality-gradient text-white font-black uppercase tracking-widest text-xs shadow-xl hover:scale-[1.05] active:scale-[0.95] transition-all flex items-center gap-3"
-                        >
-                            <IoCheckmarkCircle className="text-lg" />
-                            Use this Plan
-                        </button>
-                    )}
+                    <div className="flex gap-4">
+                        {!plan?.isActive && (
+                            <button
+                                onClick={activatePlan}
+                                className="px-10 py-5 rounded-[2rem] vitality-gradient text-white font-black uppercase tracking-widest text-xs shadow-xl hover:scale-[1.05] active:scale-[0.95] transition-all flex items-center gap-3"
+                            >
+                                <IoCheckmarkCircle className="text-lg" />
+                                Use this Plan
+                            </button>
+                        )}
+                        {plan?.isActive && (
+                            <button
+                                onClick={generateShoppingList}
+                                className="px-10 py-5 rounded-[2rem] bg-surface-container-low text-on-surface font-black uppercase tracking-widest text-xs shadow-xl hover:bg-surface-container-high hover:scale-[1.05] active:scale-[0.95] transition-all flex items-center gap-3"
+                            >
+                                <span className="material-symbols-outlined text-base">shopping_cart</span>
+                                Generate Shopping List
+                            </button>
+                        )}
+                    </div>
                 </header>
 
                 {/* Weekly Grid */}
@@ -642,7 +696,7 @@ const MealPlanner = () => {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                                        <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">AI-Powered Suggestions</span>
+                                        <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">Expert Rule Engine</span>
                                     </div>
                                 </div>
                             </div>
