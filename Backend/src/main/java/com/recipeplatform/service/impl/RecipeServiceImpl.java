@@ -195,6 +195,7 @@ public class RecipeServiceImpl implements RecipeService {
             Double minCalories,
             Double maxCalories,
             Long authorId,
+            Integer minPrepTime,
             Integer maxPrepTime) {
 
         // If authorId is provided, fetch recipes by that author directly
@@ -206,7 +207,7 @@ public class RecipeServiceImpl implements RecipeService {
         }
 
         Specification<Recipe> spec = RecipeSpecification.filterRecipes(
-                query, difficulty, dietType, mealType, cuisineType, minCalories, maxCalories, maxPrepTime);
+                query, difficulty, dietType, mealType, cuisineType, minCalories, maxCalories, minPrepTime, maxPrepTime);
 
         List<Recipe> recipes = recipeRepository.findAll(spec);
         List<RecipeResponseDTO> dtos = recipeMapper.toResponseDTOList(recipes);

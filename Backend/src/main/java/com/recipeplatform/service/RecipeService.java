@@ -35,6 +35,7 @@ public interface RecipeService {
             Double minCalories,
             Double maxCalories,
             Long authorId,
+            Integer minPrepTime,
             Integer maxPrepTime);
 
     List<RecipeResponseDTO> getLatestRecipes();

@@ -111,15 +111,17 @@ public class RecipeController {
             @RequestParam(required = false) Double minCalories,
             @RequestParam(required = false) Double maxCalories,
             @RequestParam(required = false) Long authorId,
+            @RequestParam(required = false) Integer minPrepTime,
             @RequestParam(required = false) Integer maxPrepTime,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size
     ) {
         List<RecipeResponseDTO> allRecipes = recipeService.filterRecipes(
-                q, difficulty, dietType, mealType, cuisineType, minCalories, maxCalories, authorId, maxPrepTime);
+                q, difficulty, dietType, mealType, cuisineType, minCalories, maxCalories, authorId, minPrepTime, maxPrepTime);
         
-        boolean hasFilter = q != null || difficulty != null || dietType != null || mealType != null || 
-                cuisineType != null || minCalories != null || maxCalories != null || authorId != null;
+        boolean hasFilter = q != null || difficulty != null || dietType != null || mealType != null ||
+                cuisineType != null || minCalories != null || maxCalories != null || authorId != null ||
+                minPrepTime != null || maxPrepTime != null;
         
         List<RecipeResponseDTO> recipes;
         Long nextCursor = null;
