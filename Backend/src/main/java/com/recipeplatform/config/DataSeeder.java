@@ -419,19 +419,19 @@ public class DataSeeder implements ApplicationRunner {
             s.contains("omelette") || s.contains("meatballs") ||
             s.contains("anchovy") || s.contains("salami") || s.contains("turkey") ||
             s.contains("duck")) {
-            return DietType.NO_PREFERENCE;
+            return DietType.NON_VEG;
         }
 
-        // 2. Vegetarian indicators
+        // 2. Strict Veg/Vegan indicators
         if (s.contains("paneer") || s.contains("dal-") || s.contains("dal_") || 
             s.contains("soya") || s.contains("mushroom") || s.contains("aloo") || 
             s.contains("gobi") || s.contains("cheese") || s.contains("milk") || 
             s.contains("butter-") || s.contains("curd") || s.contains("yogurt") ||
             s.contains("feta") || s.contains("honey")) {
-            return DietType.VEGETARIAN;
+            return DietType.VEG;
         }
         
-        // 3. Vegan indicators
+        // 3. Known Vegan keywords
         if (s.contains("vegan") || s.contains("tofu") || s.contains("falafel") || 
             s.contains("hummus") || s.contains("quinoa") || s.contains("avocado") ||
             s.contains("sorbet") || s.contains("guacamole") || s.contains("smoothie") ||
@@ -439,7 +439,7 @@ public class DataSeeder implements ApplicationRunner {
             return DietType.VEGAN;
         }
             
-        return DietType.VEGETARIAN;
+        return DietType.VEG;
     }
 
     private CuisineType determineCuisineType(String slug) {
@@ -667,3 +667,9 @@ public class DataSeeder implements ApplicationRunner {
         private double sodium;
     }
 }
+
+//i apply Vegetarian filter and i got 79 recipies and i deeply analyzes and in result i got 3 vegan recipies ,means filtering not working properly and those recipies are
+//        Avocado Toast,
+//                Hummus,
+//                Falafel
+//
