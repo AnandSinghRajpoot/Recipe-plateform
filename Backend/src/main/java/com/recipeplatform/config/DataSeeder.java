@@ -34,16 +34,19 @@ public class DataSeeder implements ApplicationRunner {
     private final PasswordEncoder passwordEncoder;
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
+    private final AllergyRestrictionRepository allergyRestrictionRepository;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
         seedAdminUsers();
+        seedNormalUsers();
         seedIngredients();
         seedDiseases();
         seedAllergies();
         seedChefs();
         seedBulkRecipes();
+        seedAllergyRestrictions();
     }
 
     // ==============================
@@ -130,12 +133,76 @@ public class DataSeeder implements ApplicationRunner {
         log.info("Seeded {} allergies.", allergyRepository.count());
     }
 
+    /**
+     * Maps Allergies to specific Ingredients for objective medical exclusion.
+     */
+    private void seedAllergyRestrictions() {
+        if (allergyRestrictionRepository.count() > 0) return;
+
+        log.info("Seeding objective allergy restrictions...");
+        
+        // 1. Eggs
+        mapAllergyToIngredients("Eggs", List.of("Egg", "Eggs", "Egg White", "Egg Whites", "Egg Yolk", "Egg Yolks", "Mayonnaise", "Large egg", "Large eggs"));
+        
+        // 2. Milk / Dairy
+        mapAllergyToIngredients("Milk / Dairy", List.of("Milk", "Whole milk", "Butter", "Cheese", "Cream", "Yogurt", "Paneer", "Feta", "Mozzarella", "Parmesan", "Ghee", "Cream cheese", "Greek yogurt"));
+        
+        // 3. Peanuts
+        mapAllergyToIngredients("Peanuts", List.of("Peanut", "Peanut Butter", "Peanut Oil"));
+        
+        // 4. Wheat / Gluten
+        mapAllergyToIngredients("Wheat / Gluten", List.of("Wheat Flour", "All-purpose Flour", "Pasta", "Bread", "Semolina", "Maida"));
+
+        log.info("Allergy restrictions seeded.");
+    }
+
+    private void mapAllergyToIngredients(String allergyName, List<String> ingredientNames) {
+        Allergy allergy = allergyRepository.findByName(allergyName)
+                .orElseThrow(() -> new RuntimeException("Allergy not found: " + allergyName));
+        
+        for (String ingName : ingredientNames) {
+            // Find existing ingredient (created during recipe seed) or create new
+            Ingredient ingredient = ingredientRepository.findByNameIgnoreCase(ingName).orElseGet(() -> {
+                Ingredient newIng = new Ingredient();
+                newIng.setName(ingName);
+                return ingredientRepository.save(newIng);
+            });
+
+            if (!allergyRestrictionRepository.existsByAllergyIdAndIngredientId(allergy.getId(), ingredient.getId())) {
+                AllergyRestriction restriction = new AllergyRestriction();
+                restriction.setAllergy(allergy);
+                restriction.setIngredient(ingredient);
+                restriction.setReason("High risk of allergen presence.");
+                allergyRestrictionRepository.save(restriction);
+            }
+        }
+    }
+
+    private String resolveImageUrl(String slug) {
+        String base = "http://localhost:8080/images/" + slug;
+        // Try .jpg first, then .png, then fall back to no-image.jpg
+        for (String ext : new String[]{".jpg", ".jpeg", ".png", ".webp"}) {
+            try {
+                ClassPathResource res = new ClassPathResource("static/images/" + slug + ext);
+                if (res.exists()) {
+                    return base + ext;
+                }
+            } catch (Exception ignored) {}
+        }
+        log.warn("No image found for recipe slug '{}', using placeholder.", slug);
+        return "http://localhost:8080/images/no-image.jpg";
+    }
+
     private void seedBulkRecipes() {
         userRepository.migrateVegetarianToVeg();
         userRepository.migrateRecipeVegetarianToVeg();
 
-        if (recipeRepository.count() == 85) {
-            log.info("Bulk recipes already seeded — skipping.");
+        // Load the JSON to know the expected count, then skip only if DB already matches
+        Map<String, RecipeData> recipeDataMap = loadRecipeData();
+        long expectedCount = recipeDataMap.size();
+
+        if (recipeRepository.count() == expectedCount) {
+            log.info("Bulk recipes already seeded ({} recipes) — skipping.", expectedCount);
             return;
         }
 
@@ -149,8 +216,6 @@ public class DataSeeder implements ApplicationRunner {
             return;
         }
 
-        // Load recipe data from JSON
-        Map<String, RecipeData> recipeDataMap = loadRecipeData();
         if (recipeDataMap.isEmpty()) {
             log.error("No recipe data found in JSON file!");
             return;
@@ -164,7 +229,7 @@ public class DataSeeder implements ApplicationRunner {
             User assignedChef = chefs.get(index % chefs.size());
 
             DietType diet = determineDietType(entry.getKey());
-            CuisineType cuisine = determineCuisineType(entry.getKey());
+            CuisineType cuisine = data.cuisineType != null ? CuisineType.valueOf(data.cuisineType.toUpperCase()) : determineCuisineType(entry.getKey());
             MealType meal = determineMealType(entry.getKey());
             Difficulty difficulty = determineDifficulty(data.getPrepTime(), data.getCookTime());
 
@@ -182,7 +247,7 @@ public class DataSeeder implements ApplicationRunner {
             r.setServings(data.getServings() > 0 ? data.getServings() : 4);
             r.setDifficulty(difficulty);
             r.setIsPublished(true);
-            r.setCoverImageUrl("http://localhost:8080/images/" + entry.getKey() + ".jpg");
+            r.setCoverImageUrl(resolveImageUrl(entry.getKey()));
 
             // Create Nutrition entity
             Nutrition nutrition = Nutrition.builder()
@@ -232,21 +297,21 @@ public class DataSeeder implements ApplicationRunner {
                 } else {
                     continue;
                 }
+
+                String finalIngName = ingName;
+                Ingredient ing = ingredientRepository.findByNameIgnoreCase(finalIngName)
+                        .orElseGet(() -> {
+                            Ingredient newIng = new Ingredient();
+                            newIng.setName(finalIngName);
+                            newIng.setCategory(inferCategory(finalIngName));
+                            return ingredientRepository.save(newIng);
+                        });
                 
-                if (ingName == null || ingName.isEmpty()) {
-                    continue;
-                }
-                
-                Ingredient ing = ingredientRepository.findByNameIgnoreCase(ingName).orElseGet(() -> {
-                    Ingredient newIng = new Ingredient();
-                    newIng.setName(ingName);
-                    return ingredientRepository.save(newIng);
-                });
                 RecipeIngredient ri = new RecipeIngredient();
                 ri.setRecipe(r);
                 ri.setIngredient(ing);
                 ri.setQuantity(quantity);
-                ri.setUnit(unit);
+                ri.setUnit(unit != null ? unit : com.recipeplatform.domain.enums.MeasureUnit.PIECE);
                 recipeIngredients.add(ri);
             }
             r.setIngredients(recipeIngredients);
@@ -257,7 +322,9 @@ public class DataSeeder implements ApplicationRunner {
             // 1. Check for Meats/Eggs (Non-Veg)
             boolean hasNonVeg = recipeIngredients.stream().anyMatch(ri -> {
                 String name = ri.getIngredient().getName().toLowerCase();
-                return name.contains("egg") || name.contains("beef") || name.contains("mutton") || 
+                // Check for 'egg' but ignore 'eggplant' or 'eggless'
+                boolean isEgg = name.contains("egg") && !name.contains("eggplant") && !name.contains("eggless");
+                return isEgg || name.contains("beef") || name.contains("mutton") || 
                        name.contains("chicken") || name.contains("meat") || name.contains("fish") || 
                        name.contains("shrimp") || name.contains("pork") || name.contains("anchovy");
             });
@@ -288,7 +355,7 @@ public class DataSeeder implements ApplicationRunner {
         Map<String, RecipeData> map = new HashMap<>();
         try {
             ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> rawData = mapper.readValue(new ClassPathResource("recipes.json").getInputStream(), Map.class);
+            Map<String, Object> rawData = mapper.readValue(new ClassPathResource("recipes_fixed.json").getInputStream(), Map.class);
             for (Map.Entry<String, Object> entry : rawData.entrySet()) {
                 Map<String, Object> val = (Map<String, Object>) entry.getValue();
                 RecipeData rd = new RecipeData();
@@ -319,6 +386,9 @@ public class DataSeeder implements ApplicationRunner {
                     rd.setFat(((Number) val.get("fat")).doubleValue());
                 }
                 rd.setUnit((String) val.get("unit"));
+                if (val.containsKey("cuisine_type")) {
+                    rd.setCuisineType((String) val.get("cuisine_type"));
+                }
                 map.put(entry.getKey(), rd);
             }
             log.info("Loaded {} recipes from JSON", map.size());
@@ -345,22 +415,23 @@ public class DataSeeder implements ApplicationRunner {
             s.contains("shrimp") || s.contains("seafood") || s.contains("lobster") ||
             s.contains("lamb") || s.contains("bacon") || s.contains("pepperoni") ||
             s.contains("beef") || s.contains("prawn") || s.contains("crab") ||
-            s.contains("egg") || s.contains("omelette") || s.contains("meatballs") ||
+            (s.contains("egg") && !s.contains("eggplant") && !s.contains("eggless")) || 
+            s.contains("omelette") || s.contains("meatballs") ||
             s.contains("anchovy") || s.contains("salami") || s.contains("turkey") ||
             s.contains("duck")) {
-            return DietType.NON_VEG;
+            return DietType.NO_PREFERENCE;
         }
 
-        // 2. Strict Veg/Vegan indicators
+        // 2. Vegetarian indicators
         if (s.contains("paneer") || s.contains("dal-") || s.contains("dal_") || 
             s.contains("soya") || s.contains("mushroom") || s.contains("aloo") || 
             s.contains("gobi") || s.contains("cheese") || s.contains("milk") || 
             s.contains("butter-") || s.contains("curd") || s.contains("yogurt") ||
             s.contains("feta") || s.contains("honey")) {
-            return DietType.VEG;
+            return DietType.VEGETARIAN;
         }
         
-        // 3. Known Vegan keywords
+        // 3. Vegan indicators
         if (s.contains("vegan") || s.contains("tofu") || s.contains("falafel") || 
             s.contains("hummus") || s.contains("quinoa") || s.contains("avocado") ||
             s.contains("sorbet") || s.contains("guacamole") || s.contains("smoothie") ||
@@ -368,7 +439,7 @@ public class DataSeeder implements ApplicationRunner {
             return DietType.VEGAN;
         }
             
-        return DietType.VEG;
+        return DietType.VEGETARIAN;
     }
 
     private CuisineType determineCuisineType(String slug) {
@@ -469,6 +540,22 @@ public class DataSeeder implements ApplicationRunner {
         log.info("Seeded 2 admin users.");
     }
 
+    private void seedNormalUsers() {
+        if (userRepository.existsByEmail("mustafaraza@gmail.com")) {
+            return;
+        }
+
+        User user = new User();
+        user.setName("Ahmad Raza");
+        user.setEmail("mustafaraza@gmail.com");
+        user.setPassword(passwordEncoder.encode("Admin@123"));
+        user.setRole(UserRole.USER);
+        user.setIsProfileCompleted(false);
+
+        userRepository.save(user);
+        log.info("Seeded normal user: Ahmad Raza");
+    }
+
     private void seedIngredients() {
         List<String> ingredients = List.of(
             "Onion", "Tomato", "Garlic", "Ginger",
@@ -476,13 +563,48 @@ public class DataSeeder implements ApplicationRunner {
         );
 
         for (String name : ingredients) {
-            if (!ingredientRepository.existsByNameIgnoreCase(name)) {
-                Ingredient ingredient = new Ingredient();
+            Ingredient ingredient = ingredientRepository.findByNameIgnoreCase(name)
+                    .orElse(new Ingredient());
+            
+            if (ingredient.getId() == null) {
                 ingredient.setName(name);
-                ingredientRepository.save(ingredient);
             }
+            
+            // Always refresh category
+            ingredient.setCategory(inferCategory(name));
+            ingredientRepository.save(ingredient);
         }
-        log.info("Seeded basic ingredients.");
+        log.info("Seeded and categorized basic ingredients.");
+    }
+
+    private IngredientCategory inferCategory(String name) {
+        String n = name.toLowerCase();
+        if (n.contains("onion") || n.contains("tomato") || n.contains("garlic") || n.contains("ginger") || n.contains("potato") || 
+            n.contains("chili") || n.contains("spinach") || n.contains("cauliflower") || n.contains("carrot") || n.contains("cabbage") || 
+            n.contains("lemon") || n.contains("peas") || n.contains("vegetable")) return IngredientCategory.VEGETABLES;
+        
+        if (n.contains("salt") || n.contains("sugar") || n.contains("powder") || n.contains("cumin") || n.contains("pepper") || 
+            n.contains("cinnamon") || n.contains("turmeric") || n.contains("masala") || n.contains("clove") || n.contains("cardamom") || 
+            n.contains("parsley") || n.contains("cilantro") || n.contains("mint") || n.contains("herb") || n.contains("spice")) return IngredientCategory.SPICES_N_HERBS;
+        
+        if (n.contains("chicken") || n.contains("mutton") || n.contains("fish") || n.contains("egg") || n.contains("paneer") || 
+            n.contains("tofu") || n.contains("meat") || n.contains("shrimp") || n.contains("beef") || n.contains("pork")) return IngredientCategory.PROTEIN;
+        
+        if (n.contains("milk") || n.contains("butter") || n.contains("cheese") || n.contains("cream") || n.contains("yogurt") || 
+            n.contains("curd") || n.contains("ghee") || n.contains("dairy") || n.contains("parmesan")) return IngredientCategory.DAIRY;
+        
+        if (n.contains("oil")) return IngredientCategory.OILS_N_FATS;
+        
+        if (n.contains("rice") || n.contains("flour") || n.contains("bread") || n.contains("oats") || n.contains("noodle") || 
+            n.contains("pasta") || n.contains("semolina") || n.contains("grain")) return IngredientCategory.GRAINS_N_FLOURS;
+        
+        if (n.contains("water") || n.contains("broth") || n.contains("juice") || n.contains("stock")) return IngredientCategory.LIQUIDS;
+        
+        if (n.contains("sauce") || n.contains("vinegar") || n.contains("salsa") || n.contains("ketchup") || n.contains("mayonnaise")) return IngredientCategory.CONDIMENTS_N_SAUCES;
+        
+        if (n.contains("vanilla") || n.contains("baking") || n.contains("honey") || n.contains("syrup")) return IngredientCategory.BAKING_N_SWEETENERS;
+
+        return IngredientCategory.OTHERS;
     }
 
     // Inner class for JSON mapping
@@ -500,6 +622,7 @@ public class DataSeeder implements ApplicationRunner {
         private double carbs;
         private double fat;
         private String unit;
+        private String cuisineType;
 
         public String getSlug() { return slug; }
         public void setSlug(String slug) { this.slug = slug; }
@@ -527,6 +650,8 @@ public class DataSeeder implements ApplicationRunner {
         public void setFat(double fat) { this.fat = fat; }
         public String getUnit() { return unit; }
         public void setUnit(String unit) { this.unit = unit; }
+        public String getCuisineType() { return cuisineType; }
+        public void setCuisineType(String cuisineType) { this.cuisineType = cuisineType; }
         private NutritionData nutrition;
         public NutritionData getNutrition() { return nutrition; }
         public void setNutrition(NutritionData nutrition) { this.nutrition = nutrition; }
