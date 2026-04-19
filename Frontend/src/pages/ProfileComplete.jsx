@@ -564,8 +564,7 @@ const ProfileComplete = () => {
                                                     onChange={handleInputChange} 
                                                     className="w-full bg-surface-container-low border-2 border-transparent rounded-2xl px-6 py-5 focus:border-primary/40 focus:bg-white transition-all outline-none font-bold text-lg appearance-none"
                                                 >
-                                                    <option value="NON_VEG">Non-Vegetarian</option>
-                                                    <option value="VEG">Vegetarian</option>
+                                                    <option value="VEGETARIAN">Vegetarian</option>
                                                     <option value="VEGAN">Vegan</option>
                                                     <option value="NO_PREFERENCE">No Preference</option>
                                                 </select>
@@ -667,7 +666,7 @@ const ProfileComplete = () => {
                 <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
                     {[
                         { icon: 'shield', title: 'Secure Data', desc: 'Encrypted storage following global health privacy standards.', color: 'primary' },
-                        { icon: 'temp_preferences_custom', title: 'AI Personalized', desc: 'Real-time metabolic calculation for caloric accuracy.', color: 'primary' },
+                        { icon: 'temp_preferences_custom', title: 'Precision Personalization', desc: 'Real-time metabolic calculation for caloric accuracy.', color: 'primary' },
                         { icon: 'auto_awesome', title: 'Dynamic Feed', desc: 'Your home feed updates instantly based on this data.', color: 'primary' }
                     ].map((item, i) => (
                         <div key={i} className="group glass-card p-8 rounded-[2rem] border-white/50 hover:bg-white/40 transition-all flex flex-col gap-5">
