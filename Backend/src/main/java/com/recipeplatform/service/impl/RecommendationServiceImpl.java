@@ -5,10 +5,8 @@ import com.recipeplatform.domain.enums.DietType;
 import com.recipeplatform.domain.enums.MealType;
 import com.recipeplatform.dto.recipe.RecipeResponseDTO;
 import com.recipeplatform.mapper.RecipeMapper;
-import com.recipeplatform.repository.RecipeRepository;
-import com.recipeplatform.repository.SavedRecipeRepository;
-import com.recipeplatform.repository.UserHealthProfileRepository;
-import com.recipeplatform.repository.UserRepository;
+import com.recipeplatform.domain.enums.RestrictionSeverity;
+import com.recipeplatform.repository.*;
 import com.recipeplatform.service.RecommendationService;
 import com.recipeplatform.util.CurrentUser;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +24,8 @@ public class RecommendationServiceImpl implements RecommendationService {
     private final UserHealthProfileRepository healthProfileRepository;
     private final SavedRecipeRepository savedRecipeRepository;
     private final UserRepository userRepository;
+    private final DiseaseFoodRestrictionRepository diseaseFoodRestrictionRepository;
+    private final UserDiseaseRepository userDiseaseRepository;
     private final CurrentUser currentUser;
     private final RecipeMapper recipeMapper;
 
@@ -56,32 +56,55 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         Optional<UserHealthProfile> healthProfileOpt = healthProfileRepository.findByUserId(finalUser.getId());
 
-        // 1. Get Allergens for strict exclusion
-        Set<Long> userAllergenIds = new HashSet<>();
+        // 1. Get Allergic Ingredient IDs for strict objective exclusion
+        Set<Long> allergicIngredientIds = new HashSet<>();
+        Set<String> activeAllergyNames = new HashSet<>();
         healthProfileOpt.ifPresent(hp -> {
-            userAllergenIds.addAll(hp.getAllergies().stream()
-                    .map(ua -> ua.getAllergy().getId())
-                    .collect(Collectors.toSet()));
+            for (UserAllergy ua : hp.getAllergies()) {
+                String name = ua.getAllergy().getName().toUpperCase();
+                activeAllergyNames.add(name);
+                for (AllergyRestriction ar : ua.getAllergy().getRestrictions()) {
+                    allergicIngredientIds.add(ar.getIngredient().getId());
+                }
+            }
         });
 
-        // 2. Fetch recipes excluding allergens
-        List<Recipe> baseRecipes;
-        if (userAllergenIds.isEmpty()) {
-            baseRecipes = recipeRepository.findByIsPublishedTrueAndDeletedAtIsNull();
-        } else {
-            baseRecipes = recipeRepository.findPublishedRecipesExcludingAllergens(userAllergenIds);
+        // 2. Fetch published recipes
+        List<Recipe> baseRecipes = recipeRepository.findByIsPublishedTrueAndDeletedAtIsNull();
+
+        // 3. Build User's Ingredient Restriction Profile (OBJECTIVE DATA)
+        Map<Long, RestrictionSeverity> restrictedIngredients = new HashMap<>();
+        if (healthProfileOpt.isPresent()) {
+            List<UserDisease> userDiseases = userDiseaseRepository.findByUserHealthProfileId(healthProfileOpt.get().getId());
+            for (UserDisease ud : userDiseases) {
+                List<DiseaseFoodRestriction> restrictions;
+                if (ud.getStage() != null) {
+                    restrictions = diseaseFoodRestrictionRepository.findByDiseaseIdAndStageIdOrStageIsNull(
+                            ud.getDisease().getId(), ud.getStage().getId());
+                } else {
+                    restrictions = diseaseFoodRestrictionRepository.findGeneralRestrictionsByDiseaseId(ud.getDisease().getId());
+                }
+                
+                for (DiseaseFoodRestriction dfr : restrictions) {
+                    Long ingredientId = dfr.getIngredient().getId();
+                    RestrictionSeverity severity = dfr.getSeverity();
+                    // Keep the most severe restriction for an ingredient
+                    restrictedIngredients.merge(ingredientId, severity, (oldS, newS) -> 
+                        newS.ordinal() > oldS.ordinal() ? newS : oldS);
+                }
+            }
         }
 
-        // 3. Get User Favorites for scoring
+        // 4. Get User Favorites for scoring
         Set<Long> savedRecipeIds = savedRecipeRepository.findByUserId(finalUser.getId())
                 .stream().map(sr -> sr.getRecipe().getId()).collect(Collectors.toSet());
 
-        // 4. Calculate Scores
+        // 5. Calculate Scores
         return baseRecipes.stream()
                 .map(recipe -> {
-                    double score = calculateScore(recipe, finalUser, healthProfileOpt.orElse(null), savedRecipeIds);
+                    double score = calculateScore(recipe, finalUser, healthProfileOpt.orElse(null), 
+                                               savedRecipeIds, restrictedIngredients, allergicIngredientIds, activeAllergyNames);
                     RecipeResponseDTO dto = recipeMapper.toResponseDTO(recipe);
-                    // We could add the score to the DTO if needed, but for now we just use it for sorting
                     return new ScoredRecipe(dto, score);
                 })
                 .sorted(Comparator.comparingDouble(ScoredRecipe::getScore).reversed())
@@ -92,60 +115,111 @@ public class RecommendationServiceImpl implements RecommendationService {
                 .collect(Collectors.toList());
     }
 
-    private double calculateScore(Recipe recipe, User user, UserHealthProfile healthProfile, Set<Long> savedRecipeIds) {
+    private double calculateScore(Recipe recipe, User user, UserHealthProfile healthProfile, 
+                                  Set<Long> savedRecipeIds, Map<Long, RestrictionSeverity> restrictedIngredients,
+                                  Set<Long> allergicIngredientIds, Set<String> activeAllergyNames) {
         double score = 0;
 
-        // --- STRICT DIETARY ENFORCEMENT ---
-        // If user is Veg/Vegan and recipe is Non-Veg, treat as strict mismatch
+        // --- 1. STRICT DIETARY ENFORCEMENT (VEG/VEGAN) ---
         if (user.getDietType() != null && recipe.getDietType() != null) {
             String userDiet = user.getDietType().name();
             String recipeDiet = recipe.getDietType().name();
 
-            // Strict rule: Veg/Vegan users should NOT see Non-Veg recipes in "Recommended"
             if ((userDiet.equals("VEG") || userDiet.equals("VEGAN")) && recipeDiet.equals("NON_VEG")) {
-                return -1000; // Hard penalty to push to bottom or filter out
+                return -2000; // Total incompatibility
             }
 
-            // Strict rule: Vegan users should only see Vegan recipes (ideally)
             if (userDiet.equals("VEGAN") && !recipeDiet.equals("VEGAN")) {
-                score -= 50; // Heavy penalty for non-vegan recipes
+                score -= 100; // Strong penalty
             }
 
-            // Diet Match (+20 bonus for exact match)
             if (userDiet.equals(recipeDiet)) {
-                score += 20;
+                score += 30; // Match bonus
             }
         }
 
-        // Health Condition Suitability (+20 for each match)
-        if (!user.getHealthConditions().isEmpty()) {
-            Set<Long> userDiseaseIds = user.getHealthConditions().stream()
-                    .map(Disease::getId).collect(Collectors.toSet());
+        // --- 2. OBJECTIVE HEALTH SUITABILITY (INGREDIENT SCAN) ---
+        // We scan ACTUAL recipe ingredients against User's medical data (Allergies + Restrictions)
+        for (RecipeIngredient ri : recipe.getIngredients()) {
+            Long ingredientId = ri.getIngredient().getId();
             
-            long matches = recipe.getSafeForDiseases().stream()
-                    .filter(d -> userDiseaseIds.contains(d.getId()))
-                    .count();
-            
-            score += (matches * 20);
+            // A. Hard Allergen Check (Highest Priority)
+            if (allergicIngredientIds.contains(ingredientId)) {
+                return -10000; // Total medical exclusion
+            }
+
+            // B. Keyword Fail-safe for critical allergens
+            String name = ri.getIngredient().getName().toLowerCase();
+            if (activeAllergyNames.contains("EGGS") && name.contains("egg") && !name.contains("eggplant")) {
+                return -10000;
+            }
+            if (activeAllergyNames.contains("MILK / DAIRY") && (name.contains("milk") || name.contains("butter") || name.contains("cheese") || name.contains("cream"))) {
+                return -10000;
+            }
+
+            // C. Disease Restriction Check
+            if (restrictedIngredients.containsKey(ingredientId)) {
+                RestrictionSeverity severity = restrictedIngredients.get(ingredientId);
+                switch (severity) {
+                    case ELIMINATE:
+                        return -5000; // Medical danger: Exclude entirely
+                    case AVOID:
+                        score -= 150; // Heavy penalty
+                        break;
+                    case LIMIT:
+                        score -= 50;  // Moderate penalty
+                        break;
+                }
+            }
         }
 
-        // Favorites Bonus (+10)
+        // --- 3. MEDICAL NUTRITIONAL ALIGNMENT ---
+        // Rule-based logic for specific conditions using the Nutrition profile
+        if (healthProfile != null && !healthProfile.getDiseases().isEmpty() && recipe.getNutrition() != null) {
+            Nutrition n = recipe.getNutrition();
+            Set<String> diseaseNames = healthProfile.getDiseases().stream()
+                    .map(ud -> ud.getDisease().getName().toUpperCase())
+                    .collect(Collectors.toSet());
+
+            // Diabetes Mapping
+            if (diseaseNames.contains("DIABETES")) {
+                if (n.getSugar() != null && n.getSugar() > 10) score -= 100; // Penalize high sugar
+                if (n.getCarbs() != null && n.getCarbs() < 25) score += 40;  // Bonus for low carb
+                if (n.getFiber() != null && n.getFiber() > 5) score += 30;   // Bonus for high fiber
+            }
+
+            // Hypertension Mapping
+            if (diseaseNames.contains("HYPERTENSION") || diseaseNames.contains("HIGH BLOOD PRESSURE")) {
+                if (n.getSodium() != null && n.getSodium() > 500) score -= 150; // Penalize high sodium
+                if (n.getSodium() != null && n.getSodium() < 140) score += 50;  // Bonus for low sodium
+            }
+            
+            // Obesity Matching
+            if (diseaseNames.contains("OBESITY")) {
+                if (n.getCalories() != null && n.getCalories() > 600) score -= 100;
+                if (n.getCalories() != null && n.getCalories() < 400) score += 40;
+            }
+        }
+
+        // --- 4. ENGAGEMENT & SAVES ---
         if (savedRecipeIds.contains(recipe.getId())) {
-            score += 10;
+            score += 50; // High bonus for favorites
         }
 
-        // Rating Bonus (+5 if high)
         if (recipe.getAverageRating() != null && recipe.getAverageRating() >= 4.0) {
-            score += 5;
+            score += 20;
         }
 
-        // Calorie Alignment (Boost if close to target)
+        // --- 5. CALORIE BALANCING (DAILY TARGET ALIGNMENT) ---
         if (healthProfile != null && healthProfile.getDailyCalorieRequirement() != null && recipe.getNutrition() != null) {
             double targetPerMeal = healthProfile.getDailyCalorieRequirement() / 3;
             double recipeCalories = recipe.getNutrition().getCalories();
             
-            if (Math.abs(recipeCalories - targetPerMeal) < (targetPerMeal * 0.2)) {
-                score += 15;
+            double deviation = Math.abs(recipeCalories - targetPerMeal);
+            if (deviation < (targetPerMeal * 0.15)) {
+                score += 40; // High precision match
+            } else if (deviation < (targetPerMeal * 0.3)) {
+                score += 15; // Moderate match
             }
         }
 

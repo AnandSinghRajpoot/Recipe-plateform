@@ -1,6 +1,7 @@
 package com.recipeplatform.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.recipeplatform.domain.enums.IngredientCategory;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -23,5 +24,9 @@ public class Ingredient {
     @NotBlank(message = "Ingredient name is required")
     @Column(nullable = false, unique = true)
     private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50)
+    private IngredientCategory category;
 
 }

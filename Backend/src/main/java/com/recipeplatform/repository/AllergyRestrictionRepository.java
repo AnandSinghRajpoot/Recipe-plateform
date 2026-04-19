@@ -18,5 +18,7 @@ public interface AllergyRestrictionRepository extends JpaRepository<AllergyRestr
      * Used to get all forbidden ingredients for a user's allergies.
      */
     @Query("SELECT ar FROM AllergyRestriction ar WHERE ar.allergy.id IN :allergyIds")
-    List<AllergyRestriction> findByAllergyIdIn(@Param("allergyIds") List<Long> allergyIds);
+    List<AllergyRestriction> findByAllergyIdIn(@Param("allergyIds") java.util.Collection<Long> allergyIds);
+
+    boolean existsByAllergyIdAndIngredientId(Long allergyId, Long ingredientId);
 }
