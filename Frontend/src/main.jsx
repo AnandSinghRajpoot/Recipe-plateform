@@ -27,6 +27,7 @@ import ChefDashboard from './pages/ChefDashboard.jsx';
 import MealPlanner from './pages/product/MealPlanner.jsx';
 import MealPlannerLanding from './pages/product/MealPlannerLanding.jsx';
 import ChefProfile from './pages/ChefProfile.jsx';
+import ShoppingListPage from './pages/product/ShoppingListPage.jsx';
 
 
 const router = createBrowserRouter([
@@ -132,6 +133,10 @@ const router = createBrowserRouter([
         {
           path: "/chef/:id",
           element: <ChefProfile />
+        },
+        {
+          path: "/shopping-list/:id",
+          element: <ShoppingListPage />
         },
     ]
   }

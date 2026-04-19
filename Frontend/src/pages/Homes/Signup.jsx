@@ -184,7 +184,7 @@ const Signup = () => {
                   {[
                     { icon: 'nutrition', title: 'Data-Driven', sub: 'Real insights' },
                     { icon: 'communities', title: 'Global Chefs', sub: 'Pro network' },
-                    { icon: 'auto_awesome', title: 'AI Planning', sub: 'Personalized' },
+                    { icon: 'auto_awesome', title: 'Expert Planning', sub: 'Personalized' },
                     { icon: 'rocket_launch', title: 'Quick Prep', sub: 'Under 30min' },
                   ].map((item, idx) => (
                     <div key={idx} className="flex gap-4 items-start group">

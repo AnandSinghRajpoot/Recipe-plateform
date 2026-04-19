@@ -4,6 +4,7 @@ import { SkeletonProfile, SkeletonCard } from "../../components/Skeleton";
 import MealPlannerLanding from "../product/MealPlannerLanding.jsx";
 import SavedRecipesTab from "../product/SavedRecipesTab.jsx";
 import CollectionsTab from "../product/CollectionsTab.jsx";
+import ShoppingListsTab from "../product/ShoppingListsTab.jsx";
 import { resolveImageUrl, handleImageError } from "../../utils/imageUtils";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,7 +20,8 @@ import {
     IoPersonOutline,
     IoSettingsOutline,
     IoLogOutOutline,
-    IoCloudUploadOutline
+    IoCloudUploadOutline,
+    IoCartOutline
 } from "react-icons/io5";
 
 const Profile = () => {
@@ -163,6 +165,24 @@ const Profile = () => {
     const completionPercentage = calculateCompletion();
     const missingItems = getMissingItems();
 
+    const calculateBMI = () => {
+        if (!healthProfile?.height || !healthProfile?.weight) return null;
+        const heightInMeters = healthProfile.height / 100;
+        const bmi = healthProfile.weight / (heightInMeters * heightInMeters);
+        return bmi.toFixed(1);
+    };
+
+    const getBMICategory = (bmi) => {
+        if (!bmi) return null;
+        if (bmi < 18.5) return { label: "Underweight", color: "text-blue-500", bg: "bg-blue-500/10" };
+        if (bmi < 25) return { label: "Healthy Weight", color: "text-primary", bg: "bg-primary/10" };
+        if (bmi < 30) return { label: "Overweight", color: "text-amber-500", bg: "bg-amber-500/10" };
+        return { label: "Obese", color: "text-red-500", bg: "bg-red-500/10" };
+    };
+
+    const bmi = calculateBMI();
+    const bmiCategory = getBMICategory(bmi);
+
     // Settings functions
     const getPasswordStrength = (pwd) => {
         if (!pwd) return 0;
@@ -271,6 +291,7 @@ const Profile = () => {
         { id: 'overview', label: 'Overview', icon: <IoGridOutline /> },
         { id: 'planner', label: 'Meal Plans', icon: <IoCalendarOutline /> },
         { id: 'saved', label: 'Saved Recipes', icon: <IoBookmarkOutline /> },
+        { id: 'shopping', label: 'Shopping Lists', icon: <IoCartOutline /> },
         { id: 'collections', label: 'Collections', icon: <IoFolderOutline /> },
         { id: 'settings', label: 'Settings', icon: <IoSettingsOutline /> }
     ];
@@ -427,6 +448,18 @@ const Profile = () => {
                                                     <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Skill</span>
                                                     <span className="text-xs font-bold text-secondary capitalize">{profile?.skillLevel || 'Not Set'}</span>
                                                 </div>
+                                                
+                                                {bmi && (
+                                                    <div className="mt-4 p-4 rounded-[1.5rem] bg-surface-container-low/50 border border-outline-variant/10">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">BMI Score</span>
+                                                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${bmiCategory.bg} ${bmiCategory.color}`}>
+                                                                {bmiCategory.label}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-3xl font-headline font-black text-on-surface">{bmi}</p>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
@@ -506,7 +539,7 @@ const Profile = () => {
                                                     Recommended For You
                                                     <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
                                                 </h2>
-                                                <button onClick={() => navigate('/recipes')} className="text-xs font-black uppercase tracking-widest text-primary hover:underline">View All</button>
+                                                <button onClick={() => navigate('/recipes?tab=recommended')} className="text-xs font-black uppercase tracking-widest text-primary hover:underline">View All</button>
                                             </div>
                                             
                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

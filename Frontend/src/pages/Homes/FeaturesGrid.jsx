@@ -16,7 +16,7 @@ const FeaturesGrid = () => {
                                 <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
                             </div>
                             <h3 className="text-3xl font-headline font-black text-on-surface">Smart Recommendations</h3>
-                            <p className="text-on-surface-variant leading-relaxed font-medium">Our AI learns your palate and metabolic needs to suggest meals that don't just taste good—they perform for your body.</p>
+                            <p className="text-on-surface-variant leading-relaxed font-medium">Our metabolic logic learns your palate and health needs to suggest meals that don't just taste good—they perform for your body.</p>
                             <ul className="space-y-3">
                                 <li className="flex items-center gap-3 text-sm font-black text-on-surface opacity-80">
                                     <span className="material-symbols-outlined text-primary text-xl">check_circle</span>
@@ -29,7 +29,7 @@ const FeaturesGrid = () => {
                             </ul>
                         </div>
                         <div className="flex-1 -mr-20 -mb-20 mt-10 md:mt-0">
-                            <img className="rounded-3xl shadow-2xl transition hover:scale-[1.03] duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAP0YCsWabAzsqz84CqDQEpOjP5yTH4XTg0JyoqqNP83UgeRomwP8TIhR2O7GdMkVDgPOvMv0l9cEFghd5l7QSbWvxHYQy4uZMc8wllvk9J2ITtaHt6HkjYR8ZiBqc0zQSWhNsTRAgKdnoV5C11U5JlVBAayZO_ATXd8QNNC0CsE8I4z_OeSk3xDV_dKKh7BP9WMvixlkJQfT4bQCuHHGooTxmgessVRZCYTPGSwkdht5Bq40XWKGmN3oDHZ6y0Lo3zSO7k3_Ggn3c" alt="AI Nutrition Interface"/>
+                            <img className="rounded-3xl shadow-2xl transition hover:scale-[1.03] duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAP0YCsWabAzsqz84CqDQEpOjP5yTH4XTg0JyoqqNP83UgeRomwP8TIhR2O7GdMkVDgPOvMv0l9cEFghd5l7QSbWvxHYQy4uZMc8wllvk9J2ITtaHt6HkjYR8ZiBqc0zQSWhNsTRAgKdnoV5C11U5JlVBAayZO_ATXd8QNNC0CsE8I4z_OeSk3xDV_dKKh7BP9WMvixlkJQfT4bQCuHHGooTxmgessVRZCYTPGSwkdht5Bq40XWKGmN3oDHZ6y0Lo3zSO7k3_Ggn3c" alt="Nutrition Logic Interface"/>
                         </div>
                     </div>
 

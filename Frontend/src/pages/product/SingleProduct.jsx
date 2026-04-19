@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useLoaderData, Link, useParams } from 'react-router-dom'
+import { useLoaderData, Link, useParams, useNavigate } from 'react-router-dom'
 import { resolveImageUrl } from '../../utils/imageUtils'
 import apiClient from '../../utils/apiClient'
 import toast from 'react-hot-toast'
@@ -8,6 +8,7 @@ import generalProfilePic from '../../assets/general-profile-pic.png'
 import ReviewsSection from '../../components/common/ReviewsSection'
 
 const SingleProduct = () => {
+    const navigate = useNavigate();
     const { id } = useParams();
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -160,11 +161,13 @@ const SingleProduct = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
                     
-                    <Link to="/recipes" 
-                        className="absolute top-8 left-8 flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-primary transition-all group/back">
+                    <button 
+                        onClick={() => navigate(-1)}
+                        className="absolute top-8 left-8 flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-primary transition-all group/back"
+                    >
                         <span className="material-symbols-outlined text-sm group-hover/back:-translate-x-1 transition-transform">arrow_back</span>
                         Back
-                    </Link>
+                    </button>
 
                     {/* Like and Save Floating Buttons */}
                     <div className="absolute top-8 right-8 flex flex-col gap-3">
@@ -194,6 +197,7 @@ const SingleProduct = () => {
                         <div className="flex gap-2">
                              {dietType && <span className="px-3 py-1 bg-primary text-white text-[9px] font-black uppercase tracking-widest rounded-full">{dietType}</span>}
                              {mealType && <span className="px-3 py-1 bg-white/20 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-full border border-white/30">{mealType}</span>}
+                             {item?.cuisineType && <span className="px-3 py-1 bg-secondary text-on-secondary text-[9px] font-black uppercase tracking-widest rounded-full">{item.cuisineType}</span>}
                         </div>
                         <h1 className="text-4xl md:text-6xl font-headline font-black text-white tracking-tighter leading-none">
                             {title}
@@ -313,10 +317,13 @@ const SingleProduct = () => {
 
                 {/* Footer Link */}
                 <div className="bg-surface-container-high/30 p-8 text-center">
-                     <Link to="/recipes" className="inline-flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.2em] hover:gap-4 transition-all group">
+                     <button 
+                        onClick={() => navigate(-1)} 
+                        className="inline-flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.2em] hover:gap-4 transition-all group"
+                     >
                         <span className="material-symbols-outlined">arrow_back</span>
                         Explore more botanical delicacies
-                     </Link>
+                     </button>
                 </div>
             </div>
             <style dangerouslySetInnerHTML={{ __html: `

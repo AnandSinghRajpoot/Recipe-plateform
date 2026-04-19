@@ -61,7 +61,7 @@ const HomeHero = () => {
                     </span>
                 </h1>
                 <p className="text-xl text-on-surface-variant max-w-lg leading-relaxed font-medium">
-                    Personalized nutrition planning for your unique goals. We combine AI intelligence with culinary wisdom to fuel your journey.
+                    Personalized nutrition planning for your unique goals. We combine metabolic logic with culinary wisdom to fuel your journey.
                 </p>
                 <div className="flex flex-wrap gap-6">
                     <MagneticWrapper>

@@ -6,6 +6,7 @@ import apiClient from '../../utils/apiClient';
 import toast from 'react-hot-toast';
 import generalProfilePic from '../../assets/general-profile-pic.png';
 import StarRating from '../common/StarRating';
+import { useShopping } from '../../context/ShoppingContext';
 
 const HorizontalCard = ({ item }) => {
     const cardRef = useRef(null);
@@ -13,6 +14,9 @@ const HorizontalCard = ({ item }) => {
     const [liked, setLiked] = useState(item?.isLiked || false);
     const [likesCount, setLikesCount] = useState(item?.likesCount || 0);
     const [saved, setSaved] = useState(item?.isSaved || false);
+    
+    const { selectedRecipes, toggleRecipeSelection } = useShopping();
+    const isSelectedForShopping = selectedRecipes.includes(item?.id || item?._id);
 
     const title = item?.title || item?.name || "Untitled Recipe";
 
@@ -203,6 +207,13 @@ const HorizontalCard = ({ item }) => {
                             title={saved ? "Remove from Saved" : "Save Recipe"}
                         >
                             <span className={`material-symbols-outlined text-xl`} style={saved ? { fontVariationSettings: '"FILL" 1' } : {}}>{saving ? 'hourglass_empty' : (saved ? 'bookmark' : 'bookmark_border')}</span>
+                        </button>
+                        <button 
+                            onClick={(e) => { e.preventDefault(); toggleRecipeSelection(id); }}
+                            className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all active:scale-90 duration-200 bg-surface-container-low ${isSelectedForShopping ? 'text-blue-600' : 'text-on-surface-variant hover:text-blue-600'}`}
+                            title={isSelectedForShopping ? "Remove from Shopping Bag" : "Add to Shopping Bag"}
+                        >
+                            <span className={`material-symbols-outlined text-xl`} style={isSelectedForShopping ? { fontVariationSettings: '"FILL" 1' } : {}}>{isSelectedForShopping ? 'shopping_bag' : 'add_shopping_cart'}</span>
                         </button>
                         <Link 
                             to={`/items/${id}`}

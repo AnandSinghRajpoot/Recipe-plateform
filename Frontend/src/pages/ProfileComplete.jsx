@@ -564,7 +564,8 @@ const ProfileComplete = () => {
                                                     onChange={handleInputChange} 
                                                     className="w-full bg-surface-container-low border-2 border-transparent rounded-2xl px-6 py-5 focus:border-primary/40 focus:bg-white transition-all outline-none font-bold text-lg appearance-none"
                                                 >
-                                                    <option value="VEGETARIAN">Vegetarian</option>
+                                                    <option value="NON_VEG">Non-Vegetarian</option>
+                                                    <option value="VEG">Vegetarian</option>
                                                     <option value="VEGAN">Vegan</option>
                                                     <option value="NO_PREFERENCE">No Preference</option>
                                                 </select>
