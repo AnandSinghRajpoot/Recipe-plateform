@@ -57,7 +57,9 @@ const Recipes = () => {
         difficulty: searchParams.get('difficulty') || '',
         mealType: searchParams.get('mealType') || '',
         cuisineType: searchParams.get('cuisineType') || '',
-        prepTime: searchParams.get('prepTime') || ''
+        prepTime: searchParams.get('prepTime') || '',
+        minCalories: searchParams.get('minCalories') || '',
+        maxCalories: searchParams.get('maxCalories') || ''
     });
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
     const [showFilters, setShowFilters] = useState(false);
@@ -186,6 +188,8 @@ const Recipes = () => {
         if (filters.difficulty) newParams.set('difficulty', filters.difficulty);
         if (filters.mealType) newParams.set('mealType', filters.mealType);
         if (filters.prepTime) newParams.set('prepTime', filters.prepTime);
+        if (filters.minCalories) newParams.set('minCalories', filters.minCalories);
+        if (filters.maxCalories) newParams.set('maxCalories', filters.maxCalories);
         setSearchParams(newParams);
         setShowDropdown(false);
     };
@@ -218,6 +222,8 @@ const Recipes = () => {
             const urlDiff = searchParams.get('difficulty') || "";
             const urlMeal = searchParams.get('mealType') || "";
             const urlPrep = searchParams.get('prepTime') || "";
+            const urlMinCal = searchParams.get('minCalories') || "";
+            const urlMaxCal = searchParams.get('maxCalories') || "";
 
             const params = new URLSearchParams();
             params.append('size', '10');
@@ -246,6 +252,9 @@ const Recipes = () => {
                     params.append('minPrepTime', '61');
                 }
             }
+
+            if (urlMinCal) params.append('minCalories', urlMinCal);
+            if (urlMaxCal) params.append('maxCalories', urlMaxCal);
 
             const currentCursor = loadMore ? cursor : null;
             if (currentCursor) params.append('cursor', currentCursor.toString());
@@ -302,8 +311,9 @@ const Recipes = () => {
             dietType: urlDiet,
             difficulty: urlDiff,
             mealType: urlMeal,
-            cuisineType: '',
-            prepTime: urlPrep
+            prepTime: urlPrep,
+            minCalories: urlMinCal,
+            maxCalories: urlMaxCal
         });
         setSearchQuery(urlQ);
 
@@ -359,6 +369,8 @@ const Recipes = () => {
         if (filters.difficulty) newParams.set('difficulty', filters.difficulty);
         if (filters.mealType) newParams.set('mealType', filters.mealType);
         if (filters.prepTime) newParams.set('prepTime', filters.prepTime);
+        if (filters.minCalories) newParams.set('minCalories', filters.minCalories);
+        if (filters.maxCalories) newParams.set('maxCalories', filters.maxCalories);
         setSearchParams(newParams);
         setShowDropdown(false);
     };
@@ -368,7 +380,9 @@ const Recipes = () => {
             diet: 'dietType',
             difficulty: 'difficulty',
             category: 'mealType',
-            prepTime: 'prepTime'
+            prepTime: 'prepTime',
+            minCalories: 'minCalories',
+            maxCalories: 'maxCalories'
         };
         const targetKey = paramMap[filterName] || filterName;
         setFilters(prev => ({ ...prev, [targetKey]: value }));
@@ -380,7 +394,9 @@ const Recipes = () => {
             difficulty: '',
             mealType: '',
             cuisineType: '',
-            prepTime: ''
+            prepTime: '',
+            minCalories: '',
+            maxCalories: ''
         });
         setSearchQuery('');
         setSearchParams(new URLSearchParams());
@@ -396,6 +412,8 @@ const Recipes = () => {
         if (newFilters.difficulty) newParams.set('difficulty', newFilters.difficulty);
         if (newFilters.mealType) newParams.set('mealType', newFilters.mealType);
         if (newFilters.prepTime) newParams.set('prepTime', newFilters.prepTime);
+        if (newFilters.minCalories) newParams.set('minCalories', newFilters.minCalories);
+        if (newFilters.maxCalories) newParams.set('maxCalories', newFilters.maxCalories);
         setSearchParams(newParams);
     };
 
@@ -407,10 +425,12 @@ const Recipes = () => {
         if (filters.difficulty) newParams.set('difficulty', filters.difficulty);
         if (filters.mealType) newParams.set('mealType', filters.mealType);
         if (filters.prepTime) newParams.set('prepTime', filters.prepTime);
+        if (filters.minCalories) newParams.set('minCalories', filters.minCalories);
+        if (filters.maxCalories) newParams.set('maxCalories', filters.maxCalories);
         setSearchParams(newParams);
     };
 
-    const hasActiveFilters = filters.dietType || filters.difficulty || filters.mealType || filters.prepTime || searchQuery;
+    const hasActiveFilters = filters.dietType || filters.difficulty || filters.mealType || filters.prepTime || filters.minCalories || filters.maxCalories || searchQuery;
     
     return (
         <div className='bg-surface min-h-screen px-4 lg:px-12 py-24 font-body relative overflow-hidden'>
@@ -456,10 +476,12 @@ const Recipes = () => {
                                         setShowDropdown(true);
                                         if (!value) {
                                             const newParams = new URLSearchParams();
-                                            if (filters.dietType) newParams.set('dietType', filters.dietType);
-                                            if (filters.difficulty) newParams.set('difficulty', filters.difficulty);
-                                            if (filters.mealType) newParams.set('mealType', filters.mealType);
-                                            if (filters.prepTime) newParams.set('prepTime', filters.prepTime);
+        if (filters.dietType) newParams.set('dietType', filters.dietType);
+        if (filters.difficulty) newParams.set('difficulty', filters.difficulty);
+        if (filters.mealType) newParams.set('mealType', filters.mealType);
+        if (filters.prepTime) newParams.set('prepTime', filters.prepTime);
+        if (filters.minCalories) newParams.set('minCalories', filters.minCalories);
+        if (filters.maxCalories) newParams.set('maxCalories', filters.maxCalories);
                                             setSearchParams(newParams);
                                         }
                                     }}
@@ -613,6 +635,41 @@ const Recipes = () => {
                                         </div>
                                     </div>
 
+                                    {/* Calories */}
+                                    <div>
+                                        <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest block mb-3">
+                                            Calories Range: {(filters.minCalories || '0')} - {(filters.maxCalories || '∞')} kcal
+                                        </label>
+                                        <div className="space-y-4">
+                                            <div className="px-2">
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="2000"
+                                                    step="50"
+                                                    value={filters.minCalories || '0'}
+                                                    onChange={(e) => handleFilterChange('minCalories', e.target.value)}
+                                                    className="w-full accent-primary cursor-pointer"
+                                                />
+                                                <div className="flex justify-between text-[10px] text-on-surface-variant font-bold mt-1">
+                                                    <span>Min: {filters.minCalories || '0'}</span>
+                                                    <span>Max: {filters.maxCalories || '∞'}</span>
+                                                </div>
+                                            </div>
+                                            <div className="px-2">
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="2000"
+                                                    step="50"
+                                                    value={filters.maxCalories || '2000'}
+                                                    onChange={(e) => handleFilterChange('maxCalories', e.target.value)}
+                                                    className="w-full accent-primary cursor-pointer"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <button 
                                         onClick={handleSearch}
                                         className="w-full py-3 rounded-xl vitality-gradient text-white font-black text-sm shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
@@ -693,6 +750,19 @@ const Recipes = () => {
                                         <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
                                             {filters.prepTime}
                                             <button onClick={() => removeFilterAndSearch('prepTime')} className="hover:text-error">×</button>
+                                        </span>
+                                    )}
+                                    {(filters.minCalories || filters.maxCalories) && (
+                                        <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
+                                            Calories: {filters.minCalories || '0'} - {filters.maxCalories || '∞'}
+                                            <button onClick={() => {
+                                                const newFilters = { ...filters, minCalories: '', maxCalories: '' };
+                                                setFilters(newFilters);
+                                                const newParams = new URLSearchParams(searchParams);
+                                                newParams.delete('minCalories');
+                                                newParams.delete('maxCalories');
+                                                setSearchParams(newParams);
+                                            }} className="hover:text-error">×</button>
                                         </span>
                                     )}
                                 </div>
