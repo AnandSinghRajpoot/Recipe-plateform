@@ -305,6 +305,8 @@ const Recipes = () => {
         const urlDiff = searchParams.get('difficulty') || '';
         const urlMeal = searchParams.get('mealType') || '';
         const urlPrep = searchParams.get('prepTime') || '';
+        const urlMinCal = searchParams.get('minCalories') || '';
+        const urlMaxCal = searchParams.get('maxCalories') || '';
         const urlQ = searchParams.get('q') || '';
 
         setFilters({
