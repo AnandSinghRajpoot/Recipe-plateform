@@ -16,7 +16,7 @@ const HorizontalCard = ({ item }) => {
     const [saved, setSaved] = useState(item?.isSaved || false);
     
     const { selectedRecipes, toggleRecipeSelection } = useShopping();
-    const isSelectedForShopping = selectedRecipes.includes(item?.id || item?._id);
+    const isSelectedForShopping = selectedRecipes.includes(parseInt(item?.id || item?._id));
 
     const title = item?.title || item?.name || "Untitled Recipe";
 
@@ -161,6 +161,18 @@ const HorizontalCard = ({ item }) => {
                     <p className="text-on-surface-variant text-base font-medium leading-relaxed opacity-80 line-clamp-2 mb-3">
                         {description}
                     </p>
+
+                    {/* Recommendation Match Insights - For Testing & Transparency */}
+                    {item?.matchReasons && item.matchReasons.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            <div className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20 shadow-sm">
+                                <span className="material-symbols-outlined text-[14px]">psychology</span>
+                                <span className="text-[10px] font-black uppercase tracking-tighter">
+                                    {item.matchScore > 0 ? `Match Score: ${Math.round(item.matchScore)}` : "Recommended"}
+                                </span>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Rating Display */}
                     <div className="flex items-center gap-2 mb-4">

@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'
 import generalProfilePic from '../../assets/general-profile-pic.png'
 import ReviewsSection from '../../components/common/ReviewsSection'
+import { useShopping } from '../../context/ShoppingContext';
 
 const SingleProduct = () => {
     const navigate = useNavigate();
@@ -15,6 +16,8 @@ const SingleProduct = () => {
     const [newComment, setNewComment] = useState("");
     const [isLiking, setIsLiking] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const { selectedRecipes, toggleRecipeSelection } = useShopping();
+    const isSelectedForShopping = selectedRecipes.includes(parseInt(id));
 
     const fetchRecipe = async () => {
         try {
@@ -190,6 +193,15 @@ const SingleProduct = () => {
                                 {isSaving ? 'hourglass_empty' : (item.isSaved ? 'bookmark' : 'bookmark_border')}
                             </span>
                             <span className="text-[9px] font-black">Save</span>
+                        </button>
+                        <button 
+                            onClick={() => toggleRecipeSelection(parseInt(id))}
+                            className={`w-14 h-14 rounded-3xl backdrop-blur-md flex flex-col items-center justify-center transition-all shadow-xl group/bag border border-white/40 active:scale-90 duration-200 ${isSelectedForShopping ? 'bg-white text-blue-600' : 'bg-white/20 text-white hover:bg-white hover:text-blue-600'}`}
+                        >
+                            <span className={`material-symbols-outlined text-2xl group-active/bag:scale-150 transition-transform`} style={isSelectedForShopping ? { fontVariationSettings: '"FILL" 1' } : {}}>
+                                {isSelectedForShopping ? 'shopping_bag' : 'add_shopping_cart'}
+                            </span>
+                            <span className="text-[9px] font-black">{isSelectedForShopping ? 'Added' : 'Bag'}</span>
                         </button>
                     </div>
 

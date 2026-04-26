@@ -92,14 +92,14 @@ const Recipes = () => {
 
                 // Fetch recommendations
                 const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-                const recRes = await axios.get('http://localhost:8080/api/v1/recipes/recommended?limit=6', { headers });
+                const recRes = await axios.get('http://localhost:8080/api/v1/recipes/recommended?limit=12', { headers });
                 
                 let recData = recRes.data.data || [];
                 
                 // If personalized fetch returned nothing but we are logged in, 
                 // we should still show SOMETHING (Popular)
                 if (token && recData.length === 0) {
-                     const fallbackRes = await axios.get('http://localhost:8080/api/v1/recipes/recommended?limit=6');
+                     const fallbackRes = await axios.get('http://localhost:8080/api/v1/recipes/recommended?limit=12');
                      recData = fallbackRes.data.data || [];
                 }
 
