@@ -10,6 +10,7 @@ import com.recipeplatform.service.AuthService;
 import com.recipeplatform.service.PasswordResetService;
 import com.recipeplatform.util.CurrentUser;
 import jakarta.validation.Valid;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -51,6 +52,7 @@ public class AuthController {
     }
 
     @GetMapping("/profile")
+    @Transactional(readOnly = true)
     public com.recipeplatform.dto.auth.RegisterResponse getProfile() {
         User user = currentUser.getCurrentUser();
         return userMapper.toDto(user);

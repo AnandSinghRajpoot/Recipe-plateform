@@ -37,4 +37,14 @@ public class Disease {
 
     @OneToMany(mappedBy = "disease", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DiseaseFoodRestriction> foodRestrictions = new ArrayList<>();
+
+    // Nutritional Targets for the engine
+    private Double maxSugar;
+    private Double maxSodium;
+    private Double maxFat;
+    private Double minFiber;
+    private Double minProtein;
+    private Double maxCarbs;
+    private Double minCarbs;
+    private Double maxCalories;
 }

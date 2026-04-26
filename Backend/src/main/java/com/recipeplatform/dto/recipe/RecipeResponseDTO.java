@@ -65,4 +65,8 @@ public class RecipeResponseDTO {
     private Long reviewCount = 0L;
 
     private List<CommentResponseDto> comments;
+    
+    // === Recommendation Metadata (For Testing & Transparency) ===
+    private Double matchScore;
+    private List<String> matchReasons;
 }

@@ -87,6 +87,28 @@ public class DataSeeder implements ApplicationRunner {
                 disease.setName(d[0]);
                 disease.setDescription(d[1]);
                 disease.setHasStages(false);
+                
+                // Add default nutritional targets based on name
+                String name = d[0].toUpperCase();
+                if (name.contains("DIABETES")) {
+                    disease.setMaxSugar(10.0);
+                    disease.setMaxCarbs(50.0);
+                    disease.setMinFiber(5.0);
+                } else if (name.contains("HYPERTENSION")) {
+                    disease.setMaxSodium(500.0);
+                } else if (name.contains("HYPERLIPIDEMIA") || name.contains("HEART DISEASE") || name.contains("CAD")) {
+                    disease.setMaxFat(15.0);
+                    disease.setMinFiber(7.0);
+                } else if (name.contains("PCOS")) {
+                    disease.setMinProtein(20.0);
+                    disease.setMaxSugar(8.0);
+                } else if (name.contains("OBESITY")) {
+                    disease.setMaxCalories(500.0);
+                    disease.setMaxSugar(12.0);
+                } else if (name.contains("PKU") || name.contains("KIDNEY")) {
+                    // Usually low protein, but we'll leave it generic for now
+                }
+                
                 diseaseRepository.save(disease);
             }
         });
@@ -316,29 +338,54 @@ public class DataSeeder implements ApplicationRunner {
             }
             r.setIngredients(recipeIngredients);
 
-            // --- DEEP DIETARY SCAN (Before saving) ---
-            DietType finalDiet = r.getDietType();
+            // Initial guess from keywords
+            DietType initialGuess = determineDietType(entry.getKey());
+            
+            // --- DEEP DIETARY SCAN (Final Truth) ---
+            DietType finalDiet;
             
             // 1. Check for Meats/Eggs (Non-Veg)
             boolean hasNonVeg = recipeIngredients.stream().anyMatch(ri -> {
                 String name = ri.getIngredient().getName().toLowerCase();
-                // Check for 'egg' but ignore 'eggplant' or 'eggless'
                 boolean isEgg = name.contains("egg") && !name.contains("eggplant") && !name.contains("eggless");
                 return isEgg || name.contains("beef") || name.contains("mutton") || 
                        name.contains("chicken") || name.contains("meat") || name.contains("fish") || 
-                       name.contains("shrimp") || name.contains("pork") || name.contains("anchovy");
+                       name.contains("shrimp") || name.contains("pork") || name.contains("anchovy") ||
+                       name.contains("salmon") || name.contains("tuna") || name.contains("prawn") ||
+                       name.contains("crab") || name.contains("lobster") || name.contains("bacon") ||
+                       name.contains("pepperoni") || name.contains("salami") || name.contains("sausage") ||
+                       name.contains("turkey") || name.contains("duck") || name.contains("ham") || 
+                       name.contains("steak") || name.contains("lamb");
             });
-            if (hasNonVeg) finalDiet = DietType.NON_VEG;
-
-            // 2. Check for Dairy/Honey if still Vegan
-            if (finalDiet == DietType.VEGAN) {
-                boolean hasDairyOrHoney = recipeIngredients.stream().anyMatch(ri -> {
+            
+            if (hasNonVeg) {
+                finalDiet = DietType.NON_VEG;
+            } else {
+                // Not Non-Veg, so either Veg or Vegan. 
+                // Check for dairy/animal derivatives.
+                boolean hasDairyOrAnimalDerivative = recipeIngredients.stream().anyMatch(ri -> {
                     String name = ri.getIngredient().getName().toLowerCase();
                     return name.contains("cheese") || name.contains("milk") || name.contains("butter") || 
                            name.contains("cream") || name.contains("yogurt") || name.contains("honey") || 
-                           name.contains("feta") || name.contains("paneer");
+                           name.contains("feta") || name.contains("paneer") || name.contains("ghee") ||
+                           name.contains("curd") || name.contains("mayonnaise") || name.contains("whey") ||
+                           name.contains("mozzarella") || name.contains("parmesan") || name.contains("ricotta") ||
+                           name.contains("cheddar") || name.contains("gouda") || name.contains("provolone") ||
+                           name.contains("brie") || name.contains("mascarpone") || name.contains("pecorino") ||
+                           name.contains("halloumi") || name.contains("burrata") || name.contains("condensed") ||
+                           name.contains("evaporated") || name.contains("sour cream") || name.contains("gelatin");
                 });
-                if (hasDairyOrHoney) finalDiet = DietType.VEG;
+
+                if (hasDairyOrAnimalDerivative) {
+                    finalDiet = DietType.VEG;
+                } else {
+                    // Final check: If keywords suggested VEG or NON_VEG, but ingredients looked clean,
+                    // we trust the ingredients UNLESS the title is very specific.
+                    // However, to be safe, if title said meat but ingredients didn't list it, we stay cautious.
+                    if (initialGuess == DietType.NON_VEG) finalDiet = DietType.NON_VEG;
+                    else if (initialGuess == DietType.VEG) finalDiet = DietType.VEG;
+                    else finalDiet = DietType.VEGAN;
+                }
             }
             r.setDietType(finalDiet);
 
@@ -667,9 +714,3 @@ public class DataSeeder implements ApplicationRunner {
         private double sodium;
     }
 }
-
-//i apply Vegetarian filter and i got 79 recipies and i deeply analyzes and in result i got 3 vegan recipies ,means filtering not working properly and those recipies are
-//        Avocado Toast,
-//                Hummus,
-//                Falafel
-//

@@ -45,6 +45,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/v1/recipes/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/recipes/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/recipes/**").authenticated()
+                        // Shopping List endpoints require authentication
+                        .requestMatchers("/api/v1/shopping-lists/**").authenticated()
                         .anyRequest().permitAll()
         );
 

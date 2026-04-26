@@ -12,6 +12,7 @@ public interface UserAllergyRepository extends JpaRepository<UserAllergy, Long> 
     List<UserAllergy> findByUserHealthProfileId(Long userHealthProfileId);
 
     void deleteByUserHealthProfileIdAndAllergyId(Long userHealthProfileId, Long allergyId);
+    void deleteByUserHealthProfileId(Long userHealthProfileId);
 
     boolean existsByUserHealthProfileIdAndAllergyId(Long userHealthProfileId, Long allergyId);
 }

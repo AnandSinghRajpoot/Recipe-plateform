@@ -12,6 +12,7 @@ public interface UserDiseaseRepository extends JpaRepository<UserDisease, Long> 
     List<UserDisease> findByUserHealthProfileId(Long userHealthProfileId);
 
     void deleteByUserHealthProfileIdAndDiseaseId(Long userHealthProfileId, Long diseaseId);
+    void deleteByUserHealthProfileId(Long userHealthProfileId);
 
     boolean existsByUserHealthProfileIdAndDiseaseId(Long userHealthProfileId, Long diseaseId);
 }

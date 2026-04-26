@@ -27,13 +27,23 @@ public class UserHealthProfileServiceImpl implements UserHealthProfileService {
 
     @Override
     public UserHealthProfileDTO getProfileByUserId(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new com.recipeplatform.exception.ResourceNotFoundException("User not found with id: " + userId));
+
         return userHealthProfileRepository.findByUserId(userId)
                 .map(profile -> {
                     UserHealthProfileDTO dto = userHealthProfileMapper.toDTO(profile);
                     dto.setCompletionPercentage(calculateCompletion(profile));
                     return dto;
                 })
-                .orElse(null);
+                .orElseGet(() -> {
+                    // Profile record doesn't exist in DB yet, but we still calculate completion for the User fields
+                    UserHealthProfile tempProfile = new UserHealthProfile();
+                    tempProfile.setUser(user);
+                    UserHealthProfileDTO dto = new UserHealthProfileDTO();
+                    dto.setCompletionPercentage(calculateCompletion(tempProfile));
+                    return dto;
+                });
     }
 
     @Override
@@ -62,6 +72,41 @@ public class UserHealthProfileServiceImpl implements UserHealthProfileService {
         profile.setAlcoholHabit(profileDTO.getAlcoholHabit());
 
         UserHealthProfile savedProfile = userHealthProfileRepository.save(profile);
+
+        // Sync Allergies
+        if (profileDTO.getAllergies() != null) {
+            userAllergyRepository.deleteByUserHealthProfileId(savedProfile.getId());
+            for (com.recipeplatform.dto.UserAllergyDTO allergyDto : profileDTO.getAllergies()) {
+                Allergy allergy = allergyRepository.findById(allergyDto.getAllergyId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Allergy not found with id: " + allergyDto.getAllergyId()));
+                UserAllergy ua = new UserAllergy();
+                ua.setUserHealthProfile(savedProfile);
+                ua.setAllergy(allergy);
+                userAllergyRepository.save(ua);
+            }
+        }
+
+        // Sync Diseases
+        if (profileDTO.getDiseases() != null) {
+            userDiseaseRepository.deleteByUserHealthProfileId(savedProfile.getId());
+            for (com.recipeplatform.dto.UserDiseaseDTO diseaseDto : profileDTO.getDiseases()) {
+                Disease disease = diseaseRepository.findById(diseaseDto.getDiseaseId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Disease not found with id: " + diseaseDto.getDiseaseId()));
+                
+                DiseaseStage stage = null;
+                if (diseaseDto.getStageId() != null) {
+                    stage = diseaseStageRepository.findById(diseaseDto.getStageId())
+                            .orElse(null);
+                }
+
+                UserDisease ud = new UserDisease();
+                ud.setUserHealthProfile(savedProfile);
+                ud.setDisease(disease);
+                ud.setStage(stage);
+                userDiseaseRepository.save(ud);
+            }
+        }
+
         UserHealthProfileDTO savedDto = userHealthProfileMapper.toDTO(savedProfile);
         savedDto.setCompletionPercentage(calculateCompletion(savedProfile));
         return savedDto;
@@ -70,8 +115,9 @@ public class UserHealthProfileServiceImpl implements UserHealthProfileService {
     private Integer calculateCompletion(UserHealthProfile profile) {
         if (profile == null) return 0;
         int filledFields = 0;
-        int totalFields = 12;
+        int totalFields = 17; // 12 health + 5 general
 
+        // 1. Health Fields (UserHealthProfile)
         if (profile.getAge() != null) filledFields++;
         if (profile.getGender() != null) filledFields++;
         if (profile.getWeight() != null) filledFields++;
@@ -84,6 +130,16 @@ public class UserHealthProfileServiceImpl implements UserHealthProfileService {
         if (profile.getWaterIntakeGlasses() != null) filledFields++;
         if (profile.getSmokingHabit() != null) filledFields++;
         if (profile.getAlcoholHabit() != null) filledFields++;
+
+        // 2. Account Fields (User)
+        User user = profile.getUser();
+        if (user != null) {
+            if (user.getName() != null && !user.getName().isBlank()) filledFields++;
+            if (user.getProfilePhoto() != null && !user.getProfilePhoto().contains("general-profile-pic")) filledFields++;
+            if (user.getBio() != null && !user.getBio().isBlank()) filledFields++;
+            if (user.getDietType() != null) filledFields++;
+            if (user.getSkillLevel() != null) filledFields++;
+        }
 
         return (filledFields * 100) / totalFields;
     }

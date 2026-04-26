@@ -102,9 +102,12 @@ public class RecommendationServiceImpl implements RecommendationService {
         // 5. Calculate Scores
         return baseRecipes.stream()
                 .map(recipe -> {
+                    List<String> reasons = new ArrayList<>();
                     double score = calculateScore(recipe, finalUser, healthProfileOpt.orElse(null), 
-                                               savedRecipeIds, restrictedIngredients, allergicIngredientIds, activeAllergyNames);
+                                               savedRecipeIds, restrictedIngredients, allergicIngredientIds, activeAllergyNames, reasons);
                     RecipeResponseDTO dto = recipeMapper.toResponseDTO(recipe);
+                    dto.setMatchScore(score);
+                    dto.setMatchReasons(reasons);
                     return new ScoredRecipe(dto, score);
                 })
                 .sorted(Comparator.comparingDouble(ScoredRecipe::getScore).reversed())
@@ -117,7 +120,8 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     private double calculateScore(Recipe recipe, User user, UserHealthProfile healthProfile, 
                                   Set<Long> savedRecipeIds, Map<Long, RestrictionSeverity> restrictedIngredients,
-                                  Set<Long> allergicIngredientIds, Set<String> activeAllergyNames) {
+                                  Set<Long> allergicIngredientIds, Set<String> activeAllergyNames,
+                                  List<String> reasons) {
         double score = 0;
 
         // --- 1. STRICT DIETARY ENFORCEMENT (VEG/VEGAN) ---
@@ -126,15 +130,18 @@ public class RecommendationServiceImpl implements RecommendationService {
             String recipeDiet = recipe.getDietType().name();
 
             if ((userDiet.equals("VEG") || userDiet.equals("VEGAN")) && recipeDiet.equals("NON_VEG")) {
+                reasons.add("Excluded: Contains Non-Veg ingredients");
                 return -2000; // Total incompatibility
             }
 
             if (userDiet.equals("VEGAN") && !recipeDiet.equals("VEGAN")) {
-                score -= 100; // Strong penalty
+                reasons.add("Excluded: Not strictly Vegan");
+                return -2000; // Strict vegan enforcement
             }
 
             if (userDiet.equals(recipeDiet)) {
                 score += 30; // Match bonus
+                reasons.add("Matches your diet preference (" + userDiet + ")");
             }
         }
 
@@ -145,15 +152,31 @@ public class RecommendationServiceImpl implements RecommendationService {
             
             // A. Hard Allergen Check (Highest Priority)
             if (allergicIngredientIds.contains(ingredientId)) {
+                reasons.add("Excluded: Contains " + ri.getIngredient().getName() + " (Allergen)");
                 return -10000; // Total medical exclusion
             }
 
             // B. Keyword Fail-safe for critical allergens
             String name = ri.getIngredient().getName().toLowerCase();
-            if (activeAllergyNames.contains("EGGS") && name.contains("egg") && !name.contains("eggplant")) {
+            
+            // Check for Eggs
+            boolean hasEggAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("EGG"));
+            if (hasEggAllergy && name.contains("egg") && !name.contains("eggplant")) {
+                reasons.add("Excluded: Contains Egg-based ingredients");
                 return -10000;
             }
-            if (activeAllergyNames.contains("MILK / DAIRY") && (name.contains("milk") || name.contains("butter") || name.contains("cheese") || name.contains("cream"))) {
+
+            // Check for Dairy
+            boolean hasDairyAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("DAIRY") || a.contains("MILK"));
+            if (hasDairyAllergy && (name.contains("milk") || name.contains("butter") || name.contains("cheese") || name.contains("cream") || name.contains("yogurt") || name.contains("paneer"))) {
+                reasons.add("Excluded: Contains Dairy-based ingredients");
+                return -10000;
+            }
+
+            // Check for Wheat/Gluten
+            boolean hasGlutenAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("GLUTEN") || a.contains("WHEAT"));
+            if (hasGlutenAllergy && (name.contains("flour") || name.contains("wheat") || name.contains("maida") || name.contains("semolina"))) {
+                reasons.add("Excluded: Contains Gluten/Wheat ingredients");
                 return -10000;
             }
 
@@ -162,64 +185,146 @@ public class RecommendationServiceImpl implements RecommendationService {
                 RestrictionSeverity severity = restrictedIngredients.get(ingredientId);
                 switch (severity) {
                     case ELIMINATE:
+                        reasons.add("Critical: Contains " + ri.getIngredient().getName() + " (Medical Restriction)");
                         return -5000; // Medical danger: Exclude entirely
                     case AVOID:
                         score -= 150; // Heavy penalty
+                        reasons.add("Penalty: Contains " + ri.getIngredient().getName() + " (Medical Avoidance)");
                         break;
                     case LIMIT:
                         score -= 50;  // Moderate penalty
+                        reasons.add("Note: Limited " + ri.getIngredient().getName() + " (Medical Guideline)");
                         break;
                 }
             }
         }
 
-        // --- 3. MEDICAL NUTRITIONAL ALIGNMENT ---
-        // Rule-based logic for specific conditions using the Nutrition profile
-        if (healthProfile != null && !healthProfile.getDiseases().isEmpty() && recipe.getNutrition() != null) {
+        // --- 3. MEDICAL NUTRITIONAL ALIGNMENT (Data-Driven Scanning) ---
+        // Instead of hardcoding conditions, we iterate through the user's conditions and apply their specific nutritional profiles
+        if (healthProfile != null && recipe.getNutrition() != null) {
             Nutrition n = recipe.getNutrition();
-            Set<String> diseaseNames = healthProfile.getDiseases().stream()
-                    .map(ud -> ud.getDisease().getName().toUpperCase())
-                    .collect(Collectors.toSet());
-
-            // Diabetes Mapping
-            if (diseaseNames.contains("DIABETES")) {
-                if (n.getSugar() != null && n.getSugar() > 10) score -= 100; // Penalize high sugar
-                if (n.getCarbs() != null && n.getCarbs() < 25) score += 40;  // Bonus for low carb
-                if (n.getFiber() != null && n.getFiber() > 5) score += 30;   // Bonus for high fiber
-            }
-
-            // Hypertension Mapping
-            if (diseaseNames.contains("HYPERTENSION") || diseaseNames.contains("HIGH BLOOD PRESSURE")) {
-                if (n.getSodium() != null && n.getSodium() > 500) score -= 150; // Penalize high sodium
-                if (n.getSodium() != null && n.getSodium() < 140) score += 50;  // Bonus for low sodium
-            }
             
-            // Obesity Matching
-            if (diseaseNames.contains("OBESITY")) {
-                if (n.getCalories() != null && n.getCalories() > 600) score -= 100;
-                if (n.getCalories() != null && n.getCalories() < 400) score += 40;
+            for (UserDisease ud : healthProfile.getDiseases()) {
+                Disease d = ud.getDisease();
+                
+                // Max Constraints
+                if (d.getMaxSugar() != null && n.getSugar() != null && n.getSugar() > d.getMaxSugar()) {
+                    score -= 100;
+                    reasons.add("High sugar for " + d.getName());
+                }
+                if (d.getMaxSodium() != null && n.getSodium() != null && n.getSodium() > d.getMaxSodium()) {
+                    score -= 150;
+                    reasons.add("High sodium for " + d.getName());
+                }
+                if (d.getMaxFat() != null && n.getFat() != null && n.getFat() > d.getMaxFat()) {
+                    score -= 100;
+                    reasons.add("High fat for " + d.getName());
+                }
+                
+                // Min Constraints (Bonuses)
+                if (d.getMinFiber() != null && n.getFiber() != null && n.getFiber() >= d.getMinFiber()) {
+                    score += 40;
+                    reasons.add("Good source of fiber for " + d.getName());
+                }
+                if (d.getMinProtein() != null && n.getProtein() != null && n.getProtein() >= d.getMinProtein()) {
+                    score += 40;
+                    reasons.add("High protein for " + d.getName());
+                }
             }
         }
 
-        // --- 4. ENGAGEMENT & SAVES ---
+        // --- 4. LIFESTYLE & HABIT ALIGNMENT ---
+        if (healthProfile != null) {
+            // Activity Level & Work Type Calorie Tolerance
+            boolean isSedentary = healthProfile.getActivityLevel() == com.recipeplatform.domain.enums.ActivityLevel.SEDENTARY;
+            boolean isSittingJob = healthProfile.getWorkType() == com.recipeplatform.domain.enums.WorkType.SITTING;
+            
+            if (isSedentary && isSittingJob && recipe.getNutrition() != null) {
+                if (recipe.getNutrition().getCalories() > 500) {
+                    score -= 60;
+                    reasons.add("Slightly high calories for your activity level");
+                }
+            } else if (healthProfile.getActivityLevel() == com.recipeplatform.domain.enums.ActivityLevel.VERY_ACTIVE) {
+                if (recipe.getNutrition() != null && recipe.getNutrition().getProtein() > 25) {
+                    score += 40;
+                    reasons.add("Great protein boost for your active lifestyle");
+                }
+            }
+
+            // Habits (Smoking/Alcohol) -> Focus on Antioxidants (Vitamins proxy via ingredients or simple bonus)
+            // Note: Since we don't have micronutrients in DB for most, we use a general bonus for "Healthy" categories
+            if (healthProfile.getSmokingHabit() != com.recipeplatform.domain.enums.HabitStatus.NONE || 
+                healthProfile.getAlcoholHabit() != com.recipeplatform.domain.enums.HabitStatus.NONE) {
+                // Indirect bonus for high-fiber, low-fat "clean" recipes
+                if (recipe.getNutrition() != null && recipe.getNutrition().getFiber() > 5) {
+                    score += 20;
+                    reasons.add("Rich in fiber to support your clean habits");
+                }
+            }
+
+            // Eating Pattern (On-the-go)
+            if (healthProfile.getEatingPattern() == com.recipeplatform.domain.enums.EatingPattern.IRREGULAR_MEALS) {
+                int totalTime = (recipe.getPrepTime() != null ? recipe.getPrepTime() : 0) + (recipe.getCookTime() != null ? recipe.getCookTime() : 0);
+                if (totalTime <= 30) {
+                    score += 60;
+                    reasons.add("Quick and easy for your busy schedule");
+                }
+                if (totalTime > 60) score -= 40;  
+            }
+        }
+
+        // --- 5. COOKING SKILL MATCHING ---
+        if (user.getSkillLevel() != null && recipe.getDifficulty() != null) {
+            String userSkill = user.getSkillLevel().name();
+            String recipeDiff = recipe.getDifficulty().name();
+            
+            if (userSkill.equals("BEGINNER")) {
+                if (recipeDiff.equals("EASY")) {
+                    score += 40;
+                    reasons.add("Matches your beginner skill level");
+                }
+                if (recipeDiff.equals("HARD")) score -= 100;
+            } else if (userSkill.equals("EXPERT")) {
+                if (recipeDiff.equals("HARD")) {
+                    score += 30;
+                    reasons.add("A good challenge for your expert skills");
+                }
+                if (recipeDiff.equals("EASY")) score -= 10;  
+            } else { // Intermediate
+                if (recipeDiff.equals("MEDIUM")) {
+                    score += 30;
+                    reasons.add("Perfect for your intermediate skills");
+                }
+            }
+        }
+
+        // --- 6. ENGAGEMENT & SAVES ---
         if (savedRecipeIds.contains(recipe.getId())) {
-            score += 50; // High bonus for favorites
+            score += 50; 
+            reasons.add("In your saved recipes");
         }
 
         if (recipe.getAverageRating() != null && recipe.getAverageRating() >= 4.0) {
             score += 20;
+            reasons.add("Highly rated by the community");
         }
 
-        // --- 5. CALORIE BALANCING (DAILY TARGET ALIGNMENT) ---
+        // --- 7. CALORIE BALANCING (DAILY TARGET ALIGNMENT) ---
         if (healthProfile != null && healthProfile.getDailyCalorieRequirement() != null && recipe.getNutrition() != null) {
             double targetPerMeal = healthProfile.getDailyCalorieRequirement() / 3;
             double recipeCalories = recipe.getNutrition().getCalories();
             
             double deviation = Math.abs(recipeCalories - targetPerMeal);
-            if (deviation < (targetPerMeal * 0.15)) {
-                score += 40; // High precision match
+            double tolerance = targetPerMeal * 0.15;
+            
+            if (deviation < tolerance) {
+                score += 50; // Precision bonus
+                reasons.add("Perfectly aligns with your caloric goals");
             } else if (deviation < (targetPerMeal * 0.3)) {
-                score += 15; // Moderate match
+                score += 20;
+            } else if (deviation > (targetPerMeal * 0.5)) {
+                score -= 40; // Significant caloric mismatch
+                reasons.add("Calorie count is slightly outside your target range");
             }
         }
 
