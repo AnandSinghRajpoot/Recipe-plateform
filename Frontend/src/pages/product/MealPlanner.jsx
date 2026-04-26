@@ -178,8 +178,8 @@ const MealPlanner = () => {
             const listData = generateRes.data.data;
 
             // Save the list
-            const saveRes = await apiClient.post('/shopping-lists/save', {
-                name: `${plan.name} Shopping List`,
+            const saveRes = await apiClient.post('/shopping-lists', {
+                name: `${plan.name} List - ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
                 items: listData.items.map(item => ({
                     ingredientName: item.ingredientName,
                     quantity: item.quantity,

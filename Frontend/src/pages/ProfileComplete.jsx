@@ -69,7 +69,10 @@ const ProfileComplete = () => {
                     skillLevel: userData.skillLevel || "BEGINNER"
                 }));
                 
-                setIsEditMode(true);
+                // If we have any data, it's edit mode
+                if (healthData.age || userData.dietType) {
+                    setIsEditMode(true);
+                }
             } catch (err) {
                 console.error("Profile fetch error:", err.message);
                 toast.error("Failed to load existing profile data");
@@ -143,16 +146,16 @@ const ProfileComplete = () => {
         try {
             // Combine all profile data into a single request object
             const completionData = {
-                age: profile.age,
-                gender: profile.gender,
-                height: profile.height,
-                weight: profile.weight,
+                age: profile.age !== "" ? parseInt(profile.age) : null,
+                gender: profile.gender || null,
+                height: profile.height !== "" ? parseFloat(profile.height) : null,
+                weight: profile.weight !== "" ? parseFloat(profile.weight) : null,
                 activityLevel: profile.activityLevel,
                 workType: profile.workType,
                 travelFrequency: profile.travelFrequency,
                 eatingPattern: profile.eatingPattern,
                 sleepDuration: profile.sleepDuration,
-                waterIntakeGlasses: profile.waterIntakeGlasses,
+                waterIntakeGlasses: parseInt(profile.waterIntakeGlasses),
                 smokingHabit: profile.smokingHabit,
                 alcoholHabit: profile.alcoholHabit,
                 diseaseNames: profile.diseaseNames,
@@ -484,12 +487,26 @@ const ProfileComplete = () => {
                                         <div>
                                             <label className="block text-sm font-bold text-on-surface-variant ml-2 mb-4">Health Conditions (Select Multiple)</label>
                                             <div className="flex flex-wrap gap-3">
-                                                {["Diabetes", "Hypertension", "PCOS", "Cholesterol", "IBS", "Obesity", "Thyroid"].map(disease => {
-                                                    const isSelected = profile.diseaseNames.some(d => d.toLowerCase() === disease.toLowerCase());
+                                                {[
+                                                    { name: "Type 1 Diabetes", label: "Type 1 Diabetes" },
+                                                    { name: "Type 2 Diabetes", label: "Type 2 Diabetes" },
+                                                    { name: "Hypertension", label: "High Blood Pressure" },
+                                                    { name: "Hyperlipidemia", label: "High Cholesterol" },
+                                                    { name: "PCOS", label: "PCOS" },
+                                                    { name: "Hypothyroidism", label: "Thyroid" },
+                                                    { name: "Irritable Bowel Syndrome", label: "IBS" },
+                                                    { name: "Obesity / Metabolic Syndrome", label: "Obesity" },
+                                                    { name: "Celiac Disease", label: "Celiac" },
+                                                    { name: "Heart Disease (CAD)", label: "Heart Disease" }
+                                                ].map(disease => {
+                                                    const isSelected = profile.diseaseNames.some(d => 
+                                                        d.toLowerCase() === disease.name.toLowerCase() || 
+                                                        d.toLowerCase().includes(disease.name.toLowerCase())
+                                                    );
                                                     return (
                                                         <button 
-                                                            key={disease}
-                                                            onClick={() => toggleMultiSelect('diseaseNames', disease)}
+                                                            key={disease.name}
+                                                            onClick={() => toggleMultiSelect('diseaseNames', disease.name)}
                                                             className={`px-8 py-4 rounded-2xl text-sm font-extrabold transition-all border-2 ${
                                                                 isSelected 
                                                                 ? 'vibrant-gradient border-primary text-white shadow-lg scale-105' 
@@ -497,7 +514,7 @@ const ProfileComplete = () => {
                                                             }`} 
                                                             type="button"
                                                         >
-                                                            {disease}
+                                                            {disease.label}
                                                         </button>
                                                     );
                                                 })}
@@ -509,12 +526,25 @@ const ProfileComplete = () => {
                                         <div>
                                             <label className="block text-sm font-bold text-on-surface-variant ml-2 mb-4">Food Allergies (Select Multiple)</label>
                                             <div className="flex flex-wrap gap-3">
-                                                {["Peanuts", "Dairy", "Gluten", "Shellfish", "Soy", "Tree Nuts", "Eggs"].map(allergy => {
-                                                    const isSelected = profile.allergyNames.some(a => a.toLowerCase() === allergy.toLowerCase());
+                                                {[
+                                                    { name: "Peanuts", label: "Peanuts" },
+                                                    { name: "Milk / Dairy", label: "Dairy" },
+                                                    { name: "Wheat / Gluten", label: "Gluten" },
+                                                    { name: "Shellfish", label: "Shellfish" },
+                                                    { name: "Soy", label: "Soy" },
+                                                    { name: "Tree Nuts", label: "Tree Nuts" },
+                                                    { name: "Eggs", label: "Eggs" },
+                                                    { name: "Fish", label: "Fish" },
+                                                    { name: "Sesame", label: "Sesame" }
+                                                ].map(allergy => {
+                                                    const isSelected = profile.allergyNames.some(a => 
+                                                        a.toLowerCase() === allergy.name.toLowerCase() || 
+                                                        a.toLowerCase().includes(allergy.name.toLowerCase())
+                                                    );
                                                     return (
                                                         <button 
-                                                            key={allergy}
-                                                            onClick={() => toggleMultiSelect('allergyNames', allergy)}
+                                                            key={allergy.name}
+                                                            onClick={() => toggleMultiSelect('allergyNames', allergy.name)}
                                                             className={`px-8 py-4 rounded-2xl text-sm font-extrabold transition-all border-2 ${
                                                                 isSelected 
                                                                 ? 'vibrant-gradient border-primary text-white shadow-lg scale-105' 
@@ -522,7 +552,7 @@ const ProfileComplete = () => {
                                                             }`} 
                                                             type="button"
                                                         >
-                                                            {allergy}
+                                                            {allergy.label}
                                                         </button>
                                                     );
                                                 })}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { SkeletonProfile, SkeletonCard } from "../../components/Skeleton";
 import MealPlannerLanding from "../product/MealPlannerLanding.jsx";
 import SavedRecipesTab from "../product/SavedRecipesTab.jsx";
@@ -21,7 +21,8 @@ import {
     IoSettingsOutline,
     IoLogOutOutline,
     IoCloudUploadOutline,
-    IoCartOutline
+    IoCartOutline,
+    IoRestaurantOutline
 } from "react-icons/io5";
 
 const Profile = () => {
@@ -32,8 +33,14 @@ const Profile = () => {
     const [recommendations, setRecommendations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState('overview');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = searchParams.get('tab') || 'overview';
+    
+    const setActiveTab = (tabId) => {
+        setSearchParams({ tab: tabId });
+    };
+    
     const navigate = useNavigate();
 
     // Settings state
@@ -162,7 +169,7 @@ const Profile = () => {
         return missing;
     };
 
-    const completionPercentage = calculateCompletion();
+    const completionPercentage = healthProfile?.completionPercentage ?? calculateCompletion();
     const missingItems = getMissingItems();
 
     const calculateBMI = () => {
@@ -292,7 +299,6 @@ const Profile = () => {
         { id: 'planner', label: 'Meal Plans', icon: <IoCalendarOutline /> },
         { id: 'saved', label: 'Saved Recipes', icon: <IoBookmarkOutline /> },
         { id: 'shopping', label: 'Shopping Lists', icon: <IoCartOutline /> },
-        { id: 'collections', label: 'Collections', icon: <IoFolderOutline /> },
         { id: 'settings', label: 'Settings', icon: <IoSettingsOutline /> }
     ];
 
@@ -315,8 +321,10 @@ const Profile = () => {
                             animate={{ opacity: 1 }} 
                             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                         >
-                            <div className="w-8 h-8 rounded-lg vitality-gradient shadow-lg"></div>
-                            <span className="font-headline font-black text-xl tracking-tighter text-on-surface">RecipeHub</span>
+                            <div className="w-8 h-8 rounded-xl vitality-gradient flex items-center justify-center text-white shadow-lg">
+                                <IoRestaurantOutline className="text-lg" />
+                            </div>
+                            <span className="font-headline font-black text-xl tracking-tight text-on-surface">RecipeHub</span>
                         </motion.button>
                     )}
                     <button 
@@ -336,8 +344,8 @@ const Profile = () => {
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="px-6 mb-8"
                         >
-                            <div className="bg-surface-container-low p-4 rounded-3xl flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white shadow-sm border border-white">
+                            <div className="bg-surface-container-low/50 p-4 rounded-3xl flex items-center gap-4 border border-white">
+                                <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white shadow-sm border border-outline-variant/10">
                                     <img 
                                         src={profile?.profilePhoto ? resolveImageUrl(profile.profilePhoto) : generalProfilePic} 
                                         className="w-full h-full object-cover" 
@@ -345,8 +353,8 @@ const Profile = () => {
                                     />
                                 </div>
                                 <div className="overflow-hidden">
-                                    <p className="font-bold text-sm truncate">{profile?.name || "Member"}</p>
-                                    <p className="text-[10px] font-black uppercase text-primary/60">{profile?.role}</p>
+                                    <p className="font-black text-sm truncate">{profile?.name || "Guest"}</p>
+                                    <p className="text-[10px] font-black uppercase text-primary/60 tracking-widest">{profile?.role || "Member"}</p>
                                 </div>
                             </div>
                         </motion.div>
@@ -357,10 +365,10 @@ const Profile = () => {
                 <nav className="flex-grow px-4 space-y-2 pb-4">
                     <Link
                         to="/"
-                        className="w-full flex items-center gap-4 p-4 rounded-2xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all mb-4 border-b border-outline-variant/10"
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl text-on-surface-variant hover:bg-primary hover:text-white transition-all mb-4 border-b border-outline-variant/10 group"
                     >
-                        <span className="text-xl shrink-0"><IoChevronBackOutline /></span>
-                        {isSidebarOpen && <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-bold text-sm">Back to Home</motion.span>}
+                        <span className="text-xl shrink-0 material-symbols-outlined">home</span>
+                        {isSidebarOpen && <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-black text-xs uppercase tracking-widest">Home Page</motion.span>}
                     </Link>
 
                     {TABS.map(tab => (
@@ -595,6 +603,12 @@ const Profile = () => {
                             {activeTab === 'collections' && (
                                 <div className="px-4">
                                     <CollectionsTab />
+                                </div>
+                            )}
+                            
+                            {activeTab === 'shopping' && (
+                                <div className="px-4">
+                                    <ShoppingListsTab />
                                 </div>
                             )}
 

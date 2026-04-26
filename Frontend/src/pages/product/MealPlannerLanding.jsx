@@ -112,42 +112,48 @@ const MealPlannerLanding = ({ isTab = false }) => {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 1.05 }}
-                            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+                            className="flex flex-col md:flex-row gap-8 items-stretch"
                         >
                             {/* Create New Plan Card */}
                             <button 
                                 onClick={() => setView("create")}
-                                className="group relative bg-white/60 backdrop-blur-xl p-10 rounded-[3.5rem] border border-white hover:border-primary/30 transition-all text-left botanical-shadow overflow-hidden"
+                                className="flex-1 group relative bg-white rounded-[3rem] p-12 border border-white hover:border-primary/20 hover:shadow-2xl transition-all text-left flex flex-col botanical-shadow overflow-hidden"
                             >
-                                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                                    <IoAddCircleOutline className="w-40 h-40" />
+                                <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-8 group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                                    <span className="material-symbols-outlined text-3xl">add_circle</span>
                                 </div>
-                                <div className="w-16 h-16 rounded-3xl bg-primary text-white flex items-center justify-center mb-8 shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
-                                    <IoAddCircleOutline className="w-8 h-8" />
+                                <div className="mt-auto relative z-10">
+                                    <h3 className="text-3xl font-headline font-black text-on-surface mb-3 tracking-tight">Create New Plan</h3>
+                                    <p className="text-on-surface-variant font-medium opacity-60 mb-8 max-w-[240px]">Start a fresh weekly guide tailored to your dietary goals.</p>
+                                    <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-primary text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
+                                        Get Started <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                    </div>
                                 </div>
-                                <h3 className="text-3xl font-headline font-black text-on-surface mb-4">Create New Plan</h3>
-                                <p className="text-on-surface-variant font-medium opacity-60 mb-8">Start a fresh weekly guide for your meals.</p>
-                                <div className="flex items-center gap-2 text-primary font-black uppercase text-xs tracking-widest">
-                                    Get Started <IoChevronForwardOutline />
-                                </div>
+                                
+                                {/* Background Decoration */}
+                                <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors"></div>
+                                <span className="material-symbols-outlined absolute top-10 right-10 text-[120px] opacity-[0.03] group-hover:opacity-[0.08] transition-opacity -rotate-12">auto_awesome</span>
                             </button>
 
                             {/* View Existing Plans Card */}
                             <button 
                                 onClick={() => setView("existing")}
-                                className="group relative bg-white/60 backdrop-blur-xl p-10 rounded-[3.5rem] border border-white hover:border-primary/30 transition-all text-left botanical-shadow overflow-hidden"
+                                className="flex-1 group relative bg-on-surface rounded-[3rem] p-12 border border-white/10 hover:shadow-2xl transition-all text-left flex flex-col overflow-hidden shadow-2xl shadow-black/20"
                             >
-                                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                                    <IoLibraryOutline className="w-40 h-40" />
+                                <div className="w-16 h-16 rounded-2xl bg-white/10 text-white flex items-center justify-center mb-8 group-hover:bg-white group-hover:text-on-surface transition-all duration-500">
+                                    <span className="material-symbols-outlined text-3xl">library_books</span>
                                 </div>
-                                <div className="w-16 h-16 rounded-3xl bg-surface-container-high text-on-surface flex items-center justify-center mb-8 shadow-lg group-hover:scale-110 transition-transform">
-                                    <IoLibraryOutline className="w-8 h-8" />
+                                <div className="mt-auto relative z-10">
+                                    <h3 className="text-3xl font-headline font-black text-white mb-3 tracking-tight">Saved Library</h3>
+                                    <p className="text-white/40 font-medium mb-8 max-w-[240px]">Access and manage your collection of previously built plans.</p>
+                                    <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/10 text-white font-black uppercase text-[10px] tracking-widest border border-white/10 group-hover:bg-white group-hover:text-on-surface transition-colors">
+                                        View Library <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                    </div>
                                 </div>
-                                <h3 className="text-3xl font-headline font-black text-on-surface mb-4">Saved Library</h3>
-                                <p className="text-on-surface-variant font-medium opacity-60 mb-8">View and edit your existing meal plans.</p>
-                                <div className="flex items-center gap-2 text-on-surface font-black uppercase text-xs tracking-widest opacity-40">
-                                    View Plans <IoChevronForwardOutline />
-                                </div>
+                                
+                                {/* Background Decoration */}
+                                <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
+                                <span className="material-symbols-outlined absolute top-10 right-10 text-[120px] opacity-[0.05] group-hover:opacity-[0.1] transition-opacity rotate-12">inventory_2</span>
                             </button>
                         </motion.div>
                     )}
