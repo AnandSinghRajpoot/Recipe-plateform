@@ -28,7 +28,7 @@ import MealPlanner from './pages/product/MealPlanner.jsx';
 import MealPlannerLanding from './pages/product/MealPlannerLanding.jsx';
 import ChefProfile from './pages/ChefProfile.jsx';
 import ShoppingListPage from './pages/product/ShoppingListPage.jsx';
-
+import CollectionDetail from './pages/product/CollectionDetail.jsx';
 
 const router = createBrowserRouter([
   {
@@ -137,6 +137,10 @@ const router = createBrowserRouter([
         {
           path: "/shopping-list/:id",
           element: <ShoppingListPage />
+        },
+        {
+          path: "/collections/:id",
+          element: <CollectionDetail />
         },
     ]
   }

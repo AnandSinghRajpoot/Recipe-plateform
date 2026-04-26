@@ -74,6 +74,7 @@ const SavedRecipesTab = () => {
             await apiClient.post(`/collections/${collectionId}/recipes/${recipeId}/add`);
             toast.success('Recipe added to collection');
             fetchSavedRecipes();
+            fetchCollections(); // Update item counts
         } catch (err) {
             toast.error('Failed to add recipe to collection');
         }
@@ -102,11 +103,11 @@ const SavedRecipesTab = () => {
         <div className="space-y-8 animate-fade-in-up">
             <header className="flex justify-between items-end border-b border-outline-variant/10 pb-6">
                 <div>
-                    <h2 className="text-3xl font-headline font-black tracking-tighter text-on-surface">Saved Compositions</h2>
-                    <p className="text-on-surface-variant mt-2 font-medium">Your personal vault of favorite botanical recipes.</p>
+                    <h2 className="text-3xl font-headline font-black tracking-tighter text-on-surface">Saved Recipes</h2>
+                    <p className="text-on-surface-variant mt-2 font-medium">Your personal vault of favorite culinary inspirations.</p>
                 </div>
                 <div className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-4 py-2 rounded-xl border border-primary/20">
-                    {recipes.length} Saved • Drag recipes to collections below
+                    {recipes.length} Items Saved
                 </div>
             </header>
 
@@ -138,19 +139,36 @@ const SavedRecipesTab = () => {
                         No collections yet. Create one to organize your recipes!
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {collections.map(collection => (
-                            <Link 
-                                to={`/collections/${collection.id}`}
-                                key={collection.id}
-                                onDragOver={handleDragOver}
-                                onDrop={(e) => handleDrop(e, collection.id)}
-                                className="bg-white rounded-2xl p-4 border border-outline-variant/10 shadow-sm hover:border-primary/40 hover:shadow-md transition-all group flex flex-col items-center justify-center gap-2 cursor-pointer h-24"
-                            >
-                                <span className="material-symbols-outlined text-primary/60 group-hover:text-primary group-hover:scale-110 transition-transform">folder_special</span>
-                                <span className="text-xs font-bold text-center text-on-surface line-clamp-2">{collection.name}</span>
-                                <span className="text-[10px] text-on-surface-variant font-medium">{collection.recipeCount || 0} items</span>
-                            </Link>
+                            <div key={collection.id} className="relative group">
+                                <Link 
+                                    to={`/collections/${collection.id}`}
+                                    onDragOver={handleDragOver}
+                                    onDrop={(e) => handleDrop(e, collection.id)}
+                                    className="bg-white rounded-2xl p-4 border border-outline-variant/10 shadow-sm hover:border-primary/40 hover:shadow-md transition-all flex flex-col items-center justify-center gap-1 cursor-pointer h-24 overflow-hidden"
+                                >
+                                    <span className="material-symbols-outlined text-primary/60 group-hover:text-primary group-hover:scale-110 transition-transform">folder_special</span>
+                                    <span className="text-xs font-bold text-center text-on-surface whitespace-nowrap truncate w-full px-2">{collection.name}</span>
+                                    <span className="text-[10px] text-on-surface-variant font-medium">{collection.recipes?.length || 0} items</span>
+                                </Link>
+                                <button 
+                                    onClick={async (e) => {
+                                        e.preventDefault();
+                                        if (!window.confirm("Delete this collection?")) return;
+                                        try {
+                                            await apiClient.delete(`/collections/${collection.id}`);
+                                            toast.success("Collection deleted");
+                                            fetchCollections();
+                                        } catch (err) {
+                                            toast.error("Failed to delete collection");
+                                        }
+                                    }}
+                                    className="absolute -top-1 -right-1 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 shadow-lg z-20"
+                                >
+                                    <span className="material-symbols-outlined text-[12px]">close</span>
+                                </button>
+                            </div>
                         ))}
                     </div>
                 )}
@@ -201,7 +219,7 @@ const SavedRecipesTab = () => {
                                 </div>
                             </div>
                             
-                            <Link to={`/recipes/${recipeId}`} className="absolute inset-0 z-0"></Link>
+                            <Link to={`/items/${recipeId}`} className="absolute inset-0 z-0"></Link>
                         </div>
                     ))}
                 </div>
