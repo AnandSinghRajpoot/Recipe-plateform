@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface ShoppingListRepository extends JpaRepository<ShoppingList, Long> {
     List<ShoppingList> findByUserOrderByCreatedAtDesc(User user);
+    List<ShoppingList> findByUserIdOrderByCreatedAtDesc(Long userId);
 }

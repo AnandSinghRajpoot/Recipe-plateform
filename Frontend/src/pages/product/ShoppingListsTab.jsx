@@ -12,9 +12,16 @@ const ShoppingListsTab = () => {
     useEffect(() => {
         const fetchLists = async () => {
             try {
-                const res = await apiClient.get('/shopping-lists');
-                setLists(res.data.data);
+                console.log("Fetching shopping lists...");
+                const res = await apiClient.get(`/shopping-lists?t=${Date.now()}`);
+                console.log("Fetched lists response:", res.data);
+                if (res.data && res.data.data) {
+                    setLists(res.data.data);
+                } else {
+                    setLists([]);
+                }
             } catch (err) {
+                console.error("Failed to load shopping lists:", err);
                 toast.error("Failed to load shopping lists");
             } finally {
                 setLoading(false);
@@ -22,6 +29,18 @@ const ShoppingListsTab = () => {
         };
         fetchLists();
     }, []);
+
+    const handleDelete = async (e, id) => {
+        e.stopPropagation();
+        if (!window.confirm("Delete this shopping list?")) return;
+        try {
+            await apiClient.delete(`/shopping-lists/${id}`);
+            setLists(prev => prev.filter(l => l.id !== id));
+            toast.success("List deleted");
+        } catch (err) {
+            toast.error("Failed to delete list");
+        }
+    };
 
     if (loading) return (
         <div className="py-20 flex justify-center">
@@ -48,11 +67,19 @@ const ShoppingListsTab = () => {
                 >
                     <div className="flex justify-between items-start mb-6">
                         <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                            <span className="material-symbols-outlined text-3xl">shopping_basket</span>
+                            <span className="material-symbols-outlined text-3xl">receipt_long</span>
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                            {new Date(list.createdAt).toLocaleDateString()}
-                        </span>
+                        <div className="flex flex-col items-end gap-2">
+                            <button 
+                                onClick={(e) => handleDelete(e, list.id)}
+                                className="w-8 h-8 rounded-full bg-error/10 text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-error hover:text-white"
+                            >
+                                <span className="material-symbols-outlined text-sm">delete</span>
+                            </button>
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                                {list.createdAt ? new Date(list.createdAt).toLocaleDateString() : 'Recently'}
+                            </span>
+                        </div>
                     </div>
 
                     <h4 className="text-xl font-black text-on-surface mb-2 group-hover:text-primary transition-colors">
@@ -60,10 +87,15 @@ const ShoppingListsTab = () => {
                     </h4>
                     
                     <div className="flex items-center gap-4 mt-6 pt-6 border-t border-outline-variant/10">
-                        <div className="flex -space-x-2">
-                            {/* Placeholder for recipe avatars if available */}
-                            {[1,2,3].map(i => (
-                                <div key={i} className="w-6 h-6 rounded-full bg-surface-container-high border-2 border-white"></div>
+                        <div className="flex -space-x-1">
+                            {[
+                                { icon: 'nutrition', color: 'bg-green-100 text-green-600' },
+                                { icon: 'category', color: 'bg-blue-100 text-blue-600' },
+                                { icon: 'task_alt', color: 'bg-amber-100 text-amber-600' }
+                            ].map((item, idx) => (
+                                <div key={idx} className={`w-7 h-7 rounded-full ${item.color} border-2 border-white flex items-center justify-center shadow-sm`}>
+                                    <span className="material-symbols-outlined text-[12px]">{item.icon}</span>
+                                </div>
                             ))}
                         </div>
                         <p className="text-xs font-bold text-on-surface-variant">

@@ -12,11 +12,10 @@ const ShoppingListPage = () => {
 
     const fetchList = async () => {
         try {
-            const res = await apiClient.get(`/shopping-lists`);
-            // Find the specific list in user's lists
-            const found = res.data.data.find(l => l.id.toString() === id);
-            if (found) setList(found);
-            else toast.error("List not found");
+            // Small delay to ensure DB transaction is committed
+            await new Promise(resolve => setTimeout(resolve, 400));
+            const res = await apiClient.get(`/shopping-lists/${id}?t=${Date.now()}`);
+            setList(res.data.data);
         } catch (err) {
             toast.error("Failed to load shopping list");
         } finally {
@@ -51,7 +50,7 @@ const ShoppingListPage = () => {
         try {
             await apiClient.delete(`/shopping-lists/${id}`);
             toast.success("List deleted");
-            navigate('/profile');
+            navigate('/profile?tab=shopping');
         } catch (err) {
             toast.error("Delete failed");
         }
@@ -100,11 +99,11 @@ const ShoppingListPage = () => {
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
                             <button 
-                                onClick={() => navigate('/profile')}
+                                onClick={() => navigate('/profile?tab=shopping')}
                                 className="text-[10px] font-black uppercase tracking-widest text-primary mb-4 flex items-center gap-2"
                             >
                                 <span className="material-symbols-outlined text-sm">arrow_back</span>
-                                Back to Profile
+                                Back
                             </button>
                             <h1 className="text-4xl md:text-5xl font-headline font-black tracking-tighter">
                                 {list.name}
@@ -190,13 +189,13 @@ const ShoppingListPage = () => {
                                                 {item.ingredientName}
                                             </h4>
                                             <p className="text-xs font-black uppercase tracking-widest opacity-40">
-                                                {item.quantity} {item.unit}
+                                                {typeof item.quantity === 'number' ? Math.round(item.quantity * 100) / 100 : item.quantity} {item.unit}
                                             </p>
                                         </div>
                                         
                                         {!item.isChecked && (
-                                            <div className="w-10 h-10 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-surface-container-high">
-                                                <span className="material-symbols-outlined text-base">edit</span>
+                                            <div className="w-10 h-10 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-green-50 text-green-600">
+                                                <span className="material-symbols-outlined text-base">check</span>
                                             </div>
                                         )}
                                     </motion.div>
