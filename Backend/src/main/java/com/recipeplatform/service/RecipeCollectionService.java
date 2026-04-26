@@ -46,22 +46,21 @@ public class RecipeCollectionService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
-    public RecipeCollectionDTO addRecipeToCollection(Long collectionId, Long recipeId, Long userId) {
+    @Transactional(readOnly = true)
+    public RecipeCollectionDTO getCollectionById(Long collectionId, Long userId) {
         RecipeCollection collection = collectionRepository.findById(collectionId)
                 .orElseThrow(() -> new RuntimeException("Collection not found"));
-
+        
         if (!collection.getUser().getId().equals(userId)) {
             throw new RuntimeException("Unauthorized");
         }
-
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new RuntimeException("Recipe not found"));
-
-        collection.getRecipes().add(recipe);
-        collectionRepository.save(collection);
         
         return mapToDTO(collection);
+    }
+
+    @Transactional
+    public RecipeCollectionDTO addRecipeToCollection(Long collectionId, Long recipeId, Long userId) {
+        return addSavedRecipeToCollection(collectionId, recipeId, userId);
     }
 
     @Transactional
@@ -72,6 +71,24 @@ public class RecipeCollectionService {
             throw new RuntimeException("Unauthorized");
         }
         collectionRepository.delete(collection);
+    }
+
+    @Transactional
+    public RecipeCollectionDTO removeRecipeFromCollection(Long collectionId, Long recipeId, Long userId) {
+        RecipeCollection collection = collectionRepository.findById(collectionId)
+                .orElseThrow(() -> new RuntimeException("Collection not found"));
+
+        if (!collection.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new RuntimeException("Recipe not found"));
+
+        collection.getRecipes().remove(recipe);
+        collectionRepository.save(collection);
+
+        return mapToDTO(collection);
     }
 
     @Transactional
@@ -99,20 +116,29 @@ public class RecipeCollectionService {
 
     @Transactional
     public RecipeCollectionDTO addSavedRecipeToCollection(Long collectionId, Long recipeId, Long userId) {
-        RecipeCollection collection = collectionRepository.findById(collectionId)
+        RecipeCollection targetCollection = collectionRepository.findById(collectionId)
                 .orElseThrow(() -> new RuntimeException("Collection not found"));
 
-        if (!collection.getUser().getId().equals(userId)) {
+        if (!targetCollection.getUser().getId().equals(userId)) {
             throw new RuntimeException("Unauthorized");
         }
 
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new RuntimeException("Recipe not found"));
 
-        collection.getRecipes().add(recipe);
-        collectionRepository.save(collection);
+        // Enforce single collection rule: Remove recipe from any other collection owned by this user
+        List<RecipeCollection> userCollections = collectionRepository.findByUserId(userId);
+        for (RecipeCollection col : userCollections) {
+            if (!col.getId().equals(collectionId) && col.getRecipes().contains(recipe)) {
+                col.getRecipes().remove(recipe);
+                collectionRepository.save(col);
+            }
+        }
 
-        return mapToDTO(collection);
+        targetCollection.getRecipes().add(recipe);
+        collectionRepository.save(targetCollection);
+
+        return mapToDTO(targetCollection);
     }
 
     private RecipeCollectionDTO mapToDTO(RecipeCollection collection) {
