@@ -6,9 +6,7 @@ import com.recipeplatform.domain.enums.DietType;
 import com.recipeplatform.domain.enums.MealType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -19,7 +17,10 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"user", "nutrition", "ingredients"})
+@EqualsAndHashCode(exclude = {"user", "nutrition", "ingredients"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class Recipe {
