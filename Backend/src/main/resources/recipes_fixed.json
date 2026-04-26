@@ -9338,5 +9338,1000 @@
       "fat": 11
     },
     "cuisine_type": "AMERICAN"
+  },
+  "chana-masala": {
+    "title": "Chana Masala",
+    "description": "Hearty chickpea curry simmered with tomatoes, onion, and warm Indian spices.",
+    "ingredients": [
+      {
+        "name": "chickpeas",
+        "quantity": 2.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "onion",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "tomatoes",
+        "quantity": 2.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "ginger-garlic paste",
+        "quantity": 1.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "cumin seeds",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "coriander powder",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "garam masala",
+        "quantity": 0.5,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "turmeric",
+        "quantity": 0.5,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "oil",
+        "quantity": 2.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "salt",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      }
+    ],
+    "instructions": [
+      "Heat oil in a pan and crackle the cumin seeds.",
+      "Saute the chopped onion until golden.",
+      "Add ginger-garlic paste and cook for 1 minute.",
+      "Stir in chopped tomatoes, turmeric, coriander powder, and salt.",
+      "Cook until the tomatoes turn soft and saucy.",
+      "Add chickpeas with a splash of water and simmer for 10 minutes.",
+      "Finish with garam masala and serve hot."
+    ],
+    "prepTime": 10,
+    "cookTime": 25,
+    "servings": 4,
+    "nutrition": {
+      "calories": 260,
+      "protein": 11,
+      "carbs": 35,
+      "fat": 8
+    },
+    "cuisine_type": "INDIAN"
+  },
+  "aloo-matar": {
+    "title": "Aloo Matar",
+    "description": "Comforting North Indian curry made with potatoes and green peas in a spiced tomato gravy.",
+    "ingredients": [
+      {
+        "name": "potatoes",
+        "quantity": 3.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "green peas",
+        "quantity": 1.5,
+        "unit": "CUP"
+      },
+      {
+        "name": "onion",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "tomatoes",
+        "quantity": 2.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "ginger",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "cumin seeds",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "turmeric",
+        "quantity": 0.5,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "coriander powder",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "oil",
+        "quantity": 2.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "salt",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      }
+    ],
+    "instructions": [
+      "Dice the potatoes and finely chop the onion, tomatoes, and ginger.",
+      "Heat oil in a pan and add cumin seeds.",
+      "Saute the onion and ginger until fragrant.",
+      "Add tomatoes, turmeric, coriander powder, and salt and cook into a thick masala.",
+      "Add potatoes and mix well to coat.",
+      "Pour in a little water, cover, and cook until the potatoes are almost tender.",
+      "Add green peas and simmer until everything is cooked through.",
+      "Serve warm with roti or rice."
+    ],
+    "prepTime": 12,
+    "cookTime": 25,
+    "servings": 4,
+    "nutrition": {
+      "calories": 210,
+      "protein": 6,
+      "carbs": 32,
+      "fat": 7
+    },
+    "cuisine_type": "INDIAN"
+  },
+  "vegetable-jalfrezi": {
+    "title": "Vegetable Jalfrezi",
+    "description": "Colorful mixed vegetables tossed in a tangy, spicy Indian-style stir-fry sauce.",
+    "ingredients": [
+      {
+        "name": "bell peppers",
+        "quantity": 2.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "carrot",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "french beans",
+        "quantity": 1.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "onion",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "tomato puree",
+        "quantity": 0.75,
+        "unit": "CUP"
+      },
+      {
+        "name": "ginger-garlic paste",
+        "quantity": 1.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "cumin seeds",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "garam masala",
+        "quantity": 0.5,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "oil",
+        "quantity": 2.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "salt",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      }
+    ],
+    "instructions": [
+      "Slice all the vegetables into thin strips.",
+      "Heat oil in a wide pan and add cumin seeds.",
+      "Saute the onion and ginger-garlic paste for 2 minutes.",
+      "Add tomato puree and salt and cook until slightly thick.",
+      "Add carrot, beans, and bell peppers and stir-fry on medium-high heat.",
+      "Cook until the vegetables are tender-crisp.",
+      "Sprinkle garam masala, toss well, and serve hot."
+    ],
+    "prepTime": 15,
+    "cookTime": 20,
+    "servings": 4,
+    "nutrition": {
+      "calories": 150,
+      "protein": 4,
+      "carbs": 16,
+      "fat": 8
+    },
+    "cuisine_type": "INDIAN"
+  },
+  "stuffed-grape-leaves": {
+    "title": "Stuffed Grape Leaves",
+    "description": "Tender grape leaves filled with herbed rice and finished with lemon and olive oil.",
+    "ingredients": [
+      {
+        "name": "grape leaves",
+        "quantity": 20.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "rice",
+        "quantity": 1.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "onion",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "parsley",
+        "quantity": 0.5,
+        "unit": "CUP"
+      },
+      {
+        "name": "dill",
+        "quantity": 0.25,
+        "unit": "CUP"
+      },
+      {
+        "name": "lemon juice",
+        "quantity": 3.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "olive oil",
+        "quantity": 3.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "salt",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      }
+    ],
+    "instructions": [
+      "Rinse the grape leaves and blanch briefly if they are packed in brine.",
+      "Mix rice with finely chopped onion, parsley, dill, half the lemon juice, salt, and 1 tablespoon olive oil.",
+      "Place a small spoonful of filling on each leaf and roll tightly.",
+      "Arrange the rolls seam-side down in a pot.",
+      "Drizzle with the remaining olive oil and lemon juice and add enough water to barely cover.",
+      "Simmer on low heat until the rice is tender.",
+      "Cool slightly before serving."
+    ],
+    "prepTime": 25,
+    "cookTime": 40,
+    "servings": 6,
+    "nutrition": {
+      "calories": 170,
+      "protein": 3,
+      "carbs": 24,
+      "fat": 7
+    },
+    "cuisine_type": "MEDITERRANEAN"
+  },
+  "vegetable-pad-thai": {
+    "title": "Vegetable Pad Thai",
+    "description": "Rice noodles tossed with tofu, crunchy vegetables, tamarind, and peanuts.",
+    "ingredients": [
+      {
+        "name": "rice noodles",
+        "quantity": 200.0,
+        "unit": "GRAM"
+      },
+      {
+        "name": "firm tofu",
+        "quantity": 200.0,
+        "unit": "GRAM"
+      },
+      {
+        "name": "bean sprouts",
+        "quantity": 1.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "carrot",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "spring onions",
+        "quantity": 3.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "tamarind paste",
+        "quantity": 2.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "soy sauce",
+        "quantity": 2.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "peanuts",
+        "quantity": 0.25,
+        "unit": "CUP"
+      },
+      {
+        "name": "lime",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "oil",
+        "quantity": 2.0,
+        "unit": "TABLESPOON"
+      }
+    ],
+    "instructions": [
+      "Soak the rice noodles in warm water until softened.",
+      "Cut the tofu into cubes and pan-fry in a little oil until golden.",
+      "Stir together tamarind paste, soy sauce, and a splash of water.",
+      "Heat the remaining oil and stir-fry carrot and spring onions for 2 minutes.",
+      "Add noodles, tofu, and the sauce and toss until evenly coated.",
+      "Fold in bean sprouts and cook briefly.",
+      "Top with crushed peanuts and lime wedges before serving."
+    ],
+    "prepTime": 15,
+    "cookTime": 15,
+    "servings": 4,
+    "nutrition": {
+      "calories": 320,
+      "protein": 13,
+      "carbs": 38,
+      "fat": 13
+    },
+    "cuisine_type": "ASIAN"
+  },
+  "sesame-garlic-noodles": {
+    "title": "Sesame Garlic Noodles",
+    "description": "Savory noodles coated in a glossy sesame, soy, and garlic sauce.",
+    "ingredients": [
+      {
+        "name": "noodles",
+        "quantity": 250.0,
+        "unit": "GRAM"
+      },
+      {
+        "name": "garlic cloves",
+        "quantity": 4.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "soy sauce",
+        "quantity": 3.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "sesame oil",
+        "quantity": 1.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "peanut butter",
+        "quantity": 1.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "brown sugar",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "chili flakes",
+        "quantity": 0.5,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "spring onions",
+        "quantity": 2.0,
+        "unit": "PIECE"
+      }
+    ],
+    "instructions": [
+      "Cook the noodles according to package instructions and drain.",
+      "Mince the garlic and slice the spring onions.",
+      "Whisk soy sauce, sesame oil, peanut butter, brown sugar, and chili flakes into a smooth sauce.",
+      "Warm a pan and saute the garlic for a few seconds.",
+      "Add the noodles and sauce and toss until everything is coated.",
+      "Finish with spring onions and serve immediately."
+    ],
+    "prepTime": 10,
+    "cookTime": 12,
+    "servings": 4,
+    "nutrition": {
+      "calories": 290,
+      "protein": 8,
+      "carbs": 42,
+      "fat": 10
+    },
+    "cuisine_type": "ASIAN"
+  },
+  "tofu-lettuce-wraps": {
+    "title": "Tofu Lettuce Wraps",
+    "description": "Crisp lettuce cups filled with savory tofu, mushrooms, and fresh vegetables.",
+    "ingredients": [
+      {
+        "name": "firm tofu",
+        "quantity": 250.0,
+        "unit": "GRAM"
+      },
+      {
+        "name": "lettuce leaves",
+        "quantity": 10.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "mushrooms",
+        "quantity": 1.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "carrot",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "spring onions",
+        "quantity": 2.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "soy sauce",
+        "quantity": 2.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "sesame oil",
+        "quantity": 1.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "garlic cloves",
+        "quantity": 2.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "ginger",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      }
+    ],
+    "instructions": [
+      "Crumble the tofu and finely chop the mushrooms, carrot, garlic, and ginger.",
+      "Heat sesame oil in a pan and saute garlic and ginger until fragrant.",
+      "Add mushrooms and carrot and cook until softened.",
+      "Stir in the tofu and soy sauce and cook until the mixture is lightly browned.",
+      "Spoon the filling into lettuce leaves.",
+      "Top with sliced spring onions and serve immediately."
+    ],
+    "prepTime": 15,
+    "cookTime": 12,
+    "servings": 4,
+    "nutrition": {
+      "calories": 180,
+      "protein": 12,
+      "carbs": 10,
+      "fat": 10
+    },
+    "cuisine_type": "ASIAN"
+  },
+  "black-bean-chili": {
+    "title": "Black Bean Chili",
+    "description": "A thick and smoky vegan chili packed with beans, vegetables, and warming spices.",
+    "ingredients": [
+      {
+        "name": "black beans",
+        "quantity": 2.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "onion",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "bell pepper",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "tomatoes",
+        "quantity": 3.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "corn",
+        "quantity": 1.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "garlic cloves",
+        "quantity": 3.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "chili powder",
+        "quantity": 1.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "cumin powder",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "oil",
+        "quantity": 2.0,
+        "unit": "TABLESPOON"
+      }
+    ],
+    "instructions": [
+      "Heat oil in a pot and saute onion, bell pepper, and garlic until soft.",
+      "Add chopped tomatoes, chili powder, and cumin powder and cook for a few minutes.",
+      "Stir in black beans and corn.",
+      "Add a splash of water and simmer until thick and flavorful.",
+      "Taste and adjust seasoning if needed.",
+      "Serve hot."
+    ],
+    "prepTime": 10,
+    "cookTime": 30,
+    "servings": 4,
+    "nutrition": {
+      "calories": 240,
+      "protein": 11,
+      "carbs": 31,
+      "fat": 8
+    },
+    "cuisine_type": "AMERICAN"
+  },
+  "bbq-jackfruit-sandwich": {
+    "title": "BBQ Jackfruit Sandwich",
+    "description": "Pulled jackfruit simmered in barbecue sauce and piled into soft buns.",
+    "ingredients": [
+      {
+        "name": "young jackfruit",
+        "quantity": 400.0,
+        "unit": "GRAM"
+      },
+      {
+        "name": "burger buns",
+        "quantity": 4.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "onion",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "bbq sauce",
+        "quantity": 0.75,
+        "unit": "CUP"
+      },
+      {
+        "name": "cabbage",
+        "quantity": 1.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "carrot",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "vinegar",
+        "quantity": 1.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1.0,
+        "unit": "TABLESPOON"
+      }
+    ],
+    "instructions": [
+      "Drain the jackfruit and shred it lightly with a fork.",
+      "Saute the sliced onion in olive oil until soft.",
+      "Add the jackfruit and bbq sauce and cook until the mixture thickens.",
+      "Toss shredded cabbage and carrot with vinegar to make a quick slaw.",
+      "Warm the buns.",
+      "Fill each bun with bbq jackfruit and top with slaw before serving."
+    ],
+    "prepTime": 15,
+    "cookTime": 20,
+    "servings": 4,
+    "nutrition": {
+      "calories": 310,
+      "protein": 5,
+      "carbs": 51,
+      "fat": 8
+    },
+    "cuisine_type": "AMERICAN"
+  },
+  "spaghetti-aglio-e-olio": {
+    "title": "Spaghetti Aglio e Olio",
+    "description": "Simple Italian pasta tossed with garlic, olive oil, chili flakes, and parsley.",
+    "ingredients": [
+      {
+        "name": "spaghetti",
+        "quantity": 250.0,
+        "unit": "GRAM"
+      },
+      {
+        "name": "garlic cloves",
+        "quantity": 6.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "olive oil",
+        "quantity": 4.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "chili flakes",
+        "quantity": 0.5,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "parsley",
+        "quantity": 0.25,
+        "unit": "CUP"
+      },
+      {
+        "name": "lemon juice",
+        "quantity": 1.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "salt",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      }
+    ],
+    "instructions": [
+      "Cook the spaghetti in salted water until al dente.",
+      "Slice the garlic thinly and chop the parsley.",
+      "Warm olive oil in a pan and gently cook the garlic until lightly golden.",
+      "Add chili flakes and a splash of pasta water.",
+      "Toss in the drained spaghetti, parsley, and lemon juice.",
+      "Mix well and serve immediately."
+    ],
+    "prepTime": 10,
+    "cookTime": 15,
+    "servings": 4,
+    "nutrition": {
+      "calories": 350,
+      "protein": 8,
+      "carbs": 49,
+      "fat": 13
+    },
+    "cuisine_type": "ITALIAN"
+  },
+  "pasta-e-fagioli": {
+    "title": "Pasta e Fagioli",
+    "description": "Rustic Italian soup with pasta, beans, tomatoes, and aromatic vegetables.",
+    "ingredients": [
+      {
+        "name": "small pasta",
+        "quantity": 1.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "cannellini beans",
+        "quantity": 2.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "onion",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "carrot",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "celery",
+        "quantity": 2.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "tomato puree",
+        "quantity": 1.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "vegetable broth",
+        "quantity": 1.0,
+        "unit": "LITER"
+      },
+      {
+        "name": "olive oil",
+        "quantity": 2.0,
+        "unit": "TABLESPOON"
+      }
+    ],
+    "instructions": [
+      "Heat olive oil in a pot and saute onion, carrot, and celery until softened.",
+      "Add tomato puree and cook for 2 minutes.",
+      "Pour in the vegetable broth and bring to a boil.",
+      "Add the beans and pasta.",
+      "Simmer until the pasta is tender and the soup is slightly thickened.",
+      "Adjust seasoning and serve hot."
+    ],
+    "prepTime": 12,
+    "cookTime": 25,
+    "servings": 4,
+    "nutrition": {
+      "calories": 280,
+      "protein": 12,
+      "carbs": 42,
+      "fat": 7
+    },
+    "cuisine_type": "ITALIAN"
+  },
+  "black-bean-tostadas": {
+    "title": "Black Bean Tostadas",
+    "description": "Crispy tostadas layered with seasoned black beans, fresh vegetables, and avocado.",
+    "ingredients": [
+      {
+        "name": "tostada shells",
+        "quantity": 4.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "black beans",
+        "quantity": 2.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "lettuce",
+        "quantity": 1.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "tomatoes",
+        "quantity": 2.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "avocado",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "salsa",
+        "quantity": 0.5,
+        "unit": "CUP"
+      },
+      {
+        "name": "lime",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      }
+    ],
+    "instructions": [
+      "Warm the black beans with a pinch of salt and mash them lightly.",
+      "Spread the beans over the tostada shells.",
+      "Top with shredded lettuce, diced tomatoes, and sliced avocado.",
+      "Spoon salsa over the top.",
+      "Finish with a squeeze of lime and serve immediately."
+    ],
+    "prepTime": 12,
+    "cookTime": 8,
+    "servings": 4,
+    "nutrition": {
+      "calories": 270,
+      "protein": 10,
+      "carbs": 34,
+      "fat": 10
+    },
+    "cuisine_type": "MEXICAN"
+  },
+  "mujadara": {
+    "title": "Mujadara",
+    "description": "Middle Eastern lentils and rice topped with deeply caramelized onions.",
+    "ingredients": [
+      {
+        "name": "brown lentils",
+        "quantity": 1.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "rice",
+        "quantity": 1.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "onions",
+        "quantity": 3.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "cumin powder",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "olive oil",
+        "quantity": 3.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "salt",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      }
+    ],
+    "instructions": [
+      "Cook the lentils in water until nearly tender.",
+      "Add rice and salt and continue cooking until both are soft.",
+      "Meanwhile, slice the onions thinly.",
+      "Cook the onions slowly in olive oil until deeply caramelized.",
+      "Stir cumin powder into the lentil-rice mixture.",
+      "Top with the caramelized onions and serve warm."
+    ],
+    "prepTime": 10,
+    "cookTime": 35,
+    "servings": 4,
+    "nutrition": {
+      "calories": 300,
+      "protein": 10,
+      "carbs": 47,
+      "fat": 8
+    },
+    "cuisine_type": "MIDDLE_EASTERN"
+  },
+  "ful-medames": {
+    "title": "Ful Medames",
+    "description": "Slow-simmered fava beans mashed with garlic, cumin, lemon, and olive oil.",
+    "ingredients": [
+      {
+        "name": "fava beans",
+        "quantity": 2.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "garlic cloves",
+        "quantity": 3.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "lemon",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "cumin powder",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "olive oil",
+        "quantity": 2.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "parsley",
+        "quantity": 0.25,
+        "unit": "CUP"
+      },
+      {
+        "name": "tomatoes",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      }
+    ],
+    "instructions": [
+      "Warm the fava beans in a pan with a splash of water.",
+      "Mash them lightly with a fork.",
+      "Stir in minced garlic, cumin powder, lemon juice, and olive oil.",
+      "Cook for a few minutes until creamy and hot.",
+      "Top with chopped parsley and diced tomatoes before serving."
+    ],
+    "prepTime": 10,
+    "cookTime": 15,
+    "servings": 4,
+    "nutrition": {
+      "calories": 220,
+      "protein": 11,
+      "carbs": 27,
+      "fat": 8
+    },
+    "cuisine_type": "MIDDLE_EASTERN"
+  },
+  "stuffed-bell-peppers": {
+    "title": "Stuffed Bell Peppers",
+    "description": "Bell peppers baked with a savory quinoa and vegetable filling.",
+    "ingredients": [
+      {
+        "name": "bell peppers",
+        "quantity": 4.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "quinoa",
+        "quantity": 1.0,
+        "unit": "CUP"
+      },
+      {
+        "name": "zucchini",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "tomatoes",
+        "quantity": 2.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "onion",
+        "quantity": 1.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "garlic cloves",
+        "quantity": 2.0,
+        "unit": "PIECE"
+      },
+      {
+        "name": "olive oil",
+        "quantity": 2.0,
+        "unit": "TABLESPOON"
+      },
+      {
+        "name": "paprika",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      },
+      {
+        "name": "salt",
+        "quantity": 1.0,
+        "unit": "TEASPOON"
+      }
+    ],
+    "instructions": [
+      "Cook the quinoa until fluffy and set aside.",
+      "Cut the tops off the bell peppers and remove the seeds.",
+      "Saute onion, garlic, zucchini, and tomatoes in olive oil until softened.",
+      "Mix the vegetables with cooked quinoa, paprika, and salt.",
+      "Stuff the peppers with the filling and place them in a baking dish.",
+      "Bake until the peppers are tender and lightly browned on top.",
+      "Serve warm."
+    ],
+    "prepTime": 20,
+    "cookTime": 30,
+    "servings": 4,
+    "nutrition": {
+      "calories": 230,
+      "protein": 7,
+      "carbs": 30,
+      "fat": 9
+    },
+    "cuisine_type": "CONTINENTAL"
   }
 }

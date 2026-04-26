@@ -28,8 +28,9 @@ function App() {
     "/checkout",
     "/chef-dashboard",
     "/recipes",
-    "/search"
-  ].some(path => location.pathname === path || location.pathname.startsWith("/edit-recipe/") || location.pathname.startsWith("/chef/"));
+    "/search",
+    "/shopping-list"
+  ].some(path => location.pathname === path || location.pathname.startsWith("/edit-recipe/") || location.pathname.startsWith("/chef/") || location.pathname.startsWith("/shopping-list/"));
 
   return (
     <ErrorBoundary>
@@ -53,8 +54,8 @@ function App() {
           </div>
         
           {!hideHeaderFooter && <Footer/>}
-          <ShoppingFloatingAction />
         </div>
+        <ShoppingFloatingAction />
       </ShoppingProvider>
     </ErrorBoundary>
   )
