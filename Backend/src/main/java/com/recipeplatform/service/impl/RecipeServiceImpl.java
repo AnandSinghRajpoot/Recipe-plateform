@@ -157,6 +157,10 @@ public class RecipeServiceImpl implements RecipeService {
             })
             .collect(Collectors.toList()));
             
+        // Increment view count
+        recipe.setViewCount(recipe.getViewCount() != null ? recipe.getViewCount() + 1 : 1L);
+        recipeRepository.save(recipe);
+
         return dto;
     }
 

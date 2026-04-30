@@ -111,6 +111,9 @@ public class Recipe {
     @Column(name = "review_count")
     private Long reviewCount = 0L;
 
+    @Column(name = "view_count")
+    private Long viewCount = 0L;
+
     // === Publication Status ===
     @Column(name = "is_published", nullable = false)
     private Boolean isPublished = false;

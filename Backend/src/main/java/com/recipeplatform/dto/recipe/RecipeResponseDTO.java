@@ -63,6 +63,8 @@ public class RecipeResponseDTO {
     private Double averageRating = 0.0;
     @Builder.Default
     private Long reviewCount = 0L;
+    @Builder.Default
+    private Long viewCount = 0L;
 
     private List<CommentResponseDto> comments;
     
