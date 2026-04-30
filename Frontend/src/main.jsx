@@ -29,6 +29,7 @@ import MealPlannerLanding from './pages/product/MealPlannerLanding.jsx';
 import ChefProfile from './pages/ChefProfile.jsx';
 import ShoppingListPage from './pages/product/ShoppingListPage.jsx';
 import CollectionDetail from './pages/product/CollectionDetail.jsx';
+import { PrivacyStrategy, TermsOfVitality, CookieEthics } from './pages/legal/LegalPages.jsx';
 
 const router = createBrowserRouter([
   {
@@ -141,6 +142,18 @@ const router = createBrowserRouter([
         {
           path: "/collections/:id",
           element: <CollectionDetail />
+        },
+        {
+          path: "/privacy-strategy",
+          element: <PrivacyStrategy />
+        },
+        {
+          path: "/terms-of-vitality",
+          element: <TermsOfVitality />
+        },
+        {
+          path: "/cookie-ethics",
+          element: <CookieEthics />
         },
     ]
   }

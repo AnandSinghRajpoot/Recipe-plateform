@@ -2,17 +2,18 @@ import React from "react";
 import { HiOutlineBars3BottomRight } from "react-icons/hi2";
 import { RiCloseCircleLine } from "react-icons/ri";
 import { Link, useNavigate } from "react-router-dom";
+import ConfirmationModal from "../common/ConfirmationModal";
 
 export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
   const isChef = role === "CHEF" || role === "ADMIN";
+  const [logoutModalOpen, setLogoutModalOpen] = React.useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    alert("Logged out successfully!");
     navigate("/login");
     onClose();
   };
@@ -106,7 +107,7 @@ export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
                   Profile Settings
                 </Link>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => setLogoutModalOpen(true)}
                   className="w-full py-4 text-error font-black hover:bg-error/5 rounded-2xl transition-colors"
                 >
                   Sign Out
@@ -120,6 +121,16 @@ export const MobileNav = ({ menuItems, Logo, onClose, hideLeft, onOpen }) => {
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+        title="Sign Out"
+        message="Are you sure you want to sign out?"
+        confirmText="Sign Out"
+        type="warning"
+      />
     </div>
   );
 };

@@ -11,6 +11,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingProvider } from './context/ShoppingContext';
 import ShoppingFloatingAction from './components/Shopping/ShoppingFloatingAction';
+import ScrollToTop from './components/common/ScrollToTop';
 
 function App() {
   const location = useLocation();
@@ -29,12 +30,14 @@ function App() {
     "/chef-dashboard",
     "/recipes",
     "/search",
-    "/shopping-list"
-  ].some(path => location.pathname === path || location.pathname.startsWith("/edit-recipe/") || location.pathname.startsWith("/chef/") || location.pathname.startsWith("/shopping-list/"));
+    "/shopping-list",
+    "/resources"
+  ].some(path => location.pathname === path || location.pathname.startsWith("/edit-recipe/") || location.pathname.startsWith("/chef/") || location.pathname.startsWith("/shopping-list/") || location.pathname.startsWith("/meal-planner"));
 
   return (
     <ErrorBoundary>
       <ShoppingProvider>
+        <ScrollToTop />
         <Toaster position="top-right" reverseOrder={false} />
         <div className='max-w-screen-2xl mx-auto'>
           {!hideHeaderFooter && <Header/>}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import ConfirmationModal from "../common/ConfirmationModal";
 
 const DesktopNav = ({ menuItems, Logo }) => {
   const navigate = useNavigate();
@@ -11,12 +12,12 @@ const DesktopNav = ({ menuItems, Logo }) => {
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const searchRef = useRef(null);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    alert("Logged out successfully!");
     navigate("/login");
   };
 
@@ -213,7 +214,7 @@ const DesktopNav = ({ menuItems, Logo }) => {
                 My Dashboard
               </Link>
               <button
-                onClick={handleLogout}
+                onClick={() => setLogoutModalOpen(true)}
                 className="text-on-surface-variant hover:text-error px-2 py-2 transition-colors"
                 title="Logout"
               >
@@ -231,7 +232,7 @@ const DesktopNav = ({ menuItems, Logo }) => {
                 <span className="material-symbols-outlined">account_circle</span>
               </Link>
               <button
-                onClick={handleLogout}
+                onClick={() => setLogoutModalOpen(true)}
                 className="text-on-surface-variant hover:text-error px-2 py-2 transition-colors"
                 title="Logout"
               >
@@ -241,6 +242,16 @@ const DesktopNav = ({ menuItems, Logo }) => {
           )}
         </ul>
       </div>
+
+      <ConfirmationModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+        title="Sign Out"
+        message="Are you sure you want to sign out?"
+        confirmText="Sign Out"
+        type="warning"
+      />
     </div>
   );
 };
