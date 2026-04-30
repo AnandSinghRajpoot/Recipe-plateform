@@ -3,12 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../../utils/apiClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
+import BackButton from '../../components/common/BackButton';
 
 const ShoppingListPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [list, setList] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     const fetchList = async () => {
         try {
@@ -45,8 +48,7 @@ const ShoppingListPage = () => {
         }
     };
 
-    const handleDelete = async () => {
-        if (!window.confirm("Delete this shopping list?")) return;
+    const confirmDelete = async () => {
         try {
             await apiClient.delete(`/shopping-lists/${id}`);
             toast.success("List deleted");
@@ -98,13 +100,17 @@ const ShoppingListPage = () => {
                 <div className="bg-on-surface text-white p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
-                            <button 
-                                onClick={() => navigate('/profile?tab=shopping')}
-                                className="text-[10px] font-black uppercase tracking-widest text-primary mb-4 flex items-center gap-2"
-                            >
-                                <span className="material-symbols-outlined text-sm">arrow_back</span>
-                                Back
-                            </button>
+                            <BackButton 
+                                onClick={() => {
+                                    const role = localStorage.getItem("role");
+                                    if (role === "CHEF" || role === "ADMIN") {
+                                        navigate('/chef-dashboard?tab=shopping');
+                                    } else {
+                                        navigate('/profile?tab=shopping');
+                                    }
+                                }} 
+                                className="mb-4 !bg-white/10 !text-white !border-white/20 hover:!bg-white/20"
+                            />
                             <h1 className="text-4xl md:text-5xl font-headline font-black tracking-tighter">
                                 {list.name}
                             </h1>
@@ -122,7 +128,7 @@ const ShoppingListPage = () => {
                                 Export
                             </button>
                             <button 
-                                onClick={handleDelete}
+                                onClick={() => setShowDeleteModal(true)}
                                 className="bg-error/20 hover:bg-error/40 text-error-container px-4 py-3 rounded-2xl transition-all"
                             >
                                 <span className="material-symbols-outlined">delete</span>
@@ -218,6 +224,15 @@ const ShoppingListPage = () => {
                 .vitality-gradient { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
                 .font-headline { font-family: 'Manrope', sans-serif; }
             `}} />
+
+            <ConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Shopping List"
+                message="Are you sure you want to delete this shopping list? This action cannot be undone."
+                confirmText="Delete List"
+            />
         </div>
     );
 };

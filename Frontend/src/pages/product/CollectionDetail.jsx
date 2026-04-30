@@ -59,7 +59,14 @@ const CollectionDetail = () => {
             <div className="max-w-7xl mx-auto">
                 <header className="mb-12 animate-fade-in">
                     <button 
-                        onClick={() => navigate(-1)}
+                        onClick={() => {
+                            const role = localStorage.getItem("role");
+                            if (role === "CHEF" || role === "ADMIN") {
+                                navigate('/chef-dashboard?tab=collections');
+                            } else {
+                                navigate('/profile?tab=collections');
+                            }
+                        }}
                         className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors mb-6 group font-bold"
                     >
                         <span className="material-symbols-outlined group-hover:-translate-x-1 transition-transform">arrow_back</span>

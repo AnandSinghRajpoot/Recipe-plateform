@@ -5,6 +5,11 @@ import CreateRecipeForm from "./CreateRecipeForm";
 import MyRecipesTab from "./MyRecipesTab";
 import { resolveImageUrl } from "../utils/imageUtils";
 import { toast } from "react-hot-toast";
+import ConfirmationModal from "../components/common/ConfirmationModal";
+import generalProfilePic from "../assets/general-profile-pic.png";
+import SavedRecipesTab from "./product/SavedRecipesTab";
+import CollectionsTab from "./product/CollectionsTab";
+import ShoppingListsTab from "./product/ShoppingListsTab";
 
 // ──────────────────────────────────────────────────────────────────
 // Inline tab components
@@ -53,6 +58,7 @@ const ProfileTab = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
   const token = localStorage.getItem("token");
 
@@ -71,8 +77,39 @@ const ProfileTab = () => {
     });
   }, [token]);
 
+  const validate = () => {
+    const newErrors = {};
+    if (!profile.name || profile.name.length < 2) newErrors.name = "Name must be at least 2 characters";
+    
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    if (!profile.phoneNumber) {
+      newErrors.phoneNumber = "Phone number is required";
+    } else if (!phoneRegex.test(profile.phoneNumber)) {
+      newErrors.phoneNumber = "Invalid format (10-15 digits)";
+    }
+
+    if (!profile.bio || profile.bio.length < 50) {
+      newErrors.bio = "Bio must be at least 50 characters";
+    }
+
+    const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/;
+    if (profile.instagramLink && profile.instagramLink.trim() !== "" && !urlRegex.test(profile.instagramLink)) {
+      newErrors.instagramLink = "Invalid Instagram URL";
+    }
+    if (profile.youtubeLink && profile.youtubeLink.trim() !== "" && !urlRegex.test(profile.youtubeLink)) {
+      newErrors.youtubeLink = "Invalid YouTube URL";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleUpdate = async (e) => {
     e.preventDefault();
+    if (!validate()) {
+      toast.error("Please fix the errors before saving");
+      return;
+    }
     setSaving(true);
     try {
       // Extract completion request fields
@@ -90,7 +127,7 @@ const ProfileTab = () => {
         skillLevel: profile.skillLevel || "BEGINNER"
       };
 
-      await axios.post("http://localhost:8080/api/v1/auth/complete-profile", request, {
+      await axios.put("http://localhost:8080/api/v1/auth/profile", request, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Profile updated successfully!");
@@ -140,7 +177,7 @@ const ProfileTab = () => {
             <div className="relative group mb-6">
               <div className="w-32 h-32 rounded-[2rem] bg-surface-container-high border-4 border-white shadow-xl overflow-hidden">
                 <img 
-                  src={profile.profilePhoto ? resolveImageUrl(profile.profilePhoto) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`} 
+                  src={profile.profilePhoto ? resolveImageUrl(profile.profilePhoto) : generalProfilePic} 
                   alt="Chef" 
                   className="w-full h-full object-cover"
                 />
@@ -182,8 +219,9 @@ const ProfileTab = () => {
                   type="text" 
                   value={profile.name || ""} 
                   onChange={e => setProfile({...profile, name: e.target.value})}
-                  className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-4 outline-none font-bold transition-all" 
+                  className={`w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-4 outline-none font-bold transition-all ${errors.name ? 'border-error/40' : ''}`} 
                 />
+                {errors.name && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-1">{errors.name}</p>}
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Phone Number</label>
@@ -191,8 +229,9 @@ const ProfileTab = () => {
                   type="text" 
                   value={profile.phoneNumber || ""} 
                   onChange={e => setProfile({...profile, phoneNumber: e.target.value})}
-                  className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-4 outline-none font-bold transition-all" 
+                  className={`w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-4 outline-none font-bold transition-all ${errors.phoneNumber ? 'border-error/40' : ''}`} 
                 />
+                {errors.phoneNumber && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-1">{errors.phoneNumber}</p>}
               </div>
             </div>
 
@@ -202,10 +241,11 @@ const ProfileTab = () => {
                   rows={4}
                   value={profile.bio || ""} 
                   onChange={e => setProfile({...profile, bio: e.target.value})}
-                  className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-4 outline-none font-medium transition-all resize-none" 
+                  className={`w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-4 outline-none font-medium transition-all resize-none ${errors.bio ? 'border-error/40' : ''}`} 
                   placeholder="Share your culinary journey..."
-               />
-            </div>
+                />
+                {errors.bio && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-1">{errors.bio}</p>}
+              </div>
           </div>
 
           <div className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-6">
@@ -221,8 +261,9 @@ const ProfileTab = () => {
                   type="text" 
                   value={profile.instagramLink || ""} 
                   onChange={e => setProfile({...profile, instagramLink: e.target.value})}
-                  className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-3 outline-none font-bold" 
+                  className={`w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-3 outline-none font-bold ${errors.instagramLink ? 'border-error/40' : ''}`} 
                 />
+                {errors.instagramLink && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-1">{errors.instagramLink}</p>}
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">YouTube Link</label>
@@ -230,8 +271,9 @@ const ProfileTab = () => {
                   type="text" 
                   value={profile.youtubeLink || ""} 
                   onChange={e => setProfile({...profile, youtubeLink: e.target.value})}
-                  className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-3 outline-none font-bold" 
+                  className={`w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-3 outline-none font-bold ${errors.youtubeLink ? 'border-error/40' : ''}`} 
                 />
+                {errors.youtubeLink && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-1">{errors.youtubeLink}</p>}
               </div>
             </div>
           </div>
@@ -256,9 +298,12 @@ const ProfileTab = () => {
 // ──────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { id: "overview",  icon: "dashboard",    label: "Dashboard" },
-  { id: "recipes",   icon: "menu_book",    label: "My Recipes" },
-  { id: "profile",   icon: "settings",     label: "Settings & Profile" },
+  { id: "overview",    icon: "dashboard",    label: "Dashboard" },
+  { id: "recipes",     icon: "menu_book",    label: "My Recipes" },
+  { id: "saved",       icon: "bookmark",     label: "Saved Recipes" },
+  { id: "collections", icon: "folder",       label: "Collections" },
+  { id: "shopping",    icon: "shopping_cart", label: "Shopping Lists" },
+  { id: "profile",     icon: "settings",     label: "Settings & Profile" },
 ];
 
 const ChefDashboard = () => {
@@ -266,6 +311,7 @@ const ChefDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [stats, setStats] = useState({ total: null, views: null, saves: null });
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
 
@@ -280,7 +326,8 @@ const ChefDashboard = () => {
         }).then(res => {
             const recipes = res.data.data || res.data || [];
             const totalSaves = recipes.reduce((sum, r) => sum + (r.savedCount || 0), 0);
-            setStats(prev => ({ ...prev, total: recipes.length, saves: totalSaves }));
+            const totalViews = recipes.reduce((sum, r) => sum + (r.viewCount || 0), 0);
+            setStats(prev => ({ ...prev, total: recipes.length, saves: totalSaves, views: totalViews }));
         }).catch(console.error);
     }
   }, [token, role, navigate]);
@@ -293,11 +340,14 @@ const ChefDashboard = () => {
 
   const renderTab = () => {
     switch (activeTab) {
-      case "overview": return <OverviewTab stats={stats} setActiveTab={setActiveTab} />;
-      case "add":      return <CreateRecipeForm onSuccess={() => setActiveTab("recipes")} />;
-      case "recipes":  return <MyRecipesTab />;
-      case "profile":  return <ProfileTab />;
-      default:         return <OverviewTab stats={stats} setActiveTab={setActiveTab} />;
+      case "overview":    return <OverviewTab stats={stats} setActiveTab={setActiveTab} />;
+      case "add":         return <CreateRecipeForm onSuccess={() => setActiveTab("recipes")} />;
+      case "recipes":     return <MyRecipesTab />;
+      case "saved":       return <div className="animate-fade-in"><SavedRecipesTab /></div>;
+      case "collections": return <div className="animate-fade-in"><CollectionsTab /></div>;
+      case "shopping":    return <div className="animate-fade-in"><ShoppingListsTab /></div>;
+      case "profile":     return <ProfileTab />;
+      default:            return <OverviewTab stats={stats} setActiveTab={setActiveTab} />;
     }
   };
 
@@ -347,7 +397,7 @@ const ChefDashboard = () => {
             <span className="material-symbols-outlined shrink-0">home</span>
             {sidebarOpen && <span className="font-black text-sm">Back to Home</span>}
           </button>
-          <button onClick={handleLogout}
+          <button onClick={() => setLogoutModalOpen(true)}
             className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-error hover:bg-error/5 transition-all">
             <span className="material-symbols-outlined shrink-0">logout</span>
             {sidebarOpen && <span className="font-black text-sm">Sign Out</span>}
@@ -384,6 +434,16 @@ const ChefDashboard = () => {
           {renderTab()}
         </div>
       </main>
+
+      <ConfirmationModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+        title="Sign Out"
+        message="Are you sure you want to sign out?"
+        confirmText="Sign Out"
+        type="warning"
+      />
     </div>
   );
 };

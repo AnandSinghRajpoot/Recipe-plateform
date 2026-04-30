@@ -3,10 +3,12 @@ import apiClient from '../../utils/apiClient';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 
 const ShoppingListsTab = () => {
     const [lists, setLists] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [deleteTarget, setDeleteTarget] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -30,16 +32,21 @@ const ShoppingListsTab = () => {
         fetchLists();
     }, []);
 
-    const handleDelete = async (e, id) => {
+    const requestDelete = (e, id) => {
         e.stopPropagation();
-        if (!window.confirm("Delete this shopping list?")) return;
+        setDeleteTarget(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
         try {
-            await apiClient.delete(`/shopping-lists/${id}`);
-            setLists(prev => prev.filter(l => l.id !== id));
+            await apiClient.delete(`/shopping-lists/${deleteTarget}`);
+            setLists(prev => prev.filter(l => l.id !== deleteTarget));
             toast.success("List deleted");
         } catch (err) {
             toast.error("Failed to delete list");
         }
+        setDeleteTarget(null);
     };
 
     if (loading) return (
@@ -57,7 +64,8 @@ const ShoppingListsTab = () => {
     );
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {lists.map((list) => (
                 <motion.div
                     key={list.id}
@@ -71,7 +79,7 @@ const ShoppingListsTab = () => {
                         </div>
                         <div className="flex flex-col items-end gap-2">
                             <button 
-                                onClick={(e) => handleDelete(e, list.id)}
+                                onClick={(e) => requestDelete(e, list.id)}
                                 className="w-8 h-8 rounded-full bg-error/10 text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-error hover:text-white"
                             >
                                 <span className="material-symbols-outlined text-sm">delete</span>
@@ -107,8 +115,18 @@ const ShoppingListsTab = () => {
                         </div>
                     </div>
                 </motion.div>
-            ))}
-        </div>
+                ))}
+            </div>
+
+            <ConfirmationModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={confirmDelete}
+                title="Delete Shopping List"
+                message="Are you sure you want to delete this shopping list? This action cannot be undone."
+                confirmText="Delete List"
+            />
+        </>
     );
 };
 
