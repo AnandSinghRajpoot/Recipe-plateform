@@ -5,6 +5,7 @@ import { extractErrorMessage } from "../../utils/errorHandler";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import MagneticWrapper from "../../components/common/MagneticWrapper";
+import generalProfilePic from "../../assets/general-profile-pic.png";
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
@@ -80,8 +81,32 @@ const Signup = () => {
       newErrors.email = "Please enter a valid email address";
     }
     
-    if (formData.role === 'CHEF' && !formData.phoneNumber) {
-      newErrors.phoneNumber = "Phone number is required for Chefs";
+    if (formData.role === 'CHEF') {
+      const phoneRegex = /^(\+?\d{1,4}[\s-])?\(?\d{3}\)?[\s-]\d{3}[\s-]\d{4}$/;
+      // Basic check for common formats like +1 234 567 8901, 123-456-7890, etc.
+      const simplePhoneRegex = /^\+?[\d\s-]{10,20}$/;
+      
+      if (!formData.phoneNumber) {
+        newErrors.phoneNumber = "Phone number is required for Chefs";
+      } else if (!simplePhoneRegex.test(formData.phoneNumber)) {
+        newErrors.phoneNumber = "Invalid phone format (e.g., +1234567890)";
+      }
+
+      if (formData.specializations.length === 0) {
+        newErrors.specializations = "Please select at least one specialization";
+      }
+
+      if (!formData.bio || formData.bio.length < 50) {
+        newErrors.bio = "Chef bio must be at least 50 characters for verification";
+      }
+
+      const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/;
+      if (formData.instagramLink && formData.instagramLink.trim() !== "" && !urlRegex.test(formData.instagramLink)) {
+        newErrors.instagramLink = "Invalid Instagram URL";
+      }
+      if (formData.youtubeLink && formData.youtubeLink.trim() !== "" && !urlRegex.test(formData.youtubeLink)) {
+        newErrors.youtubeLink = "Invalid YouTube URL";
+      }
     }
 
     const passwordRegex = /^(?=.*[0-9])(?=.*[a-zA-Z]).+$/;
@@ -95,10 +120,6 @@ const Signup = () => {
 
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
-    }
-
-    if (formData.role === 'CHEF' && formData.specializations.length === 0) {
-      newErrors.specializations = "Please select at least one specialization";
     }
 
     setErrors(newErrors);
@@ -203,7 +224,7 @@ const Signup = () => {
                   <div className="flex -space-x-3">
                     {[1, 2, 3].map(i => (
                       <div key={i} className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-surface-container-low">
-                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=user${i}`} alt="user" />
+                        <img src={generalProfilePic} alt="user" className="w-full h-full object-cover" />
                       </div>
                     ))}
                   </div>
@@ -267,6 +288,7 @@ const Signup = () => {
                       placeholder="Jane Doe" 
                     />
                   </div>
+                  {errors.name && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-2">{errors.name}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -279,6 +301,7 @@ const Signup = () => {
                       placeholder="jane@greenhouse.com" 
                     />
                   </div>
+                  {errors.email && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-2">{errors.email}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -291,6 +314,7 @@ const Signup = () => {
                       placeholder="+91 00000 00000" 
                     />
                   </div>
+                  {errors.phoneNumber && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-2">{errors.phoneNumber}</p>}
                 </div>
 
                 <div className="space-y-2 relative">
@@ -306,6 +330,7 @@ const Signup = () => {
                       <span className="material-symbols-outlined">{showPassword ? "visibility_off" : "visibility"}</span>
                     </button>
                   </div>
+                  {errors.password && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-2">{errors.password}</p>}
                   {formData.password && (
                     <div className="space-y-2 mt-2 px-2">
                       <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
@@ -334,6 +359,7 @@ const Signup = () => {
                       placeholder="••••••••" 
                     />
                   </div>
+                  {errors.confirmPassword && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-2">{errors.confirmPassword}</p>}
                 </div>
               </div>
 
@@ -362,6 +388,7 @@ const Signup = () => {
                             </button>
                           ))}
                         </div>
+                        {errors.specializations && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-2 mt-1">{errors.specializations}</p>}
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -372,6 +399,7 @@ const Signup = () => {
                             className="w-full px-6 py-4 bg-surface-container-low border-2 border-transparent rounded-2xl focus:border-primary/30 focus:bg-white transition-all text-xs font-bold text-on-surface placeholder:text-outline-variant/30 resize-none h-32"
                             placeholder="Tell the community about your culinary vision..."
                           />
+                          {errors.bio && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-2">{errors.bio}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -385,6 +413,8 @@ const Signup = () => {
                                 placeholder="Instagram Link" 
                               />
                             </div>
+                            {errors.instagramLink && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-1">{errors.instagramLink}</p>}
+                            
                             <div className="relative group">
                               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary scale-75">video_library</span>
                               <input 
@@ -393,6 +423,7 @@ const Signup = () => {
                                 placeholder="YouTube Channel" 
                               />
                             </div>
+                            {errors.youtubeLink && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-1">{errors.youtubeLink}</p>}
                           </div>
                         </div>
 

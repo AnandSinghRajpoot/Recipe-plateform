@@ -41,6 +41,7 @@ public class RegisterRequest {
 
     private UserRole  role;
 
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number format")
     private String phoneNumber;
     private String confirmPassword;
     private String profilePhoto;
@@ -49,11 +50,16 @@ public class RegisterRequest {
     
     private com.recipeplatform.domain.enums.ExperienceLevel experienceLevel;
 
-    @Size(max = 500, message = "Bio must not exceed 500 characters")
+    @Size(min = 50, max = 500, message = "Bio must be between 50 and 500 characters")
     private String bio;
 
+    @Pattern(regexp = "^$|^(https?://)?(www\\.)?instagram\\.com/[A-Za-z0-9_.]+/?$", message = "Invalid Instagram URL format")
     private String instagramLink;
+    
+    @Pattern(regexp = "^$|^(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})([/\\w .-]*)*\\/?$", message = "Invalid YouTube URL format")
     private String youtubeLink;
+    
+    @Pattern(regexp = "^$|^(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})([/\\w .-]*)*\\/?$", message = "Invalid Website URL format")
     private String websiteLink;
     private String contentIntent;
 

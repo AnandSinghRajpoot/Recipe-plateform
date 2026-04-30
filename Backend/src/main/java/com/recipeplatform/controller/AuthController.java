@@ -59,7 +59,7 @@ public class AuthController {
     }
 
     @PutMapping("/profile")
-    public String updateProfile(@RequestBody com.recipeplatform.dto.auth.UserProfileUpdateRequest request) {
+    public String updateProfile(@RequestBody @jakarta.validation.Valid com.recipeplatform.dto.auth.UserProfileUpdateRequest request) {
         return authService.updateProfile(request);
     }
 

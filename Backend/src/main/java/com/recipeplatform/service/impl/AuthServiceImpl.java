@@ -104,6 +104,12 @@ public class AuthServiceImpl implements AuthService {
             if (registerRequest.getPhoneNumber() == null || registerRequest.getPhoneNumber().isBlank()) {
                 throw new RuntimeException("Phone number is required for Chef registration.");
             }
+            if (registerRequest.getBio() == null || registerRequest.getBio().length() < 50) {
+                throw new RuntimeException("Chef bio must be at least 50 characters long for verification.");
+            }
+            if (registerRequest.getSpecializations() == null || registerRequest.getSpecializations().isEmpty()) {
+                throw new RuntimeException("At least one culinary specialization is required for Chefs.");
+            }
         }
 
         // 4. Map Specialized Fields
@@ -269,15 +275,22 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (request.getName() != null) user.setName(request.getName());
+        if (request.getPhoneNumber() != null) user.setPhoneNumber(request.getPhoneNumber());
         if (request.getBio() != null) user.setBio(request.getBio());
         if (request.getDietType() != null) user.setDietType(request.getDietType());
         if (request.getSkillLevel() != null) user.setSkillLevel(request.getSkillLevel());
+        if (request.getSpecializations() != null) user.setSpecializations(request.getSpecializations());
+        if (request.getInstagramLink() != null) user.setInstagramLink(request.getInstagramLink());
+        if (request.getYoutubeLink() != null) user.setYoutubeLink(request.getYoutubeLink());
+        if (request.getWebsiteLink() != null) user.setWebsiteLink(request.getWebsiteLink());
+        if (request.getContentIntent() != null) user.setContentIntent(request.getContentIntent());
+        
         userRepository.save(user);
         return "Profile updated successfully";
     }
 
     @Override
-    public User getUserById(Long id) {
+    public User     getUserById(Long id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("User not found"));
     }
