@@ -1,6 +1,7 @@
 package com.recipeplatform.service;
 
 import com.recipeplatform.domain.User;
+import com.recipeplatform.dto.ContactRequest;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,9 @@ public class EmailService {
 
     @Value("${spring.mail.username:noreply@recipehub.com}")
     private String fromEmail;
+
+    @Value("${app.system-email:admin@recipehub.com}")
+    private String systemEmail;
 
     private static final String BASE_URL = "http://localhost:5173";
 
@@ -45,6 +49,16 @@ public class EmailService {
             sendHtmlEmail(user.getEmail(), "Reset Your Password - RecipeHub", htmlContent);
         } catch (Exception e) {
             System.err.println("Failed to send password reset email: " + e.getMessage());
+        }
+    }
+
+    public void sendContactMessageEmail(ContactRequest request) {
+        try {
+            String subject = "New Contact Message from " + request.getName();
+            String htmlContent = buildContactEmailHtml(request);
+            sendHtmlEmail(systemEmail, subject, htmlContent);
+        } catch (Exception e) {
+            System.err.println("Failed to send contact email: " + e.getMessage());
         }
     }
 
@@ -98,5 +112,25 @@ public class EmailService {
             "<tr><td style=\"background-color:#f9fafb;padding:24px 40px;border-top:1px solid #e5e7eb;text-align:center;\">" +
             "<p style=\"margin:0;font-size:12px;color:#6b7280;\">Need help? Contact support@recipehub.com</p>" +
             "<p style=\"margin:0;font-size:12px;color:#9ca3af;\">RecipeHub - Your Smart Nutrition Platform</p></td></tr></table></td></tr></table></body></html>";
+    }
+
+    private String buildContactEmailHtml(ContactRequest request) {
+        return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head><body style=\"margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background-color:#f5f5f5;\">" +
+            "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#f5f5f5;\"><tr><td align=\"center\" style=\"padding:40px 20px;\">" +
+            "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);\">" +
+            "<tr><td style=\"background:linear-gradient(135deg,#22c55e,#16a34a);padding:32px;text-align:center;\">" +
+            "<span style=\"font-size:32px;\">✉️</span><br><span style=\"font-size:28px;font-weight:bold;color:#ffffff;\">New Message</span></td></tr>" +
+            "<tr><td style=\"padding:48px 40px;\">" +
+            "<h2 style=\"margin:0 0 24px;font-size:20px;font-weight:600;color:#1f2937;border-bottom:2px solid #f3f4f6;padding-bottom:12px;\">Contact Details</h2>" +
+            "<table width=\"100%\" style=\"margin-bottom:32px;\">" +
+            "<tr><td style=\"padding:8px 0;color:#6b7280;width:120px;font-size:14px;font-weight:600;text-transform:uppercase;\">Name:</td><td style=\"padding:8px 0;color:#1f2937;font-weight:bold;\">" + request.getName() + "</td></tr>" +
+            "<tr><td style=\"padding:8px 0;color:#6b7280;font-size:14px;font-weight:600;text-transform:uppercase;\">Email:</td><td style=\"padding:8px 0;color:#1f2937;font-weight:bold;\">" + request.getEmail() + "</td></tr>" +
+            "<tr><td style=\"padding:8px 0;color:#6b7280;font-size:14px;font-weight:600;text-transform:uppercase;\">Address:</td><td style=\"padding:8px 0;color:#1f2937;font-weight:bold;\">" + (request.getAddress() != null ? request.getAddress() : "Not provided") + "</td></tr>" +
+            "</table>" +
+            "<h2 style=\"margin:0 0 16px;font-size:20px;font-weight:600;color:#1f2937;border-bottom:2px solid #f3f4f6;padding-bottom:12px;\">Message Content</h2>" +
+            "<div style=\"padding:24px;background-color:#f9fafb;border-radius:12px;color:#4b5563;line-height:1.6;font-style:italic;\">\"" + request.getMessage() + "\"</div>" +
+            "</td></tr>" +
+            "<tr><td style=\"background-color:#f3f4f6;padding:24px 40px;text-align:center;\">" +
+            "<p style=\"margin:0;font-size:12px;color:#9ca3af;\">This message was sent via the RecipeHub Contact Form.</p></td></tr></table></td></tr></table></body></html>";
     }
 }

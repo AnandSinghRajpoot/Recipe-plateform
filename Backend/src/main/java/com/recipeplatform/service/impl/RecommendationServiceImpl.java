@@ -161,22 +161,50 @@ public class RecommendationServiceImpl implements RecommendationService {
             
             // Check for Eggs
             boolean hasEggAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("EGG"));
-            if (hasEggAllergy && name.contains("egg") && !name.contains("eggplant")) {
+            if (hasEggAllergy && ((name.contains("egg") && !name.contains("eggplant")) || name.contains("mayo"))) {
                 reasons.add("Excluded: Contains Egg-based ingredients");
                 return -10000;
             }
 
             // Check for Dairy
             boolean hasDairyAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("DAIRY") || a.contains("MILK"));
-            if (hasDairyAllergy && (name.contains("milk") || name.contains("butter") || name.contains("cheese") || name.contains("cream") || name.contains("yogurt") || name.contains("paneer"))) {
+            if (hasDairyAllergy && (name.contains("milk") || name.contains("butter") || name.contains("cheese") || name.contains("cream") || name.contains("yogurt") || name.contains("paneer") || name.contains("ghee"))) {
                 reasons.add("Excluded: Contains Dairy-based ingredients");
                 return -10000;
             }
 
             // Check for Wheat/Gluten
             boolean hasGlutenAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("GLUTEN") || a.contains("WHEAT"));
-            if (hasGlutenAllergy && (name.contains("flour") || name.contains("wheat") || name.contains("maida") || name.contains("semolina"))) {
+            if (hasGlutenAllergy && (name.contains("flour") || name.contains("wheat") || name.contains("maida") || name.contains("semolina") || name.contains("bread") || name.contains("pasta"))) {
                 reasons.add("Excluded: Contains Gluten/Wheat ingredients");
+                return -10000;
+            }
+            
+            // Check for Fish
+            boolean hasFishAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("FISH"));
+            if (hasFishAllergy && (name.contains("fish") || name.contains("salmon") || name.contains("tuna") || name.contains("cod") || name.contains("tilapia") || name.contains("trout"))) {
+                reasons.add("Excluded: Contains Fish");
+                return -10000;
+            }
+
+            // Check for Shellfish
+            boolean hasShellfishAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("SHELLFISH"));
+            if (hasShellfishAllergy && (name.contains("shrimp") || name.contains("crab") || name.contains("lobster") || name.contains("prawn") || name.contains("scallop") || name.contains("oyster") || name.contains("mussel") || name.contains("clam"))) {
+                reasons.add("Excluded: Contains Shellfish");
+                return -10000;
+            }
+
+            // Check for Peanuts & Tree Nuts
+            boolean hasNutAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("NUT") || a.contains("PEANUT"));
+            if (hasNutAllergy && (name.contains("peanut") || name.contains("almond") || name.contains("walnut") || name.contains("pecan") || name.contains("cashew") || name.contains("pistachio") || name.contains("macadamia"))) {
+                reasons.add("Excluded: Contains Nuts/Peanuts");
+                return -10000;
+            }
+
+            // Check for Soy
+            boolean hasSoyAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("SOY"));
+            if (hasSoyAllergy && (name.contains("soy") || name.contains("tofu") || name.contains("edamame") || name.contains("tempeh") || name.contains("miso"))) {
+                reasons.add("Excluded: Contains Soy-based ingredients");
                 return -10000;
             }
 
@@ -240,12 +268,12 @@ public class RecommendationServiceImpl implements RecommendationService {
             boolean isSittingJob = healthProfile.getWorkType() == com.recipeplatform.domain.enums.WorkType.SITTING;
             
             if (isSedentary && isSittingJob && recipe.getNutrition() != null) {
-                if (recipe.getNutrition().getCalories() > 500) {
+                if (recipe.getNutrition().getCalories() != null && recipe.getNutrition().getCalories() > 500) {
                     score -= 60;
                     reasons.add("Slightly high calories for your activity level");
                 }
             } else if (healthProfile.getActivityLevel() == com.recipeplatform.domain.enums.ActivityLevel.VERY_ACTIVE) {
-                if (recipe.getNutrition() != null && recipe.getNutrition().getProtein() > 25) {
+                if (recipe.getNutrition() != null && recipe.getNutrition().getProtein() != null && recipe.getNutrition().getProtein() > 25) {
                     score += 40;
                     reasons.add("Great protein boost for your active lifestyle");
                 }
@@ -256,7 +284,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             if (healthProfile.getSmokingHabit() != com.recipeplatform.domain.enums.HabitStatus.NONE || 
                 healthProfile.getAlcoholHabit() != com.recipeplatform.domain.enums.HabitStatus.NONE) {
                 // Indirect bonus for high-fiber, low-fat "clean" recipes
-                if (recipe.getNutrition() != null && recipe.getNutrition().getFiber() > 5) {
+                if (recipe.getNutrition() != null && recipe.getNutrition().getFiber() != null && recipe.getNutrition().getFiber() > 5) {
                     score += 20;
                     reasons.add("Rich in fiber to support your clean habits");
                 }
@@ -310,7 +338,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
 
         // --- 7. CALORIE BALANCING (DAILY TARGET ALIGNMENT) ---
-        if (healthProfile != null && healthProfile.getDailyCalorieRequirement() != null && recipe.getNutrition() != null) {
+        if (healthProfile != null && healthProfile.getDailyCalorieRequirement() != null && recipe.getNutrition() != null && recipe.getNutrition().getCalories() != null) {
             double targetPerMeal = healthProfile.getDailyCalorieRequirement() / 3;
             double recipeCalories = recipe.getNutrition().getCalories();
             

@@ -54,6 +54,7 @@ public class RecommendationEngineImpl implements RecommendationEngine {
         UserHealthProfile profile = userHealthProfileRepository.findByUserId(userId).orElse(null);
 
         Set<Long> userAllergyIds = Set.of();
+        Set<String> activeAllergyNames = new java.util.HashSet<>();
         Set<Long> userDiseaseIds = Set.of();
         double targetCalories = 600.0; // Default fallback per meal
 
@@ -61,6 +62,10 @@ public class RecommendationEngineImpl implements RecommendationEngine {
             userAllergyIds = profile.getAllergies().stream()
                     .map(ua -> ua.getAllergy().getId())
                     .collect(Collectors.toSet());
+
+            for (UserAllergy ua : profile.getAllergies()) {
+                activeAllergyNames.add(ua.getAllergy().getName().toUpperCase());
+            }
 
             userDiseaseIds = profile.getDiseases().stream()
                     .map(ud -> ud.getDisease().getId())
@@ -88,10 +93,11 @@ public class RecommendationEngineImpl implements RecommendationEngine {
         final double finalTargetCalories = targetCalories;
 
         // ============================================
-        // Phase 2 & 3: Score and Apply Soft Filters
+        // Phase 2 & 3: Score and Apply Soft Filters & Keyword Fail-safes
         // ============================================
         List<RecipeRecommendationDTO> recommendations = candidateRecipes.stream()
-                .map(recipe -> scoreRecipe(recipe, user, finalDiseaseIds, targetMealType, finalTargetCalories))
+                .map(recipe -> scoreRecipe(recipe, user, finalDiseaseIds, activeAllergyNames, targetMealType, finalTargetCalories))
+                .filter(r -> r.getScore() > -500.0) // Exclude hard dietary/allergen mismatches
                 .sorted(Comparator.comparingDouble(RecipeRecommendationDTO::getScore).reversed())
                 .limit(limit)
                 .collect(Collectors.toList());
@@ -100,13 +106,85 @@ public class RecommendationEngineImpl implements RecommendationEngine {
         return recommendations;
     }
 
-    private RecipeRecommendationDTO scoreRecipe(Recipe recipe, User user, Set<Long> userDiseaseIds, MealType targetMealType, double targetCalories) {
+    private RecipeRecommendationDTO scoreRecipe(Recipe recipe, User user, Set<Long> userDiseaseIds, Set<String> activeAllergyNames, MealType targetMealType, double targetCalories) {
         double score = 0.0;
         double safetyScore = 100.0;
         List<String> matchReasons = new ArrayList<>();
 
         // Base score simply for being in the candidate pool safely
         score += 20.0;
+
+        // --- Phase 1.5: Keyword Fail-safes for critical allergens ---
+        if (!activeAllergyNames.isEmpty() && recipe.getIngredients() != null) {
+            for (com.recipeplatform.domain.RecipeIngredient ri : recipe.getIngredients()) {
+                if (ri.getIngredient() == null) continue;
+                String name = ri.getIngredient().getName().toLowerCase();
+                
+                // Check for Eggs
+                boolean hasEggAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("EGG"));
+                if (hasEggAllergy && ((name.contains("egg") && !name.contains("eggplant")) || name.contains("mayo"))) {
+                    matchReasons.add("Excluded: Contains Egg-based ingredients");
+                    score -= 10000.0;
+                    break;
+                }
+
+                // Check for Dairy
+                boolean hasDairyAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("DAIRY") || a.contains("MILK"));
+                if (hasDairyAllergy && (name.contains("milk") || name.contains("butter") || name.contains("cheese") || name.contains("cream") || name.contains("yogurt") || name.contains("paneer") || name.contains("ghee"))) {
+                    matchReasons.add("Excluded: Contains Dairy-based ingredients");
+                    score -= 10000.0;
+                    break;
+                }
+
+                // Check for Wheat/Gluten
+                boolean hasGlutenAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("GLUTEN") || a.contains("WHEAT"));
+                if (hasGlutenAllergy && (name.contains("flour") || name.contains("wheat") || name.contains("maida") || name.contains("semolina") || name.contains("bread") || name.contains("pasta"))) {
+                    matchReasons.add("Excluded: Contains Gluten/Wheat ingredients");
+                    score -= 10000.0;
+                    break;
+                }
+                
+                // Check for Fish
+                boolean hasFishAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("FISH"));
+                if (hasFishAllergy && (name.contains("fish") || name.contains("salmon") || name.contains("tuna") || name.contains("cod") || name.contains("tilapia") || name.contains("trout"))) {
+                    matchReasons.add("Excluded: Contains Fish");
+                    score -= 10000.0;
+                    break;
+                }
+
+                // Check for Shellfish
+                boolean hasShellfishAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("SHELLFISH"));
+                if (hasShellfishAllergy && (name.contains("shrimp") || name.contains("crab") || name.contains("lobster") || name.contains("prawn") || name.contains("scallop") || name.contains("oyster") || name.contains("mussel") || name.contains("clam"))) {
+                    matchReasons.add("Excluded: Contains Shellfish");
+                    score -= 10000.0;
+                    break;
+                }
+
+                // Check for Peanuts & Tree Nuts
+                boolean hasNutAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("NUT") || a.contains("PEANUT"));
+                if (hasNutAllergy && (name.contains("peanut") || name.contains("almond") || name.contains("walnut") || name.contains("pecan") || name.contains("cashew") || name.contains("pistachio") || name.contains("macadamia"))) {
+                    matchReasons.add("Excluded: Contains Nuts/Peanuts");
+                    score -= 10000.0;
+                    break;
+                }
+
+                // Check for Soy
+                boolean hasSoyAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("SOY"));
+                if (hasSoyAllergy && (name.contains("soy") || name.contains("tofu") || name.contains("edamame") || name.contains("tempeh") || name.contains("miso"))) {
+                    matchReasons.add("Excluded: Contains Soy-based ingredients");
+                    score -= 10000.0;
+                    break;
+                }
+            }
+        }
+        
+        // If keyword fail-safe triggered, return immediately
+        if (score <= -500.0) {
+            return RecipeRecommendationDTO.builder()
+                .id(recipe.getId())
+                .score(score)
+                .build();
+        }
 
         // --- Phase 2: Disease-Safe Boosting ---
         boolean isDiseaseVetted = false;

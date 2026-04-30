@@ -33,7 +33,10 @@ const MealPlanner = () => {
     });
     const [healthScoreFilter, setHealthScoreFilter] = useState(0);
 
-    const backPath = location.state?.from || '/meal-planner';
+    let backPath = location.state?.from || '/profile?tab=planner';
+    if (backPath === '/profile') {
+        backPath = '/profile?tab=planner';
+    }
 
     useEffect(() => {
         if (planId) {
@@ -173,13 +176,16 @@ const MealPlanner = () => {
         }
 
         try {
+            const listName = window.prompt("Enter a name for your shopping list:", `${plan.name} List`);
+            if (listName === null) return; // User cancelled
+
             // Generate the list
             const generateRes = await apiClient.post('/shopping-lists/generate', { recipeIds });
             const listData = generateRes.data.data;
 
             // Save the list
             const saveRes = await apiClient.post('/shopping-lists', {
-                name: `${plan.name} List - ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+                name: listName.trim() || `${plan.name} List`,
                 items: listData.items.map(item => ({
                     ingredientName: item.ingredientName,
                     quantity: item.quantity,
@@ -251,7 +257,7 @@ const MealPlanner = () => {
                             className="group flex items-center gap-3 text-primary hover:text-white hover:bg-primary px-5 py-2.5 rounded-2xl transition-all mb-8 text-[11px] font-black uppercase tracking-widest border border-primary/20 bg-primary/5 shadow-sm hover:shadow-lg hover:shadow-primary/20"
                         >
                             <span className="material-symbols-outlined text-base group-hover:-translate-x-1 transition-transform">arrow_back</span>
-                            {backPath === '/profile' ? 'Back to Profile' : 'Back to Library'}
+                            Back
                         </button>
                         <div className="flex items-center gap-4 mb-4">
                             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest">
@@ -298,22 +304,23 @@ const MealPlanner = () => {
                     {DAYS.map(day => (
                         <div key={day} className="flex flex-col gap-0 bg-white/40 backdrop-blur-xl rounded-[3rem] border border-white/50 botanical-shadow overflow-hidden transition-all hover:bg-white/50">
                             {/* Day Header */}
-                            <div className="text-center py-6 px-4 bg-white/20 border-b border-white/40 flex flex-col items-center relative group/day">
-                                <button 
-                                    onClick={() => handleAutoFillDay(day)}
-                                    disabled={autoFilling === day}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-primary/10 text-primary opacity-0 group-hover/day:opacity-100 transition-all hover:bg-primary hover:text-white flex items-center justify-center shadow-sm"
-                                    title="Auto-fill empty slots for today"
-                                >
-                                    {autoFilling === day ? (
-                                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                    ) : (
-                                        <span className="material-symbols-outlined text-sm">magic_button</span>
-                                    )}
-                                </button>
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-1">{day}</h3>
+                            <div className="text-center py-5 px-3 bg-white/20 border-b border-white/40 flex flex-col items-center">
+                                <div className="flex items-center justify-center gap-2 mb-3 w-full">
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{day}</h3>
+                                    <button 
+                                        onClick={() => handleAutoFillDay(day)}
+                                        disabled={autoFilling === day}
+                                        className="w-6 h-6 rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-white flex items-center justify-center shadow-sm shrink-0"
+                                        title="Auto-fill empty slots for today"
+                                    >
+                                        {autoFilling === day ? (
+                                            <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-[14px]">magic_button</span>
+                                        )}
+                                    </button>
+                                </div>
                                 <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/5 rounded-full border border-primary/10">
-                                    <span className="material-symbols-outlined text-[10px] text-primary">flame</span>
                                     <span className="text-[9px] font-black text-on-surface opacity-60 tracking-tight">
                                         {getDayTotalCalories(day).toFixed(0)} kcal
                                     </span>
@@ -337,7 +344,10 @@ const MealPlanner = () => {
                                             </div>
 
                                             {recipe ? (
-                                                <div className="bg-white p-4 rounded-[2.5rem] border border-white botanical-shadow hover:border-primary/20 transition-all group/card relative overflow-hidden h-[240px] flex flex-col">
+                                                <div 
+                                                    onClick={() => navigate(`/items/${recipe.id}`)}
+                                                    className="bg-white p-4 rounded-[2.5rem] border border-white botanical-shadow hover:border-primary/20 transition-all group/card relative overflow-hidden h-[240px] flex flex-col cursor-pointer"
+                                                >
                                                     <div className="h-32 rounded-[1.8rem] overflow-hidden mb-3 bg-surface-container-high border border-white/20 shrink-0">
                                                         <img 
                                                             src={recipe.coverImageUrl || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"} 
@@ -353,7 +363,10 @@ const MealPlanner = () => {
                                                             {recipe.prepTime + recipe.cookTime}m
                                                         </div>
                                                         <button 
-                                                            onClick={() => removeMeal(slot.id)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                removeMeal(slot.id);
+                                                            }}
                                                             className="w-7 h-7 rounded-full bg-error/10 text-error flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-all hover:bg-error hover:text-white shrink-0"
                                                         >
                                                             <span className="material-symbols-outlined text-[12px]">close</span>
@@ -392,312 +405,304 @@ const MealPlanner = () => {
                             className="absolute inset-0 bg-black/50 backdrop-blur-md"
                         ></motion.div>
                         
-                        <motion.div 
+                        <motion.div
                             initial={{ scale: 0.9, opacity: 0, y: 30 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 30 }}
-                            className="relative bg-white rounded-[3rem] md:rounded-[4rem] w-full max-w-6xl p-0 botanical-shadow h-[90vh] md:h-[85vh] overflow-hidden flex border border-white"
+                            className="relative bg-white rounded-[2rem] w-full max-w-4xl botanical-shadow flex flex-col border border-white overflow-hidden"
+                            style={{ height: '95vh', maxHeight: '960px' }}
                         >
-                            {/* Left Sidebar: Filters */}
-                            <div className="w-80 bg-surface-container-low border-r border-outline-variant/10 p-10 flex flex-col overflow-y-auto hidden lg:flex">
-                                <div className="mb-10">
-                                    <h3 className="text-xl font-headline font-black text-on-surface mb-6 tracking-tight">Filters</h3>
-                                    
-                                    <div className="space-y-8">
-                                        <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-40 mb-4">Min. Health Match</p>
-                                            <div className="flex flex-col gap-3">
-                                                <input 
-                                                    type="range" min="0" max="90" step="10"
-                                                    value={healthScoreFilter}
-                                                    onChange={(e) => setHealthScoreFilter(parseInt(e.target.value))}
-                                                    className="w-full accent-primary"
-                                                />
-                                                <span className="text-lg font-black text-primary">{healthScoreFilter}%+</span>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-40 mb-4">Dietary Type</p>
-                                            <select 
-                                                value={filters.dietType}
-                                                onChange={(e) => {
-                                                    const newFilters = {...filters, dietType: e.target.value};
-                                                    setFilters(newFilters);
-                                                    handleSearch(searchQuery, newFilters);
-                                                }}
-                                                className="w-full p-4 rounded-2xl bg-white border border-outline-variant/10 text-xs font-bold uppercase tracking-widest"
-                                            >
-                                                <option value="">Any Diet</option>
-                                                <option value="VEGAN">Vegan</option>
-                                                <option value="VEGETARIAN">Vegetarian</option>
-                                                <option value="KETO">Keto</option>
-                                                <option value="PALEO">Paleo</option>
-                                            </select>
-                                        </div>
-
-                                        <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-40 mb-4">Max Calories</p>
-                                            <input 
-                                                type="number" 
-                                                min="0"
-                                                placeholder="e.g. 800"
-                                                value={filters.maxCalories}
-                                                onKeyDown={(e) => { if(e.key === '-' || e.key === 'e') e.preventDefault(); }}
-                                                onChange={(e) => {
-                                                    const val = e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value));
-                                                    const newFilters = {...filters, maxCalories: val};
-                                                    setFilters(newFilters);
-                                                    handleSearch(searchQuery, newFilters);
-                                                }}
-                                                className="w-full p-4 rounded-2xl bg-white border border-outline-variant/10 text-xs font-bold"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-40 mb-4">Cooking Skill</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {['EASY', 'MEDIUM', 'HARD'].map(lvl => (
-                                                    <button 
-                                                        key={lvl}
-                                                        onClick={() => {
-                                                            const newFilters = {...filters, difficulty: filters.difficulty === lvl ? "" : lvl};
-                                                            setFilters(newFilters);
-                                                            handleSearch(searchQuery, newFilters);
-                                                        }}
-                                                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${filters.difficulty === lvl ? 'bg-primary text-white border-primary' : 'bg-white text-on-surface-variant border-outline-variant/10 hover:border-primary/40'}`}
-                                                    >
-                                                        {lvl}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
+                            {/* ── HEADER ── */}
+                            <div className="px-8 pt-5 pb-3 border-b border-outline-variant/10 flex-shrink-0">
+                                {/* Title row */}
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-xl font-headline font-black text-on-surface tracking-tight">
+                                        Select a Recipe
+                                    </h3>
+                                    <button
+                                        onClick={() => setSelectedSlot(null)}
+                                        className="w-9 h-9 rounded-xl bg-surface-container-low hover:bg-surface-container-high flex items-center justify-center transition-all flex-shrink-0"
+                                    >
+                                        <span className="material-symbols-outlined text-base">close</span>
+                                    </button>
                                 </div>
-                                <button 
-                                    onClick={() => {
-                                        const reset = { dietType: "", difficulty: "", maxCalories: "", minCalories: "" };
-                                        setFilters(reset);
-                                        setHealthScoreFilter(0);
-                                        handleSearch(searchQuery, reset);
-                                    }}
-                                    className="mt-auto text-[9px] font-black uppercase tracking-widest text-error opacity-60 hover:opacity-100 transition-all flex items-center gap-2"
-                                >
-                                    <span className="material-symbols-outlined text-sm">restart_alt</span>
-                                    Reset Filters
-                                </button>
+
+                                {/* Tabs */}
+                                <div className="flex gap-1.5 p-1 bg-surface-container-low rounded-xl">
+                                    {[
+                                        { id: 'recommended', label: 'Recommended' },
+                                        { id: 'search', label: 'Search All' },
+                                        { id: 'saved', label: `Favorites (${savedRecipes.length})` }
+                                    ].map(tab => (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setModalTab(tab.id)}
+                                            className={`flex-1 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all ${
+                                                modalTab === tab.id
+                                                    ? 'bg-white text-primary shadow-sm'
+                                                    : 'text-on-surface-variant/50 hover:text-on-surface-variant'
+                                            }`}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
-                            {/* Right Content: Results */}
-                            <div className="flex-grow p-6 md:p-12 flex flex-col h-full bg-white">
-                                <div className="flex items-center justify-between mb-8">
-                                    <div>
-                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[9px] font-black uppercase tracking-widest mb-4">
-                                            Smart Discovery
-                                        </div>
-                                        <h3 className="text-3xl md:text-4xl font-headline font-black text-on-surface mb-2 tracking-tight">Select Recipe</h3>
-                                    </div>
-                                    <button 
-                                        onClick={() => setSelectedSlot(null)}
-                                        className="w-12 h-12 rounded-full border border-outline-variant/10 flex items-center justify-center hover:bg-surface-container-high transition-all"
-                                    >
-                                        <span className="material-symbols-outlined">close</span>
-                                    </button>
-                                </div>
-
-                                <div className="flex gap-4 mb-8 p-1.5 bg-surface-container-low rounded-2xl shrink-0">
-                                    <button 
-                                        onClick={() => setModalTab("recommended")}
-                                        className={`flex-grow py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${modalTab === 'recommended' ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant opacity-40 hover:opacity-100'}`}
-                                    >
-                                        ⭐ Recommended
-                                    </button>
-                                    <button 
-                                        onClick={() => setModalTab("search")}
-                                        className={`flex-grow py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${modalTab === 'search' ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant opacity-40 hover:opacity-100'}`}
-                                    >
-                                        Search All
-                                    </button>
-                                    <button 
-                                        onClick={() => setModalTab("saved")}
-                                        className={`flex-grow py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${modalTab === 'saved' ? 'bg-white text-secondary shadow-sm' : 'text-on-surface-variant opacity-40 hover:opacity-100'}`}
-                                    >
-                                        Favorites ({savedRecipes.length})
-                                    </button>
-                                </div>
-
-                                {modalTab === "search" && (
-                                    <div className="relative mb-8 shrink-0">
-                                        <span className="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-primary">search</span>
-                                        <input 
+                            {/* ── SEARCH & FILTERS (only for search tab) ── */}
+                            {modalTab === 'search' && (
+                                <div className="px-8 py-3 border-b border-outline-variant/10 flex-shrink-0 space-y-2 bg-surface-container-lowest/40">
+                                    {/* Search Input */}
+                                    <div className="relative">
+                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary text-lg">search</span>
+                                        <input
                                             type="text"
-                                            placeholder="Ex: Chicken Pasta, Keto Salad..."
-                                            className="w-full pl-16 pr-8 py-5 bg-surface-container-low rounded-[2rem] border-none focus:ring-2 focus:ring-primary/20 font-bold text-on-surface placeholder:opacity-30"
+                                            placeholder="Try: Chicken Pasta, Keto Salad..."
+                                            className="w-full pl-12 pr-4 py-3.5 bg-surface-container-low rounded-2xl border border-outline-variant/10 focus:ring-2 focus:ring-primary/20 font-bold text-sm text-on-surface placeholder:opacity-40 outline-none transition-all"
                                             value={searchQuery}
                                             onChange={(e) => handleSearch(e.target.value)}
                                             autoFocus
                                         />
-                                        {searching && <div className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>}
+                                        {searching && (
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                        )}
                                     </div>
-                                )}
 
-                                <div className="flex-grow overflow-y-auto space-y-4 pr-2 md:pr-4 custom-scrollbar">
-                                    {modalTab === "recommended" && (
-                                        <>
-                                            {fetchingRecommended ? (
-                                                <div className="flex flex-col items-center justify-center py-20 gap-4">
-                                                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-primary animate-pulse">Personalizing your menu...</p>
-                                                </div>
-                                            ) : recommendedRecipes.length > 0 ? (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
-                                                    {recommendedRecipes.map(recipe => (
-                                                        <button 
-                                                            key={recipe.id}
-                                                            onClick={() => addMeal(recipe.id)}
-                                                            className="w-full p-6 rounded-[3.5rem] bg-surface-container-low hover:bg-primary group transition-all flex flex-col gap-6 text-left border relative shadow-sm hover:shadow-xl hover:shadow-primary/20 h-[320px] border-primary/20 bg-primary/5"
-                                                        >
-                                                            <div className="flex items-start gap-6 w-full">
-                                                                <div className="w-28 h-28 rounded-[2.5rem] overflow-hidden bg-white flex-shrink-0 relative border border-outline-variant/10">
-                                                                    <img 
-                                                                        src={recipe.coverImageUrl || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"} 
-                                                                        alt={recipe.title} 
-                                                                        className="w-full h-full object-cover transition-transform group-hover:scale-110" 
-                                                                    />
-                                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                                                                </div>
-                                                                <div className="flex-grow pt-2">
-                                                                    <p className="font-black text-on-surface group-hover:text-white transition-colors text-xl leading-[1.1] mb-2 line-clamp-2">{recipe.title}</p>
-                                                                    <div className="flex flex-wrap items-center gap-2">
-                                                                        <span className="px-3 py-1 rounded-full bg-primary text-white text-[9px] font-black uppercase tracking-widest">Recommended</span>
-                                                                        {recipe.dietType && <span className="text-[9px] font-black uppercase tracking-widest text-primary-variant group-hover:text-white/80">{recipe.dietType}</span>}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div className="grid grid-cols-3 gap-2 bg-white/60 group-hover:bg-black/10 p-4 rounded-[2rem] transition-colors mt-auto">
-                                                                <div className="text-center">
-                                                                    <p className="text-[8px] font-black text-on-surface-variant opacity-40 uppercase group-hover:text-white/40">Calories</p>
-                                                                    <p className="text-[12px] font-black text-on-surface group-hover:text-white">{recipe.nutrition?.calories?.toFixed(0) || 0}</p>
-                                                                </div>
-                                                                <div className="text-center border-x border-outline-variant/10 group-hover:border-white/10">
-                                                                    <p className="text-[8px] font-black text-on-surface-variant opacity-40 uppercase group-hover:text-white/40">Protein</p>
-                                                                    <p className="text-[12px] font-black text-on-surface group-hover:text-white">{recipe.nutrition?.protein?.toFixed(0) || 0}g</p>
-                                                                </div>
-                                                                <div className="text-center">
-                                                                    <p className="text-[8px] font-black text-on-surface-variant opacity-40 uppercase group-hover:text-white/40">Time</p>
-                                                                    <p className="text-[12px] font-black text-on-surface group-hover:text-white">{recipe.prepTime + recipe.cookTime}m</p>
-                                                                </div>
-                                                            </div>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="text-center py-24 opacity-30">
-                                                    <span className="material-symbols-outlined text-6xl mb-4">stars</span>
-                                                    <p className="font-black uppercase tracking-widest text-sm">Complete your profile for better suggestions</p>
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
+                                    {/* Filters Row */}
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/40 mr-1">Filters:</span>
 
-                                    {modalTab === "search" ? (
-                                        <>
-                                            {filteredResults.length > 0 ? (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
-                                                    {filteredResults.sort((a,b) => getHealthScore(b) - getHealthScore(a)).map(recipe => (
-                                                        <button 
-                                                            key={recipe.id}
-                                                            onClick={() => addMeal(recipe.id)}
-                                                            className={`w-full p-6 rounded-[3rem] bg-surface-container-low hover:bg-primary text-white group transition-all flex flex-col gap-6 text-left border shadow-sm hover:shadow-xl hover:shadow-primary/20 h-full ${getHealthScore(recipe) > 75 ? 'border-primary/40 bg-primary/5' : 'border-white'}`}
-                                                        >
-                                                            <div className="flex items-start gap-5 w-full">
-                                                                <div className="w-24 h-24 rounded-[2rem] overflow-hidden bg-white flex-shrink-0 relative border border-outline-variant/10">
-                                                                    <img 
-                                                                        src={recipe.coverImageUrl || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"} 
-                                                                        alt={recipe.title} 
-                                                                        className="w-full h-full object-cover" 
-                                                                    />
-                                                                    <div className="absolute right-2 top-2 p-1.5 rounded-full bg-white/90 backdrop-blur shadow-sm flex items-center justify-center border border-primary/5">
-                                                                        <span className="text-[9px] font-black text-primary">{getHealthScore(recipe)}%</span>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex-grow pt-1">
-                                                                    <p className="font-black text-on-surface group-hover:text-white transition-colors text-lg leading-tight mb-2 line-clamp-2">{recipe.title}</p>
-                                                                    <div className="flex flex-wrap items-center gap-2">
-                                                                        {getHealthScore(recipe) > 80 && (
-                                                                            <span className="px-2 py-0.5 rounded-full bg-primary text-white text-[8px] font-black uppercase tracking-tighter">Top Match</span>
-                                                                        )}
-                                                                        <span className="text-[9px] font-black uppercase tracking-widest text-primary group-hover:text-white/80">{recipe.dietType || "HEALTHY"}</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div className="grid grid-cols-3 gap-2 bg-white/50 group-hover:bg-black/10 p-3 rounded-2xl transition-colors mt-auto">
-                                                                <div className="text-center">
-                                                                    <p className="text-[7px] font-black text-on-surface-variant opacity-40 uppercase group-hover:text-white/40">Calories</p>
-                                                                    <p className="text-[10px] font-black text-on-surface group-hover:text-white">{recipe.nutrition?.calories || 0}</p>
-                                                                </div>
-                                                                <div className="text-center border-x border-outline-variant/10 group-hover:border-white/10">
-                                                                    <p className="text-[7px] font-black text-on-surface-variant opacity-40 uppercase group-hover:text-white/40">Protein</p>
-                                                                    <p className="text-[10px] font-black text-on-surface group-hover:text-white">{recipe.nutrition?.protein || 0}g</p>
-                                                                </div>
-                                                                <div className="text-center">
-                                                                    <p className="text-[7px] font-black text-on-surface-variant opacity-40 uppercase group-hover:text-white/40">Time</p>
-                                                                    <p className="text-[10px] font-black text-on-surface group-hover:text-white">{recipe.prepTime + recipe.cookTime}m</p>
-                                                                </div>
-                                                            </div>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="text-center py-16 opacity-20">
-                                                    <span className="material-symbols-outlined text-6xl mb-4">search_off</span>
-                                                    <p className="font-black uppercase tracking-widest text-xs">Try different filters</p>
-                                                </div>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
-                                            {savedRecipes.map(fav => (
-                                                <button 
-                                                    key={fav.recipeId || fav.id}
-                                                    onClick={() => addMeal(fav.recipeId || fav.id)}
-                                                    className="w-full p-6 rounded-[3rem] bg-surface-container-low hover:bg-secondary text-white group transition-all flex items-center gap-6 text-left border border-white shadow-sm hover:shadow-xl hover:shadow-secondary/20 h-full"
+                                        {/* Diet Type */}
+                                        <select
+                                            value={filters.dietType}
+                                            onChange={(e) => {
+                                                const f = { ...filters, dietType: e.target.value };
+                                                setFilters(f);
+                                                handleSearch(searchQuery, f);
+                                            }}
+                                            className="px-3 py-1.5 rounded-xl bg-white border border-outline-variant/10 text-[10px] font-black uppercase tracking-widest text-on-surface-variant outline-none cursor-pointer hover:border-primary/30 transition-all"
+                                        >
+                                            <option value="">No Preference</option>
+                                            <option value="VEG">Vegetarian</option>
+                                            <option value="NON_VEG">Non-Vegetarian</option>
+                                            <option value="VEGAN">Vegan</option>
+                                        </select>
+
+                                        {/* Difficulty pills */}
+                                        {['EASY', 'MEDIUM', 'HARD'].map(lvl => (
+                                            <button
+                                                key={lvl}
+                                                onClick={() => {
+                                                    const f = { ...filters, difficulty: filters.difficulty === lvl ? '' : lvl };
+                                                    setFilters(f);
+                                                    handleSearch(searchQuery, f);
+                                                }}
+                                                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                                                    filters.difficulty === lvl
+                                                        ? 'bg-primary text-white border-primary'
+                                                        : 'bg-white text-on-surface-variant border-outline-variant/10 hover:border-primary/30'
+                                                }`}
+                                            >
+                                                {lvl}
+                                            </button>
+                                        ))}
+
+                                        {/* Max Calories */}
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            placeholder="Max kcal"
+                                            value={filters.maxCalories}
+                                            onKeyDown={(e) => { if (e.key === '-' || e.key === 'e') e.preventDefault(); }}
+                                            onChange={(e) => {
+                                                const val = e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value));
+                                                const f = { ...filters, maxCalories: val };
+                                                setFilters(f);
+                                                handleSearch(searchQuery, f);
+                                            }}
+                                            className="w-24 px-3 py-1.5 rounded-xl bg-white border border-outline-variant/10 text-[10px] font-bold outline-none hover:border-primary/30 transition-all"
+                                        />
+
+                                        {/* Health Score */}
+                                        <div className="flex items-center gap-2 bg-white border border-outline-variant/10 rounded-xl px-3 py-1.5">
+                                            <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 whitespace-nowrap">Health {healthScoreFilter}%+</span>
+                                            <input
+                                                type="range" min="0" max="90" step="10"
+                                                value={healthScoreFilter}
+                                                onChange={(e) => setHealthScoreFilter(parseInt(e.target.value))}
+                                                className="w-20 accent-primary"
+                                            />
+                                        </div>
+
+                                        {/* Reset */}
+                                        {(filters.dietType || filters.difficulty || filters.maxCalories || healthScoreFilter > 0) && (
+                                            <button
+                                                onClick={() => {
+                                                    const reset = { dietType: '', difficulty: '', maxCalories: '', minCalories: '' };
+                                                    setFilters(reset);
+                                                    setHealthScoreFilter(0);
+                                                    handleSearch(searchQuery, reset);
+                                                }}
+                                                className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-error/70 hover:text-error hover:bg-error/5 border border-transparent hover:border-error/20 transition-all"
+                                            >
+                                                <span className="material-symbols-outlined text-sm">restart_alt</span>
+                                                Reset
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ── SCROLLABLE RECIPE LIST ── */}
+                            <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-4">
+                                {/* RECOMMENDED TAB */}
+                                {modalTab === 'recommended' && (
+                                    fetchingRecommended ? (
+                                        <div className="flex flex-col items-center justify-center h-full gap-4">
+                                            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-primary animate-pulse">Personalizing your menu...</p>
+                                        </div>
+                                    ) : recommendedRecipes.length > 0 ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {recommendedRecipes.map(recipe => (
+                                                <button
+                                                    key={recipe.id}
+                                                    onClick={() => addMeal(recipe.id)}
+                                                    className="w-full text-left group rounded-2xl border border-outline-variant/10 bg-surface-container-low hover:bg-primary hover:border-primary hover:shadow-xl hover:shadow-primary/20 transition-all overflow-hidden flex flex-col"
                                                 >
-                                                    <div className="w-24 h-24 rounded-[2rem] overflow-hidden bg-white flex-shrink-0 relative border border-outline-variant/10">
-                                                        <img 
-                                                            src={fav.coverImageUrl || fav.recipe?.coverImageUrl || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"} 
-                                                            alt={fav.title || fav.recipe?.title} 
-                                                            className="w-full h-full object-cover" 
+                                                    <div className="relative w-full h-36 overflow-hidden">
+                                                        <img
+                                                            src={recipe.coverImageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c'}
+                                                            alt={recipe.title}
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                         />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                                                        <span className="absolute top-3 left-3 px-2 py-1 rounded-full bg-primary text-white text-[8px] font-black uppercase tracking-widest">Recommended</span>
                                                     </div>
-                                                    <div className="flex-grow">
-                                                        <p className="font-black text-on-surface group-hover:text-white transition-colors text-lg leading-tight mb-2 line-clamp-2">{fav.title || fav.recipe?.title}</p>
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant group-hover:text-white/70">SAVED</span>
-                                                            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                                                                <span className="material-symbols-outlined text-sm">bookmark</span>
+                                                    <div className="p-4 flex flex-col gap-3 flex-1">
+                                                        <p className="font-black text-on-surface group-hover:text-white text-base leading-tight line-clamp-2 transition-colors">{recipe.title}</p>
+                                                        <div className="flex items-center gap-3 mt-auto pt-3 border-t border-outline-variant/10 group-hover:border-white/10">
+                                                            <span className="text-[9px] font-black uppercase text-on-surface-variant group-hover:text-white/60">{recipe.dietType || 'Healthy'}</span>
+                                                            <div className="ml-auto flex items-center gap-3 text-[10px] font-black text-on-surface group-hover:text-white">
+                                                                <span>{recipe.nutrition?.calories?.toFixed(0) || 0} kcal</span>
+                                                                <span>·</span>
+                                                                <span>{recipe.nutrition?.protein?.toFixed(0) || 0}g protein</span>
+                                                                <span>·</span>
+                                                                <span>{recipe.prepTime + recipe.cookTime}m</span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </button>
                                             ))}
                                         </div>
-                                    )}
-                                </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full gap-3 opacity-30">
+                                            <span className="material-symbols-outlined text-6xl">stars</span>
+                                            <p className="font-black uppercase tracking-widest text-sm text-center">Complete your health profile<br/>for personalised suggestions</p>
+                                        </div>
+                                    )
+                                )}
 
-                                <div className="p-8 border-t border-outline-variant/10 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-surface-container-low shrink-0">
-                                    <div className="flex items-center gap-4 text-on-surface-variant/40">
-                                        <span className="material-symbols-outlined text-xl">info</span>
-                                        <p className="text-[10px] leading-relaxed font-medium max-w-xl">
-                                            <strong>Safety Disclaimer:</strong> Recommendations are for general guidance and do not constitute medical advice. Please consult a healthcare professional for specific dietary needs.
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                                        <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">Expert Rule Engine</span>
-                                    </div>
+                                {/* SEARCH TAB */}
+                                {modalTab === 'search' && (
+                                    filteredResults.length > 0 ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {filteredResults.sort((a, b) => getHealthScore(b) - getHealthScore(a)).map(recipe => (
+                                                <button
+                                                    key={recipe.id}
+                                                    onClick={() => addMeal(recipe.id)}
+                                                    className={`w-full text-left group rounded-2xl border bg-surface-container-low hover:bg-primary hover:border-primary hover:shadow-xl hover:shadow-primary/20 transition-all overflow-hidden flex flex-col ${
+                                                        getHealthScore(recipe) > 75 ? 'border-primary/30' : 'border-outline-variant/10'
+                                                    }`}
+                                                >
+                                                    <div className="relative w-full h-32 overflow-hidden">
+                                                        <img
+                                                            src={recipe.coverImageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c'}
+                                                            alt={recipe.title}
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                                                        <span className="absolute top-2 right-2 px-2 py-1 rounded-full bg-white/90 backdrop-blur text-[9px] font-black text-primary shadow-sm">
+                                                            {getHealthScore(recipe)}% match
+                                                        </span>
+                                                        {getHealthScore(recipe) > 80 && (
+                                                            <span className="absolute top-2 left-2 px-2 py-1 rounded-full bg-primary text-white text-[8px] font-black uppercase">Top Match</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="p-4 flex flex-col gap-3 flex-1">
+                                                        <p className="font-black text-on-surface group-hover:text-white text-sm leading-tight line-clamp-2 transition-colors">{recipe.title}</p>
+                                                        <div className="flex items-center gap-2 mt-auto pt-3 border-t border-outline-variant/10 group-hover:border-white/10">
+                                                            <span className="text-[9px] font-black uppercase text-on-surface-variant group-hover:text-white/60">{recipe.dietType || 'General'}</span>
+                                                            <div className="ml-auto flex items-center gap-2 text-[10px] font-black text-on-surface group-hover:text-white">
+                                                                <span>{recipe.nutrition?.calories || 0} kcal</span>
+                                                                <span>·</span>
+                                                                <span>{recipe.nutrition?.protein || 0}g protein</span>
+                                                                <span>·</span>
+                                                                <span>{recipe.prepTime + recipe.cookTime}m</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full gap-3 opacity-30">
+                                            <span className="material-symbols-outlined text-6xl">search_off</span>
+                                            <p className="font-black uppercase tracking-widest text-sm text-center">No results found.<br/>Try different keywords or filters.</p>
+                                        </div>
+                                    )
+                                )}
+
+                                {/* FAVORITES TAB */}
+                                {modalTab === 'saved' && (
+                                    savedRecipes.length > 0 ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {savedRecipes.map(fav => (
+                                                <button
+                                                    key={fav.recipeId || fav.id}
+                                                    onClick={() => addMeal(fav.recipeId || fav.id)}
+                                                    className="w-full text-left group rounded-2xl border border-outline-variant/10 bg-surface-container-low hover:bg-secondary hover:border-secondary hover:shadow-xl hover:shadow-secondary/20 transition-all overflow-hidden flex items-center gap-4 p-4"
+                                                >
+                                                    <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 border border-outline-variant/10">
+                                                        <img
+                                                            src={fav.coverImageUrl || fav.recipe?.coverImageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c'}
+                                                            alt={fav.title || fav.recipe?.title}
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-black text-on-surface group-hover:text-white text-sm leading-tight line-clamp-2 transition-colors mb-1">
+                                                            {fav.title || fav.recipe?.title}
+                                                        </p>
+                                                        <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-on-surface-variant group-hover:text-white/60">
+                                                            <span className="material-symbols-outlined text-xs">bookmark</span>
+                                                            Saved Recipe
+                                                        </span>
+                                                    </div>
+                                                    <span className="material-symbols-outlined text-outline-variant/30 group-hover:text-white/40 flex-shrink-0">chevron_right</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full gap-3 opacity-30">
+                                            <span className="material-symbols-outlined text-6xl">bookmark_border</span>
+                                            <p className="font-black uppercase tracking-widest text-sm text-center">No saved recipes yet.<br/>Bookmark recipes to see them here.</p>
+                                        </div>
+                                    )
+                                )}
+                            </div>
+
+                            {/* ── FOOTER ── */}
+                            <div className="px-8 py-4 border-t border-outline-variant/10 flex-shrink-0 bg-surface-container-lowest flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-2 text-on-surface-variant/40">
+                                    <span className="material-symbols-outlined text-base">info</span>
+                                    <p className="text-[9px] font-medium leading-relaxed">
+                                        Recommendations are for guidance only. Consult a healthcare professional for specific dietary needs.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Expert Engine</span>
                                 </div>
                             </div>
                         </motion.div>

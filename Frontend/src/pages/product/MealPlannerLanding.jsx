@@ -4,6 +4,7 @@ import apiClient from "../../utils/apiClient";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { IoAddCircleOutline, IoLibraryOutline, IoTrashOutline, IoChevronForwardOutline, IoCheckmarkCircle } from "react-icons/io5";
+import ConfirmationModal from "../../components/common/ConfirmationModal";
 
 const GOALS = [
     { id: "WEIGHT_LOSS", label: "Weight Loss", icon: "trending_down" },
@@ -19,6 +20,7 @@ const MealPlannerLanding = ({ isTab = false }) => {
     const [plans, setPlans] = useState([]);
     const [loading, setLoading] = useState(false);
     const [newPlan, setNewPlan] = useState({ name: "", description: "", goal: "HEALTHY_EATING" });
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
     useEffect(() => {
         if (view === "existing") {
@@ -45,22 +47,27 @@ const MealPlannerLanding = ({ isTab = false }) => {
         try {
             const res = await apiClient.post("/meal-planner/plans", newPlan);
             toast.success("Plan created");
-            navigate(`/meal-planner/${res.data.data.id}`, { state: { from: isTab ? '/profile' : '/meal-planner' } });
+            navigate(`/meal-planner/${res.data.data.id}`, { state: { from: isTab ? '/profile?tab=planner' : '/meal-planner' } });
         } catch (err) {
             toast.error("Failed to create plan");
         }
     };
 
-    const deletePlan = async (id, e) => {
+    const requestDelete = (id, e) => {
         e.stopPropagation();
-        if (!window.confirm("Are you sure you want to delete this plan?")) return;
+        setDeleteTarget(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
         try {
-            await apiClient.delete(`/meal-planner/plans/${id}`);
+            await apiClient.delete(`/meal-planner/plans/${deleteTarget}`);
             toast.success("Plan deleted");
             fetchPlans();
         } catch (err) {
             toast.error("Failed to delete plan");
         }
+        setDeleteTarget(null);
     };
 
     const activatePlan = async (id, e) => {
@@ -239,7 +246,7 @@ const MealPlannerLanding = ({ isTab = false }) => {
                                     {plans.map(plan => (
                                         <div 
                                             key={plan.id}
-                                            onClick={() => navigate(`/meal-planner/${plan.id}`, { state: { from: isTab ? '/profile' : '/meal-planner' } })}
+                                            onClick={() => navigate(`/meal-planner/${plan.id}`, { state: { from: isTab ? '/profile?tab=planner' : '/meal-planner' } })}
                                             className={`group p-8 rounded-[3rem] border transition-all cursor-pointer botanical-shadow flex justify-between items-start ${plan.isActive ? 'bg-primary/5 border-primary/20' : 'bg-white border-white hover:border-primary/20'}`}
                                         >
                                             <div className="space-y-2">
@@ -266,7 +273,7 @@ const MealPlannerLanding = ({ isTab = false }) => {
                                                     </button>
                                                 )}
                                                 <button 
-                                                    onClick={(e) => deletePlan(plan.id, e)}
+                                                    onClick={(e) => requestDelete(plan.id, e)}
                                                     className="p-3 rounded-2xl bg-error/10 text-error opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error/20"
                                                     title="Delete Plan"
                                                 >
@@ -295,6 +302,15 @@ const MealPlannerLanding = ({ isTab = false }) => {
                     )}
                 </AnimatePresence>
             </div>
+
+            <ConfirmationModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={confirmDelete}
+                title="Delete Meal Plan"
+                message="Are you sure you want to delete this meal plan? All data associated with it will be lost."
+                confirmText="Delete Plan"
+            />
         </div>
     );
 };
