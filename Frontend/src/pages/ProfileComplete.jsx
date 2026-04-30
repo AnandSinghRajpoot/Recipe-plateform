@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import apiClient from "../utils/apiClient";
 
-const ProfileComplete = () => {
+const ProfileComplete = ({ isSettingsMode = false }) => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
     
@@ -188,8 +188,8 @@ const ProfileComplete = () => {
     }
 
     return (
-        <div className="bg-surface font-body text-on-surface min-h-screen pb-24 selection:bg-primary/20">
-            <main className="max-w-5xl mx-auto px-6 pt-12 md:pt-16">
+        <div className={`font-body text-on-surface pb-24 selection:bg-primary/20 ${isSettingsMode ? "" : "bg-surface min-h-screen"}`}>
+            <main className={`mx-auto pt-12 md:pt-16 ${isSettingsMode ? "max-w-full" : "max-w-5xl px-6"}`}>
                 
                 {/* Dynamic Header & Stepper */}
                 <div className="mb-12 text-center">
@@ -254,39 +254,41 @@ const ProfileComplete = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
                     {/* Hero Sidebar - Context Aware */}
-                    <div className="hidden lg:block lg:col-span-4 sticky top-10">
-                        <div className="relative rounded-[2.5rem] overflow-hidden h-[600px] glass-card border-white/40 shadow-inner">
-                            <img 
-                                alt="Onboarding context" 
-                                className="w-full h-full object-cover transition-all duration-700 hover:scale-105" 
-                                src={
-                                    step === 1 ? "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=800" : 
-                                    step === 2 ? "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800" : 
-                                    "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=800"
-                                }
-                            />
-                            <div className={`absolute inset-0 bg-gradient-to-t ${currentTheme.overlay} via-black/20 to-transparent transition-colors duration-700`}></div>
-                            <div className="absolute bottom-10 left-10 right-10 text-white">
-                                <div className={`w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-6 transition-all duration-500`}>
-                                    <span className="material-symbols-outlined text-3xl">
-                                        {step === 1 ? "fitness_center" : step === 2 ? "schedule" : "monitor_heart"}
-                                    </span>
+                    {!isSettingsMode && (
+                        <div className="hidden lg:block lg:col-span-4 sticky top-10">
+                            <div className="relative rounded-[2.5rem] overflow-hidden h-[600px] glass-card border-white/40 shadow-inner">
+                                <img 
+                                    alt="Onboarding context" 
+                                    className="w-full h-full object-cover transition-all duration-700 hover:scale-105" 
+                                    src={
+                                        step === 1 ? "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=800" : 
+                                        step === 2 ? "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800" : 
+                                        "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=800"
+                                    }
+                                />
+                                <div className={`absolute inset-0 bg-gradient-to-t ${currentTheme.overlay} via-black/20 to-transparent transition-colors duration-700`}></div>
+                                <div className="absolute bottom-10 left-10 right-10 text-white">
+                                    <div className={`w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-6 transition-all duration-500`}>
+                                        <span className="material-symbols-outlined text-3xl">
+                                            {step === 1 ? "fitness_center" : step === 2 ? "schedule" : "monitor_heart"}
+                                        </span>
+                                    </div>
+                                    <h3 className="font-headline text-3xl font-bold leading-tight mb-4">
+                                        {step === 1 && "Your physical profile is our foundation."}
+                                        {step === 2 && "Optimize recipes for your daily rhythm."}
+                                        {step === 3 && "Health first approach to food."}
+                                    </h3>
+                                    <p className="text-on-primary/80 font-medium tracking-wide flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                                        Phase {step}: {step === 1 ? "Vitality" : step === 2 ? "Energy" : "Care"}
+                                    </p>
                                 </div>
-                                <h3 className="font-headline text-3xl font-bold leading-tight mb-4">
-                                    {step === 1 && "Your physical profile is our foundation."}
-                                    {step === 2 && "Optimize recipes for your daily rhythm."}
-                                    {step === 3 && "Health first approach to food."}
-                                </h3>
-                                <p className="text-on-primary/80 font-medium tracking-wide flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                                    Phase {step}: {step === 1 ? "Vitality" : step === 2 ? "Energy" : "Care"}
-                                </p>
                             </div>
                         </div>
-                    </div>
+                    )}
                     
                     {/* Wizard Container */}
-                    <div className="lg:col-span-8 bg-surface-container-lowest rounded-[2.5rem] p-8 md:p-12 shadow-[0_32px_64px_rgba(25,28,27,0.06)] border border-surface-container-high transition-all duration-500 relative overflow-hidden">
+                    <div className={`${isSettingsMode ? "lg:col-span-12" : "lg:col-span-8"} bg-surface-container-lowest rounded-[2.5rem] p-8 md:p-12 shadow-[0_32px_64px_rgba(25,28,27,0.06)] border border-surface-container-high transition-all duration-500 relative overflow-hidden`}>
                         
                         {/* Phase 1+ Back Navigation */}
                         <button 
@@ -694,23 +696,25 @@ const ProfileComplete = () => {
                 </div>
 
                 {/* Supportive Info - Responsive Desktop Grid */}
-                <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-                    {[
-                        { icon: 'shield', title: 'Secure Data', desc: 'Encrypted storage following global health privacy standards.', color: 'primary' },
-                        { icon: 'temp_preferences_custom', title: 'Precision Personalization', desc: 'Real-time metabolic calculation for caloric accuracy.', color: 'primary' },
-                        { icon: 'auto_awesome', title: 'Dynamic Feed', desc: 'Your home feed updates instantly based on this data.', color: 'primary' }
-                    ].map((item, i) => (
-                        <div key={i} className="group glass-card p-8 rounded-[2rem] border-white/50 hover:bg-white/40 transition-all flex flex-col gap-5">
-                            <div className={`w-14 h-14 rounded-2xl bg-surface-container-high flex items-center justify-center transition-transform group-hover:scale-110`}>
-                                <span className={`material-symbols-outlined text-3xl font-bold text-primary`}>{item.icon}</span>
+                {!isSettingsMode && (
+                    <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                        {[
+                            { icon: 'shield', title: 'Secure Data', desc: 'Encrypted storage following global health privacy standards.', color: 'primary' },
+                            { icon: 'temp_preferences_custom', title: 'Precision Personalization', desc: 'Real-time metabolic calculation for caloric accuracy.', color: 'primary' },
+                            { icon: 'auto_awesome', title: 'Dynamic Feed', desc: 'Your home feed updates instantly based on this data.', color: 'primary' }
+                        ].map((item, i) => (
+                            <div key={i} className="group glass-card p-8 rounded-[2rem] border-white/50 hover:bg-white/40 transition-all flex flex-col gap-5">
+                                <div className={`w-14 h-14 rounded-2xl bg-surface-container-high flex items-center justify-center transition-transform group-hover:scale-110`}>
+                                    <span className={`material-symbols-outlined text-3xl font-bold text-primary`}>{item.icon}</span>
+                                </div>
+                                <div>
+                                    <h4 className="font-headline font-extrabold text-xl mb-2">{item.title}</h4>
+                                    <p className="text-sm text-on-surface-variant leading-relaxed font-medium">{item.desc}</p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="font-headline font-extrabold text-xl mb-2">{item.title}</h4>
-                                <p className="text-sm text-on-surface-variant leading-relaxed font-medium">{item.desc}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </main>
             
             {/* Custom Animations Inline */}

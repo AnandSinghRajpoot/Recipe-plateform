@@ -7,6 +7,7 @@ import CollectionsTab from "../product/CollectionsTab.jsx";
 import ShoppingListsTab from "../product/ShoppingListsTab.jsx";
 import { resolveImageUrl, handleImageError } from "../../utils/imageUtils";
 import { toast } from "react-hot-toast";
+import ConfirmationModal from "../../components/common/ConfirmationModal";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "../../utils/apiClient";
 import generalProfilePic from "../../assets/general-profile-pic.png";
@@ -34,6 +35,7 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [logoutModalOpen, setLogoutModalOpen] = useState(false);
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTab = searchParams.get('tab') || 'overview';
     
@@ -54,12 +56,7 @@ const Profile = () => {
     const [activeSettingsTab, setActiveSettingsTab] = useState("account");
     const [editProfileForm, setEditProfileForm] = useState({ name: "", bio: "", dietType: "NON_VEG", skillLevel: "BEGINNER" });
     const [savingProfile, setSavingProfile] = useState(false);
-    const [notifications, setNotifications] = useState({
-        emailRecipes: true,
-        emailNews: false,
-        pushNewFollower: true,
-        pushComments: true
-    });
+    // Removed notification state
 
     const handlePhotoClick = () => fileInputRef.current?.click();
 
@@ -389,7 +386,7 @@ const Profile = () => {
 
                 {/* Bottom Actions */}
                 <div className="p-4 border-t border-outline-variant/10 space-y-2 flex-shrink-0">
-                    <button onClick={handleLogout} className="w-full flex items-center gap-4 p-4 rounded-2xl text-error hover:bg-error/10 transition-all">
+                    <button onClick={() => setLogoutModalOpen(true)} className="w-full flex items-center gap-4 p-4 rounded-2xl text-error hover:bg-error/10 transition-all">
                         <IoLogOutOutline className="text-xl shrink-0" />
                         {isSidebarOpen && <span className="font-bold text-sm">Logout</span>}
                     </button>
@@ -445,11 +442,7 @@ const Profile = () => {
                                                 <div className="flex justify-between items-center bg-surface-container-low/50 p-4 rounded-2xl">
                                                     <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Diet</span>
                                                     <span className="text-xs font-bold text-primary capitalize">
-                                                        {profile?.dietType === 'NON_VEG' ? 'Non-Vegetarian' : 
-                                                         profile?.dietType === 'VEG' ? 'Vegetarian' :
-                                                         profile?.dietType === 'VEGAN' ? 'Vegan' :
-                                                         profile?.dietType === 'NO_PREFERENCE' ? 'No Preference' :
-                                                         'Not Set'}
+                                                        {profile?.dietType?.replace(/_/g, ' ') || 'Not Set'}
                                                     </span>
                                                 </div>
                                                 <div className="flex justify-between items-center bg-surface-container-low/50 p-4 rounded-2xl">
@@ -588,7 +581,7 @@ const Profile = () => {
                             {activeTab === 'planner' && (
                                 <div className="space-y-6">
                                     <h2 className="text-2xl font-headline font-black mb-8 px-4">Your Weekly Plans</h2>
-                                    <div className="bg-white rounded-[4rem] p-4 shadow-sm border border-white overflow-hidden botanical-shadow">
+                                    <div className="px-4">
                                         <MealPlannerLanding isTab={true} />
                                     </div>
                                 </div>
@@ -618,9 +611,7 @@ const Profile = () => {
                                     <div className="flex gap-2 overflow-x-auto pb-2">
                                         {[
                                             { id: "account", label: "Account", icon: "person" },
-                                            { id: "health", label: "Health & Lifestyle", icon: "monitor_heart" },
-                                            { id: "notifications", label: "Notifications", icon: "notifications" },
-                                            { id: "privacy", label: "Privacy", icon: "security" }
+                                            { id: "health", label: "Health & Lifestyle", icon: "monitor_heart" }
                                         ].map(tab => (
                                             <button
                                                 key={tab.id}
@@ -948,63 +939,6 @@ const Profile = () => {
                                             </div>
                                         </div>
                                     )}
-
-                                    {/* Notifications Tab */}
-                                    {activeSettingsTab === "notifications" && (
-                                        <div className="bg-white rounded-[2rem] p-6 shadow-lg space-y-4">
-                                            <h2 className="font-headline font-black text-xl mb-6">Notification Settings</h2>
-                                            
-                                            {[
-                                                { key: "emailRecipes", label: "Daily Recipe Recommendations", desc: "Get personalized recipes in your inbox" },
-                                                { key: "emailNews", label: "News & Updates", desc: "Latest features and community news" },
-                                                { key: "pushNewFollower", label: "New Followers", desc: "When someone follows you" },
-                                                { key: "pushComments", label: "Comments & Mentions", desc: "When someone comments on your recipes" }
-                                            ].map(item => (
-                                                <div key={item.key} className="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl">
-                                                    <div>
-                                                        <p className="font-bold text-on-surface">{item.label}</p>
-                                                        <p className="text-xs text-on-surface-variant">{item.desc}</p>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => setNotifications({ ...notifications, [item.key]: !notifications[item.key] })}
-                                                        className={`w-14 h-8 rounded-full transition-all ${
-                                                            notifications[item.key] ? "bg-primary" : "bg-surface-container-high"
-                                                        }`}
-                                                    >
-                                                        <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-transform ${
-                                                            notifications[item.key] ? "translate-x-7" : "translate-x-1"
-                                                        }`} />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Privacy Tab */}
-                                    {activeSettingsTab === "privacy" && (
-                                        <div className="bg-white rounded-[2rem] p-6 shadow-lg space-y-4">
-                                            <h2 className="font-headline font-black text-xl mb-6">Privacy Controls</h2>
-                                            
-                                            <div className="p-4 bg-surface-container-low rounded-2xl space-y-4">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="font-bold">Profile Visibility</span>
-                                                    <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-black">Public</span>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <span className="font-bold">Show Email</span>
-                                                    <button className="w-12 h-6 bg-surface-container-high rounded-full relative">
-                                                        <div className="w-4 h-4 bg-primary rounded-full absolute left-1 top-1"></div>
-                                                    </button>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <span className="font-bold">Show Recipes</span>
-                                                    <button className="w-12 h-6 bg-primary rounded-full relative">
-                                                        <div className="w-4 h-4 bg-white rounded-full absolute right-1 top-1"></div>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             )}
                         </motion.div>
@@ -1014,6 +948,16 @@ const Profile = () => {
 
             <input type="file" ref={fileInputRef} onChange={handlePhotoChange} className="hidden" accept="image/*" />
             <input type="file" ref={settingsFileInputRef} onChange={handleSettingsPhotoChange} className="hidden" accept="image/*" />
+
+            <ConfirmationModal
+                isOpen={logoutModalOpen}
+                onClose={() => setLogoutModalOpen(false)}
+                onConfirm={handleLogout}
+                title="Sign Out"
+                message="Are you sure you want to sign out? You will need to log back in to access your profile."
+                confirmText="Sign Out"
+                type="warning"
+            />
         </div>
     );
 };

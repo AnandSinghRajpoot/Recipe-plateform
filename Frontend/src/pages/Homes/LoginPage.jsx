@@ -184,6 +184,7 @@ const Login = () => {
                   placeholder="Enter your email or phone" 
                 />
               </div>
+              {errors.email && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-4">{errors.email}</p>}
             </div>
             
             <div className="space-y-3">
@@ -209,6 +210,7 @@ const Login = () => {
                   <span className="material-symbols-outlined text-xl">{showPassword ? "visibility_off" : "visibility"}</span>
                 </button>
               </div>
+              {errors.password && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-4">{errors.password}</p>}
             </div>
             
             <MagneticWrapper>

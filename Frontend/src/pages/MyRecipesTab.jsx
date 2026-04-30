@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import ConfirmationModal from "../components/common/ConfirmationModal";
 
 const MyRecipesTab = () => {
   const navigate = useNavigate();
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => {
     fetchMyRecipes();
@@ -28,18 +30,23 @@ const MyRecipesTab = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this recipe?")) return;
+  const requestDelete = (id) => {
+    setDeleteTarget(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:8080/api/v1/recipes/${id}`, {
+      await axios.delete(`http://localhost:8080/api/v1/recipes/${deleteTarget}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setRecipes(recipes.filter(r => r.id !== id));
+      setRecipes(recipes.filter(r => r.id !== deleteTarget));
       toast.success("Recipe deleted");
     } catch (err) {
       toast.error("Failed to delete recipe");
     }
+    setDeleteTarget(null);
   };
 
   const handleTogglePublish = async (id, currentStatus) => {
@@ -132,7 +139,7 @@ const MyRecipesTab = () => {
                           className="w-8 h-8 rounded-full bg-surface-container-low hover:bg-primary hover:text-white flex items-center justify-center text-on-surface-variant transition-colors">
                           <span className="material-symbols-outlined text-sm">edit</span>
                         </button>
-                        <button onClick={() => handleDelete(recipe.id)} title="Delete"
+                        <button onClick={() => requestDelete(recipe.id)} title="Delete"
                           className="w-8 h-8 rounded-full bg-surface-container-low hover:bg-error hover:text-white flex items-center justify-center text-error transition-colors">
                           <span className="material-symbols-outlined text-sm">delete</span>
                         </button>
@@ -145,6 +152,15 @@ const MyRecipesTab = () => {
           </div>
         </div>
       )}
+      
+      <ConfirmationModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete Recipe"
+        message="Are you sure you want to delete this recipe? This action cannot be undone."
+        confirmText="Delete Recipe"
+      />
     </div>
   );
 };

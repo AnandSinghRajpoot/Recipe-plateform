@@ -5,6 +5,7 @@ import HorizontalCard from "../../components/Headers/HorizontalCard.jsx";
 import LottiePlayer from '../../components/common/LottiePlayer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IoSearchOutline } from 'react-icons/io5';
+import BackButton from '../../components/common/BackButton';
 
 const Recipes = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -96,12 +97,8 @@ const Recipes = () => {
                 
                 let recData = recRes.data.data || [];
                 
-                // If personalized fetch returned nothing but we are logged in, 
-                // we should still show SOMETHING (Popular)
-                if (token && recData.length === 0) {
-                     const fallbackRes = await axios.get('http://localhost:8080/api/v1/recipes/recommended?limit=12');
-                     recData = fallbackRes.data.data || [];
-                }
+                // Removed the unauthenticated fallback to ensure we don't show unsafe recipes
+                // when personalized recommendations are correctly filtered out.
 
                 if (!token) {
                     const teaserCard = { id: 'personalization-teaser', isTeaserCard: true };
@@ -121,11 +118,8 @@ const Recipes = () => {
                 setRecommendations(recData);
             } catch (err) {
                 console.error("Failed to fetch recommendations:", err);
-                // Last ditch effort: Try to get popular recipes even on total failure
-                try {
-                    const fallbackRes = await axios.get('http://localhost:8080/api/v1/recipes/recommended?limit=6');
-                    setRecommendations(fallbackRes.data.data || []);
-                } catch (e) {}
+                // We do not fallback to unauthenticated recipes on error because
+                // failing-open could expose the user to allergens. We must fail-closed.
             } finally {
                 setRecLoading(false);
             }
@@ -199,7 +193,12 @@ const Recipes = () => {
         localStorage.removeItem("recentSearches");
     };
 
-    const dietTypes = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'No Preference'];
+    const dietTypes = [
+        { label: 'Vegetarian', value: 'VEG' },
+        { label: 'Non-Vegetarian', value: 'NON_VEG' },
+        { label: 'Vegan', value: 'VEGAN' },
+        { label: 'No Preference', value: 'NO_PREFERENCE' },
+    ];
     const difficulties = ['Easy', 'Medium', 'Hard'];
     const categories = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
     const prepTimes = ['Under 15 min', '15-30 min', '30-60 min', 'Over 60 min'];
@@ -230,12 +229,11 @@ const Recipes = () => {
             
             if (query) params.append('q', query);
             
-            // Map frontend values to backend enum values
-            const dietMap = { 'Vegetarian': 'VEG', 'Non-Vegetarian': 'NON_VEG', 'Vegan': 'VEGAN', 'No Preference': 'NO_PREFERENCE' };
+            // Diet type values now match the backend enum directly
             const diffMap = { 'Easy': 'EASY', 'Medium': 'MEDIUM', 'Hard': 'HARD' };
             const mealMap = { 'Breakfast': 'BREAKFAST', 'Lunch': 'LUNCH', 'Dinner': 'DINNER', 'Snack': 'SNACK' };
 
-            if (urlDiet && dietMap[urlDiet]) params.append('dietType', dietMap[urlDiet]);
+            if (urlDiet) params.append('dietType', urlDiet);
             if (urlDiff && diffMap[urlDiff]) params.append('difficulty', diffMap[urlDiff]);
             if (urlMeal && mealMap[urlMeal]) params.append('mealType', mealMap[urlMeal]);
             
@@ -447,13 +445,10 @@ const Recipes = () => {
                 
                 {/* Header & Back Navigation */}
                 <div className="mb-8">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="group flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors mb-6 text-[10px] font-black uppercase tracking-widest"
-                    >
-                        <span className="material-symbols-outlined text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
-                        Back
-                    </button>
+                    <BackButton 
+                        onClick={() => navigate('/')} 
+                        className="mb-6"
+                    />
                     
                     <h1 className="text-4xl md:text-5xl font-headline font-black text-on-surface tracking-tighter">
                         Recipes
@@ -579,11 +574,11 @@ const Recipes = () => {
                                         <div className="flex flex-wrap gap-2">
                                             {dietTypes.map(type => (
                                                 <button
-                                                    key={type}
-                                                    onClick={() => handleFilterChange('diet', filters.dietType === type ? '' : type)}
-                                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filters.dietType === type ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10'}`}
+                                                    key={type.value}
+                                                    onClick={() => handleFilterChange('diet', filters.dietType === type.value ? '' : type.value)}
+                                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filters.dietType === type.value ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10'}`}
                                                 >
-                                                    {type}
+                                                    {type.label}
                                                 </button>
                                             ))}
                                         </div>
@@ -732,7 +727,7 @@ const Recipes = () => {
                                     )}
                                     {filters.dietType && (
                                         <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-2">
-                                            {filters.dietType}
+                                            {dietTypes.find(d => d.value === filters.dietType)?.label || filters.dietType}
                                             <button onClick={() => removeFilterAndSearch('dietType')} className="hover:text-error">×</button>
                                         </span>
                                     )}

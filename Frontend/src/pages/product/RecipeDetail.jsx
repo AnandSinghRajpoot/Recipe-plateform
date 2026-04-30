@@ -5,8 +5,9 @@ import { extractErrorMessage } from "../../utils/errorHandler";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import { HeroSkeleton } from "../../components/common/LoadingSkeleton";
-import { resolveImageUrl } from "../../utils/imageUtils";
+import resolveImageUrl from "../../utils/imageUtils";
 import ReviewsSection from "../../components/common/ReviewsSection";
+import BackButton from "../../components/common/BackButton";
 
 const RecipeDetails = () => {
   const { id } = useParams();
@@ -120,15 +121,16 @@ const RecipeDetails = () => {
       <div className="max-w-7xl mx-auto px-6 pt-24 relative z-10">
         
         {/* Header Navigation */}
-        <motion.button 
+        <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          onClick={() => navigate(-1)}
-          className="group flex items-center gap-3 text-on-surface-variant font-black uppercase tracking-widest text-[10px] mb-12 hover:text-primary transition-colors"
+          className="mb-12"
         >
-          <span className="material-symbols-outlined text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
-          Return to All Recipes
-        </motion.button>
+          <BackButton 
+            onClick={() => navigate(-1)} 
+            label="Return to All Recipes"
+          />
+        </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
             
