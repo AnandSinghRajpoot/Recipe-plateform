@@ -1,7 +1,15 @@
 import { motion } from 'framer-motion'
 import MagneticWrapper from '../../components/common/MagneticWrapper'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
 const AboutSection = () => {
+  const navigate = useNavigate();
+
+  const handleExploreClick = () => {
+    navigate('/recipes');
+  };
+
   return (
     <div className='relative overflow-hidden flex md:flex-row flex-col justify-between items-center my-32 md:gap-20 gap-16 px-6 lg:px-20'>
       
@@ -32,7 +40,10 @@ const AboutSection = () => {
         
         <div className='pt-6 flex flex-wrap gap-6'>
             <MagneticWrapper>
-                <button className="vitality-gradient text-white px-10 py-5 rounded-[2rem] font-black text-lg shadow-xl shadow-primary/20 transition-all flex items-center gap-4">
+                <button 
+                  onClick={handleExploreClick}
+                  className="vitality-gradient text-white px-10 py-5 rounded-[2rem] font-black text-lg shadow-xl shadow-primary/20 transition-all flex items-center gap-4"
+                >
                     Explore the Compendium
                     <span className="material-symbols-outlined">arrow_forward</span>
                 </button>

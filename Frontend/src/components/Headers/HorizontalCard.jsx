@@ -8,7 +8,7 @@ import generalProfilePic from '../../assets/general-profile-pic.png';
 import StarRating from '../common/StarRating';
 import { useShopping } from '../../context/ShoppingContext';
 
-const HorizontalCard = ({ item }) => {
+const HorizontalCard = ({ item, isPersonalized }) => {
     const cardRef = useRef(null);
     const [saving, setSaving] = useState(false);
     const [liked, setLiked] = useState(item?.isLiked || false);
@@ -163,12 +163,12 @@ const HorizontalCard = ({ item }) => {
                     </p>
 
                     {/* Recommendation Match Insights - For Testing & Transparency */}
-                    {item?.matchReasons && item.matchReasons.length > 0 && (
+                    {(isPersonalized || item?.matchScore > 0) && (
                         <div className="flex flex-wrap gap-2 mb-4">
                             <div className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20 shadow-sm">
                                 <span className="material-symbols-outlined text-[14px]">psychology</span>
                                 <span className="text-[10px] font-black uppercase tracking-tighter">
-                                    {item.matchScore > 0 ? `Match Score: ${Math.round(item.matchScore)}` : "Recommended"}
+                                    {item?.matchScore > 0 ? `Match Score: ${Math.round(item.matchScore)}%` : "Recommended"}
                                 </span>
                             </div>
                         </div>

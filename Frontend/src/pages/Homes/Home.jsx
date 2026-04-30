@@ -77,7 +77,6 @@ const Home = () => {
                 <ScrollReveal delay={0.2}><FeaturesGrid /></ScrollReveal>
                 <ScrollReveal delay={0.2}><AboutSection /></ScrollReveal>
                 <ScrollReveal delay={0.2}><TestimonialsSection /></ScrollReveal>
-                <ScrollReveal delay={0.2}><NewsLetter /></ScrollReveal>
                 <ScrollReveal delay={0.2}><CTASection /></ScrollReveal>
             </main>
 

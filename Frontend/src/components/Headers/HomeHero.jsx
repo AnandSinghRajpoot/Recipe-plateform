@@ -105,18 +105,6 @@ const HomeHero = () => {
                     className="relative rounded-[2rem] overflow-hidden botanical-shadow transition-all duration-700 hover:scale-[1.02]"
                 >
                     <img className="w-full aspect-[4/5] object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBM6J1PPtTHLR0f8iqcpHxvf-h2miMDp9FfOHPO-vPPPKx0Vt1Uc5gpEm-OxyZ-a8RE9VQRe42gt6_E8J8hxHOGxdTihxKCy7fMYmEk7qDA9J9lNbnmYU3HWxHuMfFboaIdYUxh8j5G-ReXKwZczk73Lv-6eRHN1HejgU-_-2Csldk9vAAgOndOMj1XYlM7_sX_65lE1oXQnHq5A9lf9lQqtkEQWzBtC-CbYmnVqD79cwcY2vT1ji9mtOJS8nb2VUPn-KHzkVMgbA" alt="Healthy Vitality Bowl"/>
-                    <div className="absolute bottom-6 left-6 right-6 p-6 bg-white/70 backdrop-blur-xl rounded-2xl border border-white/40">
-                        <div className="flex justify-between items-end">
-                            <div>
-                                <p className="text-xs font-black text-primary uppercase tracking-widest mb-1">Recipe of the day</p>
-                                <h3 className="text-xl font-headline font-black text-on-surface">Avocado Vitality Bowl</h3>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-2xl font-black text-on-surface">420</p>
-                                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Kcal</p>
-                            </div>
-                        </div>
-                    </div>
                 </motion.div>
             </motion.div>
         </section>

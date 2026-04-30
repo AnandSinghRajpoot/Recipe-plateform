@@ -1,6 +1,20 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const FeaturesGrid = () => {
+    const navigate = useNavigate();
+
+    const handleMealPlannerClick = () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            toast.error("Please login to access the Meal Planner");
+            navigate("/login");
+            return;
+        }
+        navigate("/meal-planner");
+    };
+
     return (
         <section className="bg-surface-container-low py-24 px-6 md:px-12 border-y border-outline-variant/5">
             <div className="max-w-7xl mx-auto">
@@ -43,10 +57,13 @@ const FeaturesGrid = () => {
                             <p className="text-white/80 leading-relaxed font-medium">Visual weekly calendars that sync with your grocery list and culinary schedule effortlessly.</p>
                         </div>
                         <div className="mt-8 pt-8 border-t border-white/20">
-                            <div className="flex justify-between items-center group cursor-pointer">
+                            <button 
+                                onClick={handleMealPlannerClick}
+                                className="flex justify-between items-center group w-full text-left"
+                            >
                                 <span className="text-sm font-black uppercase tracking-widest group-hover:mr-2 transition-all">View Calendar</span>
                                 <span className="material-symbols-outlined group-hover:scale-110 transition-transform">arrow_forward</span>
-                            </div>
+                            </button>
                         </div>
                     </div>
 
