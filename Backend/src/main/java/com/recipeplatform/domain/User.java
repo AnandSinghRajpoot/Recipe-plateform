@@ -4,6 +4,7 @@ import com.recipeplatform.domain.enums.DietType;
 import com.recipeplatform.domain.enums.ExperienceLevel;
 import com.recipeplatform.domain.enums.SkillLevel;
 import com.recipeplatform.domain.enums.UserRole;
+import com.recipeplatform.domain.enums.UserStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -54,6 +55,13 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", length = 20)
     private UserRole role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20)
+    private UserStatus status = UserStatus.ACTIVE;
+
+    @Column(name = "suspended_until")
+    private LocalDateTime suspendedUntil;
 
     @Column(name = "phone_number", length = 20, nullable = true)
     private String phoneNumber;

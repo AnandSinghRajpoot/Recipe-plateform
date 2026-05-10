@@ -118,6 +118,12 @@ public class Recipe {
     @Column(name = "is_published", nullable = false)
     private Boolean isPublished = false;
 
+    @Column(name = "is_moderated", nullable = false)
+    private Boolean isModerated = false;
+
+    @Column(name = "moderation_reason", length = 500)
+    private String moderationReason;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 

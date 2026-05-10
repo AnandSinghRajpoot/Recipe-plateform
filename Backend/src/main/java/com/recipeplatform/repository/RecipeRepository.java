@@ -20,14 +20,14 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long>, JpaSpecif
 
     List<Recipe> findByUserIdAndIsPublishedTrue(Long userId);
 
-    @Query("SELECT r FROM Recipe r WHERE LOWER(r.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(r.description) LIKE LOWER(CONCAT('%', :query, '%'))")
+    @Query("SELECT r FROM Recipe r WHERE (LOWER(r.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(r.description) LIKE LOWER(CONCAT('%', :query, '%'))) AND r.isModerated = false")
     List<Recipe> searchRecipes(@Param("query") String query);
 
-    @Query("SELECT r FROM Recipe r WHERE r.deletedAt IS NULL ORDER BY r.createdAt DESC")
+    @Query("SELECT r FROM Recipe r WHERE r.deletedAt IS NULL AND r.isModerated = false ORDER BY r.createdAt DESC")
     List<Recipe> findAllOrderByCreatedAtDesc();
 
     // Published only — for public feeds
-    List<Recipe> findByIsPublishedTrueAndDeletedAtIsNull();
+    List<Recipe> findByIsPublishedTrueAndDeletedAtIsNullAndIsModeratedFalse();
 
     List<Recipe> findByDietTypeAndIsPublishedTrueAndDeletedAtIsNull(DietType dietType);
 
@@ -41,7 +41,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long>, JpaSpecif
      * This query runs at the database layer so allergen data never leaks into application memory.
      */
     @Query("""
-        SELECT r FROM Recipe r WHERE r.isPublished = true AND r.deletedAt IS NULL
+        SELECT r FROM Recipe r WHERE r.isPublished = true AND r.deletedAt IS NULL AND r.isModerated = false
         AND NOT EXISTS (
             SELECT a FROM r.containsAllergens a
             WHERE a.id IN :allergenIds
@@ -56,7 +56,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long>, JpaSpecif
     @Query("""
         SELECT DISTINCT r FROM Recipe r
         JOIN r.safeForDiseases d
-        WHERE d.id IN :diseaseIds AND r.isPublished = true AND r.deletedAt IS NULL
+        WHERE d.id IN :diseaseIds AND r.isPublished = true AND r.deletedAt IS NULL AND r.isModerated = false
     """)
     List<Recipe> findPublishedRecipesSafeForDiseases(@Param("diseaseIds") Set<Long> diseaseIds);
 }
