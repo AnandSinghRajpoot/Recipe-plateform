@@ -24,6 +24,7 @@ import EditRecipe from "./pages/EditRecipe.jsx";
 import ProfileComplete from "./pages/ProfileComplete.jsx";
 import Profile from './pages/Homes/profile.jsx';
 import ChefDashboard from './pages/ChefDashboard.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
 import MealPlanner from './pages/product/MealPlanner.jsx';
 import MealPlannerLanding from './pages/product/MealPlannerLanding.jsx';
 import ChefProfile from './pages/ChefProfile.jsx';
@@ -130,6 +131,10 @@ const router = createBrowserRouter([
         {
           path: "/chef-dashboard",
           element: <ChefDashboard />
+        },
+        {
+          path: "/admin-dashboard",
+          element: <AdminDashboard />
         },
         {
           path: "/chef/:id",

@@ -18,6 +18,9 @@ const SingleProduct = () => {
     const [isSaving, setIsSaving] = useState(false);
     const { selectedRecipes, toggleRecipeSelection } = useShopping();
     const isSelectedForShopping = selectedRecipes.includes(parseInt(id));
+    const userRole = localStorage.getItem('role');
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportReason, setReportReason] = useState('');
 
     const fetchRecipe = async () => {
         try {
@@ -130,6 +133,26 @@ const SingleProduct = () => {
         }
     };
 
+    const handleReport = async () => {
+        if (!reportReason.trim()) { toast.error('Please provide a reason'); return; }
+        try {
+            await apiClient.post(`/reports?type=RECIPE&targetId=${id}&reason=${encodeURIComponent(reportReason)}`);
+            toast.success('Report submitted. Our team will review it.');
+            setShowReportModal(false);
+            setReportReason('');
+        } catch (err) { toast.error('Failed to submit report'); }
+    };
+
+    const handleAdminModerate = async (moderated) => {
+        const reason = moderated ? prompt('Reason for taking down this recipe:') : '';
+        if (moderated && !reason) return;
+        try {
+            await apiClient.patch(`/admin/recipes/${id}/moderate?moderated=${moderated}&reason=${encodeURIComponent(reason || '')}`);
+            toast.success(moderated ? 'Recipe taken down' : 'Recipe restored');
+            fetchRecipe();
+        } catch (err) { toast.error('Moderation failed'); }
+    };
+
     if (loading) return <div className="min-h-screen bg-surface flex items-center justify-center"><div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
     if (!item) return <div className="min-h-screen bg-surface flex items-center justify-center">Recipe not found.</div>;
 
@@ -203,6 +226,16 @@ const SingleProduct = () => {
                             </span>
                             <span className="text-[9px] font-black">{isSelectedForShopping ? 'Added' : 'Bag'}</span>
                         </button>
+                        {localStorage.getItem('token') && userRole !== 'ADMIN' && (
+                            <button 
+                                onClick={() => setShowReportModal(true)}
+                                className="w-14 h-14 rounded-3xl backdrop-blur-md flex flex-col items-center justify-center transition-all shadow-xl bg-white/20 text-white border border-white/40 hover:bg-red-500 active:scale-90 duration-200 group/report"
+                                title="Report this recipe"
+                            >
+                                <span className="material-symbols-outlined text-2xl group-hover/report:scale-110 transition-transform">flag</span>
+                                <span className="text-[9px] font-black">Report</span>
+                            </button>
+                        )}
                     </div>
 
                     <div className="absolute bottom-10 left-10 right-10 flex flex-col items-start gap-4">
@@ -343,6 +376,53 @@ const SingleProduct = () => {
                 .bg-surface { background-color: #f5fced; }
             `}} />
         </div>
+
+        {/* Admin Moderation Bar */}
+        {userRole === 'ADMIN' && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-gray-900/95 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl border border-white/10">
+                <span className="material-symbols-outlined text-violet-400">admin_panel_settings</span>
+                <span className="text-xs font-black uppercase tracking-widest text-violet-300">Admin Control</span>
+                <div className="w-px h-5 bg-white/20 mx-1" />
+                {!item?.isModerated ? (
+                    <button onClick={() => handleAdminModerate(true)}
+                        className="px-4 py-1.5 bg-red-600 text-white rounded-xl text-xs font-black hover:bg-red-700 transition-colors">
+                        Take Down Recipe
+                    </button>
+                ) : (
+                    <button onClick={() => handleAdminModerate(false)}
+                        className="px-4 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-black hover:bg-emerald-700 transition-colors">
+                        Restore Recipe
+                    </button>
+                )}
+            </div>
+        )}
+
+        {/* Report Modal */}
+        {showReportModal && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                    <h2 className="font-black text-xl mb-1">Report Recipe</h2>
+                    <p className="text-gray-500 text-sm mb-4">Describe the issue with this recipe. Our team will review it within 24 hours.</p>
+                    <textarea
+                        value={reportReason}
+                        onChange={e => setReportReason(e.target.value)}
+                        placeholder="E.g. Contains false nutritional info, inappropriate content..."
+                        rows={4}
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary resize-none mb-4"
+                    />
+                    <div className="flex gap-3">
+                        <button onClick={handleReport}
+                            className="flex-1 py-3 bg-red-600 text-white rounded-xl font-black text-sm hover:bg-red-700 transition-colors">
+                            Submit Report
+                        </button>
+                        <button onClick={() => setShowReportModal(false)}
+                            className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-black text-sm hover:bg-gray-200 transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
     );
 };
 

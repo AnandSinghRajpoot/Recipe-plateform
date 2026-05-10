@@ -31,7 +31,8 @@ function App() {
     "/recipes",
     "/search",
     "/shopping-list",
-    "/resources"
+    "/resources",
+    "/admin-dashboard"
   ].some(path => location.pathname === path || location.pathname.startsWith("/edit-recipe/") || location.pathname.startsWith("/chef/") || location.pathname.startsWith("/shopping-list/") || location.pathname.startsWith("/meal-planner"));
 
   return (

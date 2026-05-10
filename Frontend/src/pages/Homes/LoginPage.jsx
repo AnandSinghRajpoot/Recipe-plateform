@@ -40,13 +40,15 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await apiClient.post("/auth/login", { ...user, role: activeTab });
+      const res = await apiClient.post("/auth/login", { ...user, role: activeTab === 'ADMIN' ? null : activeTab });
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
       toast.success("Login successful! Redirecting...");
       
       setTimeout(() => {
-        if (res.data.role === "CHEF" || res.data.role === "ADMIN") {
+        if (res.data.role === "ADMIN") {
+          navigate("/admin-dashboard");
+        } else if (res.data.role === "CHEF") {
           navigate("/chef-dashboard");
         } else {
           navigate("/");
