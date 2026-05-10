@@ -15,7 +15,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
@@ -47,6 +50,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/recipes/**").authenticated()
                         // Shopping List endpoints require authentication
                         .requestMatchers("/api/v1/shopping-lists/**").authenticated()
+                        // Admin endpoints — locked to ADMIN role via @PreAuthorize on controller
+                        .requestMatchers("/api/v1/admin/**").authenticated()
+                        // Reports — authenticated users can file reports
+                        .requestMatchers(HttpMethod.POST, "/api/v1/reports/**").authenticated()
                         .anyRequest().permitAll()
         );
 

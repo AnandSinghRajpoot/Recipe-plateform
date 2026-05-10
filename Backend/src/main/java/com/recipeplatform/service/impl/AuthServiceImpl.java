@@ -73,6 +73,24 @@ public class AuthServiceImpl implements AuthService {
                 .getPrincipal();
         User user = userDetails.getUser();
 
+        // Check account status
+        if (user.getStatus() == com.recipeplatform.domain.enums.UserStatus.BANNED) {
+            throw new org.springframework.security.authentication.LockedException("Your account has been permanently banned.");
+        }
+        if (user.getStatus() == com.recipeplatform.domain.enums.UserStatus.DELETED) {
+            throw new org.springframework.security.authentication.AccountExpiredException("This account has been deleted.");
+        }
+        if (user.getStatus() == com.recipeplatform.domain.enums.UserStatus.SUSPENDED) {
+            if (user.getSuspendedUntil() != null && user.getSuspendedUntil().isAfter(java.time.LocalDateTime.now())) {
+                throw new org.springframework.security.authentication.LockedException("Your account is suspended until: " + user.getSuspendedUntil());
+            } else {
+                // Suspension expired, reactivate
+                user.setStatus(com.recipeplatform.domain.enums.UserStatus.ACTIVE);
+                user.setSuspendedUntil(null);
+                userRepository.save(user);
+            }
+        }
+
         if (loginRequest.getRole() != null && user.getRole() != loginRequest.getRole()) {
             throw new org.springframework.security.authentication.BadCredentialsException("Invalid credentials for the specified role.");
         }

@@ -183,7 +183,7 @@ public class RecipeServiceImpl implements RecipeService {
     @Transactional(readOnly = true)
     public List<RecipeResponseDTO> getAllRecipes() {
         List<RecipeResponseDTO> dtos = recipeMapper.toResponseDTOList(
-            recipeRepository.findByIsPublishedTrueAndDeletedAtIsNull());
+            recipeRepository.findByIsPublishedTrueAndDeletedAtIsNullAndIsModeratedFalse());
         dtos.forEach(this::populateSocialData);
         return dtos;
     }
