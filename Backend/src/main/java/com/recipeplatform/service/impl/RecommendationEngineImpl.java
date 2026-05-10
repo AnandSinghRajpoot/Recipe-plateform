@@ -83,7 +83,7 @@ public class RecommendationEngineImpl implements RecommendationEngine {
         if (!userAllergyIds.isEmpty()) {
             candidateRecipes = recipeRepository.findPublishedRecipesExcludingAllergens(userAllergyIds);
         } else {
-            candidateRecipes = recipeRepository.findByIsPublishedTrueAndDeletedAtIsNull();
+            candidateRecipes = recipeRepository.findByIsPublishedTrueAndDeletedAtIsNullAndIsModeratedFalse();
         }
 
         log.info("Phase 1 complete: Found {} safe candidate recipes for user {} (Excluded {} allergens)",

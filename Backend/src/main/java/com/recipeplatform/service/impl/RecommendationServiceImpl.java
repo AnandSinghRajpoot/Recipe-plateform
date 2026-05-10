@@ -41,7 +41,7 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         if (user == null) {
             // Return popular recipes for guests
-            return recipeRepository.findByIsPublishedTrueAndDeletedAtIsNull()
+            return recipeRepository.findByIsPublishedTrueAndDeletedAtIsNullAndIsModeratedFalse()
                     .stream()
                     .sorted(Comparator.comparingDouble((Recipe r) -> r.getAverageRating() != null ? r.getAverageRating() : 0).reversed())
                     .limit(limit)
@@ -70,7 +70,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         });
 
         // 2. Fetch published recipes
-        List<Recipe> baseRecipes = recipeRepository.findByIsPublishedTrueAndDeletedAtIsNull();
+        List<Recipe> baseRecipes = recipeRepository.findByIsPublishedTrueAndDeletedAtIsNullAndIsModeratedFalse();
 
         // 3. Build User's Ingredient Restriction Profile (OBJECTIVE DATA)
         Map<Long, RestrictionSeverity> restrictedIngredients = new HashMap<>();
