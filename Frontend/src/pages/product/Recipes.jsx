@@ -680,36 +680,38 @@ const Recipes = () => {
                 </div>
 
                 {/* Tab Switcher */}
-                <div className="flex items-center gap-2 mb-10 bg-surface-container-low p-1.5 rounded-3xl w-fit border border-outline-variant/5">
-                    <button 
-                        onClick={() => {
-                            setActiveTab('all');
-                            setSearchParams(prev => {
-                                prev.set('tab', 'all');
-                                return prev;
-                            });
-                        }}
-                        className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'all' ? 'bg-white text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}
-                    >
-                        All Recipes
-                    </button>
-                    <button 
-                        onClick={() => {
-                            setActiveTab('recommended');
-                            setSearchParams(prev => {
-                                prev.set('tab', 'recommended');
-                                return prev;
-                            });
-                        }}
-                        className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'recommended' ? 'bg-white text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}
-                    >
-                        <span className="material-symbols-outlined text-sm">temp_preferences_custom</span>
-                        For You
-                    </button>
-                </div>
+                {localStorage.getItem('role') !== 'CHEF' && (
+                    <div className="flex items-center gap-2 mb-10 bg-surface-container-low p-1.5 rounded-3xl w-fit border border-outline-variant/5">
+                        <button 
+                            onClick={() => {
+                                setActiveTab('all');
+                                setSearchParams(prev => {
+                                    prev.set('tab', 'all');
+                                    return prev;
+                                });
+                            }}
+                            className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'all' ? 'bg-white text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}
+                        >
+                            All Recipes
+                        </button>
+                        <button 
+                            onClick={() => {
+                                setActiveTab('recommended');
+                                setSearchParams(prev => {
+                                    prev.set('tab', 'recommended');
+                                    return prev;
+                                });
+                            }}
+                            className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'recommended' ? 'bg-white text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}
+                        >
+                            <span className="material-symbols-outlined text-sm">temp_preferences_custom</span>
+                            For You
+                        </button>
+                    </div>
+                )}
 
                 <AnimatePresence mode="wait">
-                    {activeTab === 'all' ? (
+                    {activeTab === 'all' || localStorage.getItem('role') === 'CHEF' ? (
                         <motion.div 
                             key="all-tab"
                             initial={{ opacity: 0, x: -20 }}

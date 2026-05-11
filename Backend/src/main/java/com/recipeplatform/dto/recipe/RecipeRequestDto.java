@@ -59,6 +59,6 @@ public class RecipeRequestDto {
     // Health tagging — IDs of allergens this recipe contains
     private Set<Long> allergenIds;
 
-    // IDs of diseases this recipe is safe for
-    private Set<Long> safeForDiseaseIds;
+    // Intended Dietary Goals
+    private Set<com.recipeplatform.domain.enums.DietaryGoal> dietaryGoals;
 }

@@ -77,7 +77,7 @@ const Home = () => {
                 <ScrollReveal delay={0.2}><FeaturesGrid /></ScrollReveal>
                 <ScrollReveal delay={0.2}><AboutSection /></ScrollReveal>
                 <ScrollReveal delay={0.2}><TestimonialsSection /></ScrollReveal>
-                <ScrollReveal delay={0.2}><CTASection /></ScrollReveal>
+                {!localStorage.getItem("token") && <ScrollReveal delay={0.2}><CTASection /></ScrollReveal>}
             </main>
 
             <style dangerouslySetInnerHTML={{ __html: `

@@ -7,11 +7,19 @@ const FeaturesGrid = () => {
 
     const handleMealPlannerClick = () => {
         const token = localStorage.getItem("token");
+        const role = localStorage.getItem("role");
+
         if (!token) {
             toast.error("Please login to access the Meal Planner");
             navigate("/login");
             return;
         }
+
+        if (role === "CHEF") {
+            toast.error("Meal Planning is only available for regular users.");
+            return;
+        }
+
         navigate("/meal-planner");
     };
 
@@ -48,24 +56,26 @@ const FeaturesGrid = () => {
                     </div>
 
                     {/* Feature 2: Meal Planning */}
-                    <div className="vitality-gradient p-10 rounded-[2.5rem] text-white flex flex-col justify-between shadow-xl shadow-primary/10 hover:scale-[1.02] transition-all">
-                        <div className="space-y-6">
-                            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-3xl">calendar_today</span>
+                    {localStorage.getItem("role") !== "CHEF" && (
+                        <div className="vitality-gradient p-10 rounded-[2.5rem] text-white flex flex-col justify-between shadow-xl shadow-primary/10 hover:scale-[1.02] transition-all">
+                            <div className="space-y-6">
+                                <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-3xl">calendar_today</span>
+                                </div>
+                                <h3 className="text-3xl font-headline font-black leading-tight">Vibrant Meal <br/>Planning</h3>
+                                <p className="text-white/80 leading-relaxed font-medium">Visual weekly calendars that sync with your grocery list and culinary schedule effortlessly.</p>
                             </div>
-                            <h3 className="text-3xl font-headline font-black leading-tight">Vibrant Meal <br/>Planning</h3>
-                            <p className="text-white/80 leading-relaxed font-medium">Visual weekly calendars that sync with your grocery list and culinary schedule effortlessly.</p>
+                            <div className="mt-8 pt-8 border-t border-white/20">
+                                <button 
+                                    onClick={handleMealPlannerClick}
+                                    className="flex justify-between items-center group w-full text-left"
+                                >
+                                    <span className="text-sm font-black uppercase tracking-widest group-hover:mr-2 transition-all">View Calendar</span>
+                                    <span className="material-symbols-outlined group-hover:scale-110 transition-transform">arrow_forward</span>
+                                </button>
+                            </div>
                         </div>
-                        <div className="mt-8 pt-8 border-t border-white/20">
-                            <button 
-                                onClick={handleMealPlannerClick}
-                                className="flex justify-between items-center group w-full text-left"
-                            >
-                                <span className="text-sm font-black uppercase tracking-widest group-hover:mr-2 transition-all">View Calendar</span>
-                                <span className="material-symbols-outlined group-hover:scale-110 transition-transform">arrow_forward</span>
-                            </button>
-                        </div>
-                    </div>
+                    )}
 
                     {/* Feature 3: Nutrition Tracking */}
                     <div className="bg-surface-container-highest p-10 rounded-[2.5rem] flex flex-col justify-between border border-outline-variant/10">

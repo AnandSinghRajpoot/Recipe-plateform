@@ -8,7 +8,6 @@ import { toast } from "react-hot-toast";
 import ConfirmationModal from "../components/common/ConfirmationModal";
 import generalProfilePic from "../assets/general-profile-pic.png";
 import SavedRecipesTab from "./product/SavedRecipesTab";
-import CollectionsTab from "./product/CollectionsTab";
 import ShoppingListsTab from "./product/ShoppingListsTab";
 
 // ──────────────────────────────────────────────────────────────────
@@ -196,9 +195,16 @@ const ProfileTab = () => {
             <p className="text-on-surface-variant text-xs font-bold opacity-60 mt-1 uppercase tracking-widest">{profile.role}</p>
             
             <div className="w-full mt-6 pt-6 border-t border-outline-variant/10 space-y-4">
-               <div className="flex justify-between text-xs font-bold px-2">
+               <div className="flex justify-between items-center text-xs font-bold px-2">
                   <span className="text-on-surface-variant opacity-60">Status</span>
-                  <span className="text-primary">Professional</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                    profile.status === 'ACTIVE' || !profile.status ? 'bg-emerald-100 text-emerald-700' :
+                    profile.status === 'SUSPENDED' ? 'bg-amber-100 text-amber-700' :
+                    profile.status === 'BANNED' ? 'bg-red-100 text-red-700' :
+                    'bg-gray-100 text-gray-500'
+                  }`}>
+                    {profile.status || "ACTIVE"}
+                  </span>
                </div>
             </div>
           </div>
@@ -301,7 +307,6 @@ const NAV_ITEMS = [
   { id: "overview",    icon: "dashboard",    label: "Dashboard" },
   { id: "recipes",     icon: "menu_book",    label: "My Recipes" },
   { id: "saved",       icon: "bookmark",     label: "Saved Recipes" },
-  { id: "collections", icon: "folder",       label: "Collections" },
   { id: "shopping",    icon: "shopping_cart", label: "Shopping Lists" },
   { id: "profile",     icon: "settings",     label: "Settings & Profile" },
 ];
@@ -325,9 +330,10 @@ const ChefDashboard = () => {
             headers: { Authorization: `Bearer ${token}` }
         }).then(res => {
             const recipes = res.data.data || res.data || [];
+            const publishedRecipes = recipes.filter(r => r.isPublished);
             const totalSaves = recipes.reduce((sum, r) => sum + (r.savedCount || 0), 0);
             const totalViews = recipes.reduce((sum, r) => sum + (r.viewCount || 0), 0);
-            setStats(prev => ({ ...prev, total: recipes.length, saves: totalSaves, views: totalViews }));
+            setStats(prev => ({ ...prev, total: publishedRecipes.length, saves: totalSaves, views: totalViews }));
         }).catch(console.error);
     }
   }, [token, role, navigate]);
@@ -344,7 +350,6 @@ const ChefDashboard = () => {
       case "add":         return <CreateRecipeForm onSuccess={() => setActiveTab("recipes")} />;
       case "recipes":     return <MyRecipesTab />;
       case "saved":       return <div className="animate-fade-in"><SavedRecipesTab /></div>;
-      case "collections": return <div className="animate-fade-in"><CollectionsTab /></div>;
       case "shopping":    return <div className="animate-fade-in"><ShoppingListsTab /></div>;
       case "profile":     return <ProfileTab />;
       default:            return <OverviewTab stats={stats} setActiveTab={setActiveTab} />;

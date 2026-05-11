@@ -100,13 +100,7 @@ const Signup = () => {
         newErrors.bio = "Chef bio must be at least 50 characters for verification";
       }
 
-      const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/;
-      if (formData.instagramLink && formData.instagramLink.trim() !== "" && !urlRegex.test(formData.instagramLink)) {
-        newErrors.instagramLink = "Invalid Instagram URL";
-      }
-      if (formData.youtubeLink && formData.youtubeLink.trim() !== "" && !urlRegex.test(formData.youtubeLink)) {
-        newErrors.youtubeLink = "Invalid YouTube URL";
-      }
+
     }
 
     const passwordRegex = /^(?=.*[0-9])(?=.*[a-zA-Z]).+$/;
@@ -377,7 +371,7 @@ const Signup = () => {
                       <div className="space-y-3">
                         <label className="text-[10px] font-black text-on-surface-variant ml-2 uppercase tracking-widest">Curated Specializations</label>
                         <div className="flex flex-wrap gap-2">
-                          {['Italian', 'Asian', 'Keto', 'Plant-Based', 'Modernism', 'Desserts', 'Baking', 'Organic'].map((spec) => (
+                          {['Italian', 'Asian', 'Keto', 'Plant-Based', 'Modernism', 'Desserts', 'Baking', 'Organic', 'Other'].map((spec) => (
                             <button
                               key={spec} type="button"
                               onClick={() => toggleSpecialization(spec)}
@@ -402,46 +396,7 @@ const Signup = () => {
                           {errors.bio && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-2">{errors.bio}</p>}
                         </div>
 
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-on-surface-variant ml-2 uppercase tracking-widest">Digital Presence</label>
-                          <div className="space-y-3">
-                            <div className="relative group">
-                              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary scale-75">link</span>
-                              <input 
-                                type="url" name="instagramLink" value={formData.instagramLink} onChange={handleChange}
-                                className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border-2 border-transparent rounded-xl focus:border-primary/30 focus:bg-white text-[10px] font-bold text-on-surface placeholder:text-outline-variant/30"
-                                placeholder="Instagram Link" 
-                              />
-                            </div>
-                            {errors.instagramLink && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-1">{errors.instagramLink}</p>}
-                            
-                            <div className="relative group">
-                              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary scale-75">video_library</span>
-                              <input 
-                                type="url" name="youtubeLink" value={formData.youtubeLink} onChange={handleChange}
-                                className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border-2 border-transparent rounded-xl focus:border-primary/30 focus:bg-white text-[10px] font-bold text-on-surface placeholder:text-outline-variant/30"
-                                placeholder="YouTube Channel" 
-                              />
-                            </div>
-                            {errors.youtubeLink && <p className="text-[9px] font-black text-error uppercase tracking-widest ml-1">{errors.youtubeLink}</p>}
-                          </div>
-                        </div>
 
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-on-surface-variant ml-2 uppercase tracking-widest">Content Intent</label>
-                          <div className="flex flex-col gap-2">
-                            {['RECIPE_SHARING', 'BRAND_BUILDING', 'HEALTH_COACHING'].map((intent) => (
-                              <button
-                                key={intent} type="button"
-                                onClick={() => setFormData({...formData, contentIntent: intent})}
-                                className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black transition-all ${formData.contentIntent === intent ? 'bg-primary/10 text-primary border-primary/20' : 'bg-surface-container-low text-on-surface-variant'}`}
-                                style={{ borderWidth: '1px' }}
-                              >
-                                {intent.replace('_', ' ')}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
                       </div>
                     </div>
                   </motion.div>

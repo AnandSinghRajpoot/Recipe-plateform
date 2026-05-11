@@ -5,6 +5,7 @@ import MagneticWrapper from '../common/MagneticWrapper';
 
 const HomeHero = () => {
     const navigate = useNavigate();
+    const token = localStorage.getItem("token");
     const [displayText1, setDisplayText1] = useState("");
     const [displayText2, setDisplayText2] = useState("");
     const [showCursor, setShowCursor] = useState(true);
@@ -64,14 +65,16 @@ const HomeHero = () => {
                     Personalized nutrition planning for your unique goals. We combine metabolic logic with culinary wisdom to fuel your journey.
                 </p>
                 <div className="flex flex-wrap gap-6">
-                    <MagneticWrapper>
-                        <button 
-                          onClick={() => navigate("/signup")}
-                          className="vitality-gradient text-white px-8 py-4 rounded-xl font-bold text-lg botanical-shadow hover:opacity-90 transition-all active:scale-[0.98]"
-                        >
-                            Get Started
-                        </button>
-                    </MagneticWrapper>
+                    {!token && (
+                        <MagneticWrapper>
+                            <button 
+                              onClick={() => navigate("/signup")}
+                              className="vitality-gradient text-white px-8 py-4 rounded-xl font-bold text-lg botanical-shadow hover:opacity-90 transition-all active:scale-[0.98]"
+                            >
+                                Get Started
+                            </button>
+                        </MagneticWrapper>
+                    )}
                     <MagneticWrapper strength={0.3}>
                         <button 
                           onClick={() => navigate("/recipes")}

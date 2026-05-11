@@ -35,6 +35,9 @@ public class DataSeeder implements ApplicationRunner {
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
     private final AllergyRestrictionRepository allergyRestrictionRepository;
+    private final RecipeCollectionRepository recipeCollectionRepository;
+    private final MealSlotRepository mealSlotRepository;
+    private final ReviewRepository reviewRepository;
 
     @Override
     @Transactional
@@ -229,6 +232,11 @@ public class DataSeeder implements ApplicationRunner {
         }
 
         log.info("Cleaning up old recipes and user bookmarks for a fresh 85-recipe seed...");
+        mealSlotRepository.deleteAll();
+        recipeCollectionRepository.deleteAll();
+        reviewRepository.deleteAll();
+        commentRepository.deleteAll();
+        likeRepository.deleteAll();
         savedRecipeRepository.deleteAll();
         recipeRepository.deleteAll();
         

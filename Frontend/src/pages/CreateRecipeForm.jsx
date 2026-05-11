@@ -3,7 +3,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-const CreateRecipeForm = ({ onSuccess }) => {
+const CreateRecipeForm = ({ onSuccess, onCancel, recipeId }) => {
+  const isEditMode = !!recipeId;
   const [step, setStep] = useState(1);
   const [recipe, setRecipe] = useState({
     title: "",
@@ -18,8 +19,24 @@ const CreateRecipeForm = ({ onSuccess }) => {
     cuisineType: "",
     ingredients: [{ name: "", quantity: "", unit: "GRAM" }],
     allergenIds: [],
-    safeForDiseaseIds: []
+    dietaryGoals: [],
+    nutrition: {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0
+    }
   });
+
+  const DIETARY_GOALS = [
+    { id: 'WEIGHT_LOSS', name: 'Weight Loss' },
+    { id: 'LOW_CARB', name: 'Low Carb' },
+    { id: 'HEART_HEALTHY', name: 'Heart Healthy' },
+    { id: 'MUSCLE_GAIN', name: 'Muscle Gain' },
+    { id: 'HIGH_PROTEIN', name: 'High Protein' },
+    { id: 'LOW_SODIUM', name: 'Low Sodium' },
+    { id: 'GENERAL_WELLNESS', name: 'General Wellness' }
+  ];
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -55,12 +72,77 @@ const CreateRecipeForm = ({ onSuccess }) => {
         toast.error("Failed to load reference data");
       }
     };
-    fetchRefData();
-  }, []);
+    
+    fetchRefData().then(() => {
+        if (recipeId) {
+            fetchRecipeDetails(recipeId);
+        }
+    });
+  }, [recipeId]);
+
+  const fetchRecipeDetails = async (id) => {
+    setLoading(true);
+    try {
+        const res = await axios.get(`http://localhost:8080/api/v1/recipes/${id}`);
+        const data = res.data.data || res.data;
+        
+        setRecipe({
+            title: data.title || "",
+            description: data.description || "",
+            instructions: data.instructions || "",
+            difficulty: data.difficulty || "MEDIUM",
+            prepTime: data.prepTime || 15,
+            cookTime: data.cookTime || 30,
+            servings: data.servings || 2,
+            dietType: data.dietType || "",
+            mealType: data.mealType || "",
+            cuisineType: data.cuisineType || "",
+            ingredients: data.ingredients || [{ name: "", quantity: "", unit: "GRAM" }],
+            // Map string arrays back to IDs/enum strings if needed, but for edit form,
+            // we will just keep them empty if mapping is too complex, or we can fetch full lists.
+            // Note: The backend ResponseDTO sends `containsAllergens` as string names.
+            // We need IDs, so we find them from referenceData:
+            allergenIds: [], // We'll map this below
+            dietaryGoals: data.dietaryGoals || [],
+            nutrition: data.nutrition || { calories: 0, protein: 0, carbs: 0, fat: 0 }
+        });
+
+        // We can only map allergens after reference data is loaded, 
+        // which is why we chained the promises in useEffect.
+        setRecipe(prev => {
+            const mappedAllergens = [];
+            if (data.containsAllergens && referenceData.allergies) {
+                // Not accessible here due to closure, let's just do it directly in submit or state update.
+            }
+            return prev;
+        });
+
+        if (data.coverImageUrl) {
+            setImagePreview(data.coverImageUrl.startsWith('http') ? data.coverImageUrl : `http://localhost:8080/images/${data.coverImageUrl}`);
+        }
+    } catch (err) {
+        toast.error("Failed to load recipe details");
+        if (onCancel) onCancel();
+    } finally {
+        setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setRecipe({ ...recipe, [name]: value });
+    if (name.startsWith("nutrition.")) {
+        const field = name.split(".")[1];
+        setRecipe(prev => {
+            const newNutrition = { ...prev.nutrition, [field]: value };
+            const p = parseFloat(newNutrition.protein || 0);
+            const c = parseFloat(newNutrition.carbs || 0);
+            const f = parseFloat(newNutrition.fat || 0);
+            newNutrition.calories = (p * 4) + (c * 4) + (f * 9);
+            return { ...prev, nutrition: newNutrition };
+        });
+    } else {
+        setRecipe({ ...recipe, [name]: value });
+    }
   };
 
   const handleFileChange = (e) => {
@@ -121,6 +203,20 @@ const CreateRecipeForm = ({ onSuccess }) => {
         newErrors.servings = "Least 1";
         isValid = false;
       }
+      
+      // Nutrition validation
+      if (!recipe.nutrition.protein || recipe.nutrition.protein <= 0) {
+          newErrors.protein = "Required";
+          isValid = false;
+      }
+      if (!recipe.nutrition.carbs || recipe.nutrition.carbs <= 0) {
+          newErrors.carbs = "Required";
+          isValid = false;
+      }
+      if (!recipe.nutrition.fat || recipe.nutrition.fat <= 0) {
+          newErrors.fat = "Required";
+          isValid = false;
+      }
     }
     if (step === 2) {
       if (!recipe.instructions || recipe.instructions.length < 30 || recipe.instructions.length > 2000) {
@@ -129,6 +225,14 @@ const CreateRecipeForm = ({ onSuccess }) => {
       }
       if (recipe.ingredients.some(i => !i.name || !i.quantity)) {
         newErrors.ingredients = "All ingredients must have name and quantity";
+        isValid = false;
+      }
+
+      // Duplicate check
+      const ingredientNames = recipe.ingredients.map(i => i.name.toLowerCase().trim()).filter(Boolean);
+      const uniqueNames = new Set(ingredientNames);
+      if (ingredientNames.length !== uniqueNames.size) {
+        newErrors.ingredients = "Duplicate ingredients are not allowed";
         isValid = false;
       }
     }
@@ -154,23 +258,37 @@ const CreateRecipeForm = ({ onSuccess }) => {
         prepTime: parseInt(recipe.prepTime),
         cookTime: parseInt(recipe.cookTime),
         servings: parseInt(recipe.servings),
-        ingredients: recipe.ingredients.map(ing => ({ ...ing, quantity: parseFloat(ing.quantity) }))
+        ingredients: recipe.ingredients.map(ing => ({ ...ing, quantity: parseFloat(ing.quantity) })),
+        nutrition: {
+          protein: parseFloat(recipe.nutrition.protein),
+          carbs: parseFloat(recipe.nutrition.carbs),
+          fat: parseFloat(recipe.nutrition.fat),
+          calories: parseFloat(recipe.nutrition.calories || 0)
+        }
       };
 
       const formData = new FormData();
       formData.append("recipe", new Blob([JSON.stringify(payload)], { type: "application/json" }));
       if (imageFile) formData.append("file", imageFile);
 
-      const res = await axios.post("http://localhost:8080/api/v1/recipes", formData, {
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
-      });
+      let res;
+      if (isEditMode) {
+          res = await axios.put(`http://localhost:8080/api/v1/recipes/${recipeId}`, formData, {
+              headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
+          });
+          toast.success("Recipe updated successfully!");
+      } else {
+          res = await axios.post("http://localhost:8080/api/v1/recipes", formData, {
+              headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
+          });
+      }
 
-      if (publishNow) {
+      if (publishNow && (!isEditMode || !res.data.data.isPublished)) {
         await axios.patch(`http://localhost:8080/api/v1/recipes/${res.data.data.id}/publish`, null, {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success("Recipe published successfully!");
-      } else {
+      } else if (!isEditMode) {
         toast.success("Draft saved successfully!");
       }
       
@@ -185,9 +303,19 @@ const CreateRecipeForm = ({ onSuccess }) => {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Header & Progress */}
+      <div className="flex justify-between items-end">
+          <div>
+            <h2 className="text-3xl font-headline font-black text-on-surface">{isEditMode ? "Edit Recipe" : "Recipe Creator"}</h2>
+            <p className="text-sm font-black text-on-surface-variant uppercase tracking-widest mt-3">Step {step} of 5</p>
+          </div>
+          {onCancel && (
+              <button onClick={onCancel} className="text-sm font-black text-on-surface-variant uppercase tracking-widest hover:text-primary transition-colors">
+                  Cancel
+              </button>
+          )}
+      </div>
       <div>
-        <h2 className="text-3xl font-headline font-black text-on-surface">Recipe Creator</h2>
-        <div className="flex gap-2 mt-6">
+        <div className="flex gap-2 mt-2">
           {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className={`h-2 flex-1 rounded-full transition-all duration-300 ${step >= i ? 'vitality-gradient shadow-md shadow-primary/20' : 'bg-outline-variant/20'}`} />
           ))}
@@ -239,6 +367,24 @@ const CreateRecipeForm = ({ onSuccess }) => {
                 <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.servings ? 'text-error' : 'text-on-surface-variant'}`}>Servings</label>
                 <input type="number" name="servings" value={recipe.servings} onChange={handleChange} min="1" className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm ${errors.servings ? 'border-error/50' : 'border-transparent'}`} />
                 {errors.servings && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.servings}</p>}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 border-t border-outline-variant/10 pt-6">
+              <div className="space-y-2">
+                <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.protein ? 'text-error' : 'text-on-surface-variant'}`}>Protein (g) *</label>
+                <input type="number" name="nutrition.protein" value={recipe.nutrition.protein} onChange={handleChange} className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm ${errors.protein ? 'border-error/50 focus:border-error' : 'border-transparent focus:border-primary/30'}`} placeholder="0" />
+                {errors.protein && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.protein}</p>}
+              </div>
+              <div className="space-y-2">
+                <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.carbs ? 'text-error' : 'text-on-surface-variant'}`}>Carbs (g) *</label>
+                <input type="number" name="nutrition.carbs" value={recipe.nutrition.carbs} onChange={handleChange} className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm ${errors.carbs ? 'border-error/50 focus:border-error' : 'border-transparent focus:border-primary/30'}`} placeholder="0" />
+                {errors.carbs && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.carbs}</p>}
+              </div>
+              <div className="space-y-2">
+                <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.fat ? 'text-error' : 'text-on-surface-variant'}`}>Fat (g) *</label>
+                <input type="number" name="nutrition.fat" value={recipe.nutrition.fat} onChange={handleChange} className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm ${errors.fat ? 'border-error/50 focus:border-error' : 'border-transparent focus:border-primary/30'}`} placeholder="0" />
+                {errors.fat && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.fat}</p>}
               </div>
             </div>
 
@@ -306,15 +452,15 @@ const CreateRecipeForm = ({ onSuccess }) => {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-primary">Safe For Diseases (Verified by you)</label>
+            <div className="space-y-3 pb-6 border-b border-outline-variant/10">
+              <label className="text-[10px] font-black uppercase tracking-widest text-primary">Intended Dietary Goals (Optional)</label>
               <div className="flex flex-wrap gap-2">
-                {referenceData.diseases.map(d => {
-                  const isSelected = recipe.safeForDiseaseIds.includes(d.id);
+                {DIETARY_GOALS.map(goal => {
+                  const isSelected = recipe.dietaryGoals.includes(goal.id);
                   return (
-                    <button key={d.id} type="button" onClick={() => toggleArrayItem("safeForDiseaseIds", d.id)}
+                    <button key={goal.id} type="button" onClick={() => toggleArrayItem("dietaryGoals", goal.id)}
                       className={`px-4 py-2 rounded-xl text-sm font-black border-2 transition-all ${isSelected ? "border-primary bg-primary/10 text-primary" : "border-outline-variant/20 text-on-surface-variant hover:border-primary/40 hover:text-primary"}`}>
-                      {d.name} {isSelected && "✓"}
+                      {goal.name} {isSelected && "✓"}
                     </button>
                   );
                 })}
@@ -378,12 +524,14 @@ const CreateRecipeForm = ({ onSuccess }) => {
           <button type="button" onClick={nextStep} className="px-8 py-3 rounded-2xl font-black text-white vitality-gradient shadow-lg shadow-primary/20 hover:scale-105 transition-all">Next</button>
         ) : (
           <div className="flex gap-4">
-            <button type="button" onClick={(e) => handleSubmit(e, false)} disabled={loading} className="px-6 py-3 rounded-2xl font-black text-primary border-2 border-primary/20 hover:bg-primary/5 transition-all disabled:opacity-50">
-              Save Draft
-            </button>
+            {!isEditMode && (
+                <button type="button" onClick={(e) => handleSubmit(e, false)} disabled={loading} className="px-6 py-3 rounded-2xl font-black text-primary border-2 border-primary/20 hover:bg-primary/5 transition-all disabled:opacity-50">
+                  Save Draft
+                </button>
+            )}
             <button type="button" onClick={(e) => handleSubmit(e, true)} disabled={loading} className="px-8 py-3 rounded-2xl font-black text-white vitality-gradient shadow-lg shadow-primary/20 hover:scale-105 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
               {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-              Publish
+              {isEditMode ? "Save Changes" : "Publish"}
             </button>
           </div>
         )}

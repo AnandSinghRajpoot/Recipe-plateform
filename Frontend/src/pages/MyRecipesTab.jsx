@@ -92,6 +92,7 @@ const MyRecipesTab = () => {
                   <th className="p-4 pl-6">Recipe</th>
                   <th className="p-4">Diet / Meal</th>
                   <th className="p-4">Time</th>
+                  <th className="p-4">Analytics</th>
                   <th className="p-4">Status</th>
                   <th className="p-4 pr-6 text-right">Actions</th>
                 </tr>
@@ -125,6 +126,22 @@ const MyRecipesTab = () => {
                         <span className="material-symbols-outlined text-sm">schedule</span>
                         {(recipe.prepTime || 0) + (recipe.cookTime || 0)}m
                       </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="flex items-center gap-1.5 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest" title="Views">
+                          <span className="material-symbols-outlined text-[12px] text-tertiary">visibility</span>
+                          {recipe.viewCount || 0} Views
+                        </span>
+                        <span className="flex items-center gap-1.5 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest" title="Likes">
+                          <span className="material-symbols-outlined text-[12px] text-error">favorite</span>
+                          {recipe.likesCount || 0} Likes
+                        </span>
+                        <span className="flex items-center gap-1.5 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest" title="Saves">
+                          <span className="material-symbols-outlined text-[12px] text-secondary">bookmark</span>
+                          {recipe.savedCount || 0} Saves
+                        </span>
+                      </div>
                     </td>
                     <td className="p-4">
                       <button onClick={() => handleTogglePublish(recipe.id, recipe.isPublished)}

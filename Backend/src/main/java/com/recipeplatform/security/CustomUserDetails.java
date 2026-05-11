@@ -19,7 +19,7 @@ public class CustomUserDetails implements UserDetails {
     public CustomUserDetails(User user) {
         this.user = user;
         this.authorities = List.of(
-                new SimpleGrantedAuthority(user.getRole().toString())
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
         );
     }
 

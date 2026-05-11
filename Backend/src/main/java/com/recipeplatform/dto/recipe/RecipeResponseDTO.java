@@ -43,7 +43,8 @@ public class RecipeResponseDTO {
 
     // Health tagging
     private Set<String> containsAllergens;
-    private Set<String> safeForDiseases;
+    private Set<com.recipeplatform.domain.enums.DietaryGoal> dietaryGoals;
+    private List<RecipeHealthAnalysisDTO> healthInsights;
 
     // Nutritional info
     private NutritionDTO nutrition;

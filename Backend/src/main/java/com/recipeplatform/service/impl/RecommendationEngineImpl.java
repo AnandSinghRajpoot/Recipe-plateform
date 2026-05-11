@@ -186,16 +186,21 @@ public class RecommendationEngineImpl implements RecommendationEngine {
                 .build();
         }
 
-        // --- Phase 2: Disease-Safe Boosting ---
+        // --- Phase 2: Health Analysis Boosting ---
         boolean isDiseaseVetted = false;
-        if (!userDiseaseIds.isEmpty() && recipe.getSafeForDiseases() != null) {
-            for (Long udId : userDiseaseIds) {
-                boolean match = recipe.getSafeForDiseases().stream().anyMatch(d -> d.getId().equals(udId));
-                if (match) {
-                    score += 15.0; // Disease-safe bonus
-                    isDiseaseVetted = true;
-                    matchReasons.add("Vetted safe for your health conditions");
-                    break;
+        if (!userDiseaseIds.isEmpty() && recipe.getHealthAnalyses() != null) {
+            for (com.recipeplatform.domain.RecipeHealthAnalysis analysis : recipe.getHealthAnalyses()) {
+                if (userDiseaseIds.contains(analysis.getDisease().getId())) {
+                    if (analysis.getRiskLevel() == com.recipeplatform.domain.enums.RiskLevel.SEVERE || analysis.getRiskLevel() == com.recipeplatform.domain.enums.RiskLevel.HIGH) {
+                        score -= 50.0;
+                        matchReasons.add("Warning: High risk for your " + analysis.getDisease().getName() + " condition.");
+                    } else if (analysis.getRiskLevel() == com.recipeplatform.domain.enums.RiskLevel.LOW) {
+                        score += 15.0;
+                        isDiseaseVetted = true;
+                        matchReasons.add("Highly compatible with your " + analysis.getDisease().getName() + " condition.");
+                    } else if (analysis.getRiskLevel() == com.recipeplatform.domain.enums.RiskLevel.MEDIUM) {
+                        matchReasons.add("Moderate risk for " + analysis.getDisease().getName() + ".");
+                    }
                 }
             }
         }

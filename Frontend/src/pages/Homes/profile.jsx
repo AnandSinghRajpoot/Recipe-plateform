@@ -436,7 +436,18 @@ const Profile = () => {
                                                 />
                                             </div>
                                             <h3 className="text-xl font-headline font-black text-center">{profile?.name}</h3>
-                                            <p className="text-xs text-on-surface-variant font-medium opacity-60 italic mb-6 text-center">{profile?.email}</p>
+                                            <p className="text-xs text-on-surface-variant font-medium opacity-60 italic mb-4 text-center">{profile?.email}</p>
+
+                                            <div className="mb-6">
+                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                                    profile?.status === 'ACTIVE' || !profile?.status ? 'bg-emerald-100 text-emerald-700' :
+                                                    profile?.status === 'SUSPENDED' ? 'bg-amber-100 text-amber-700' :
+                                                    profile?.status === 'BANNED' ? 'bg-red-100 text-red-700' :
+                                                    'bg-gray-100 text-gray-500'
+                                                }`}>
+                                                    {profile?.status || "ACTIVE"}
+                                                </span>
+                                            </div>
                                             
                                             <div className="w-full space-y-3 pt-6 border-t border-outline-variant/10">
                                                 <div className="flex justify-between items-center bg-surface-container-low/50 p-4 rounded-2xl">

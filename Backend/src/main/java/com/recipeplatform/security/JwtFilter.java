@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -71,6 +72,15 @@ public class JwtFilter extends OncePerRequestFilter {
                 {
                   "error": "JWT_EXPIRED",
                   "message": "JWT token has expired. Please login again."
+                }
+            """);
+        } catch (UsernameNotFoundException ex) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("""
+                {
+                  "error": "USER_NOT_FOUND",
+                  "message": "User associated with this token no longer exists. Please login again."
                 }
             """);
         }

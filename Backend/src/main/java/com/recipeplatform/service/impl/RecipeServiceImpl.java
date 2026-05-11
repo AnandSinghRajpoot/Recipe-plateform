@@ -25,9 +25,12 @@ import com.recipeplatform.repository.DiseaseRepository;
 import com.recipeplatform.repository.LikeRepository;
 import com.recipeplatform.repository.SavedRecipeRepository;
 import com.recipeplatform.repository.RecipeRepository;
+import com.recipeplatform.repository.RecipeViewRepository;
+import com.recipeplatform.domain.RecipeView;
 import com.recipeplatform.service.ImageService;
 import com.recipeplatform.service.IngredientService;
 import com.recipeplatform.service.RecipeService;
+import com.recipeplatform.service.HealthAnalysisEngine;
 import com.recipeplatform.specification.RecipeSpecification;
 import com.recipeplatform.util.CurrentUser;
 import org.springframework.data.jpa.domain.Specification;
@@ -55,12 +58,15 @@ public class RecipeServiceImpl implements RecipeService {
     private final SavedRecipeRepository savedRecipeRepository;
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
+    private final HealthAnalysisEngine healthAnalysisEngine;
+    private final RecipeViewRepository recipeViewRepository;
 
     public RecipeServiceImpl(RecipeRepository recipeRepository, RecipeMapper recipeMapper,
             IngredientService ingredientService, CurrentUser currentUser, ImageService imageService,
             AllergyRepository allergyRepository, DiseaseRepository diseaseRepository, 
             SavedRecipeRepository savedRecipeRepository, LikeRepository likeRepository,
-            CommentRepository commentRepository) {
+            CommentRepository commentRepository, HealthAnalysisEngine healthAnalysisEngine,
+            RecipeViewRepository recipeViewRepository) {
         this.recipeRepository = recipeRepository;
         this.recipeMapper = recipeMapper;
         this.ingredientService = ingredientService;
@@ -71,6 +77,8 @@ public class RecipeServiceImpl implements RecipeService {
         this.savedRecipeRepository = savedRecipeRepository;
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
+        this.healthAnalysisEngine = healthAnalysisEngine;
+        this.recipeViewRepository = recipeViewRepository;
     }
 
     @Override
@@ -141,7 +149,6 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public RecipeResponseDTO getRecipeById(Long id) {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe", "id", id));
@@ -157,9 +164,30 @@ public class RecipeServiceImpl implements RecipeService {
             })
             .collect(Collectors.toList()));
             
-        // Increment view count
-        recipe.setViewCount(recipe.getViewCount() != null ? recipe.getViewCount() + 1 : 1L);
-        recipeRepository.save(recipe);
+        // Unique View Logic (Only count once per user)
+        try {
+            User user = currentUser.getCurrentUser();
+            if (user != null) {
+                boolean alreadyViewed = recipeViewRepository.existsByUserIdAndRecipeId(user.getId(), id);
+                if (!alreadyViewed) {
+                    RecipeView view = RecipeView.builder()
+                            .user(user)
+                            .recipe(recipe)
+                            .build();
+                    recipeViewRepository.save(view);
+                    
+                    recipe.setViewCount(recipe.getViewCount() != null ? recipe.getViewCount() + 1 : 1L);
+                    recipeRepository.save(recipe);
+                }
+            } else {
+                // For guest users, we still increment view count normally for now 
+                // (or you could choose to ignore guest views)
+                recipe.setViewCount(recipe.getViewCount() != null ? recipe.getViewCount() + 1 : 1L);
+                recipeRepository.save(recipe);
+            }
+        } catch (Exception e) {
+            // Fallback for safety
+        }
 
         return dto;
     }
@@ -271,10 +299,7 @@ public class RecipeServiceImpl implements RecipeService {
             recipe.setContainsAllergens(allergens);
         }
 
-        // Handle Safe Diseases
-        if (dto.getSafeForDiseaseIds() != null) {
-            Set<Disease> diseases = new HashSet<>(diseaseRepository.findAllById(dto.getSafeForDiseaseIds()));
-            recipe.setSafeForDiseases(diseases);
-        }
+        // Health Analysis will be computed by HealthAnalysisEngine
+        healthAnalysisEngine.performAnalysis(recipe);
     }
 }

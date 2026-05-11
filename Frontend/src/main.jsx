@@ -2,6 +2,18 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import './index.css';
+import axios from 'axios';
+
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+    }
+    return Promise.reject(error);
+  }
+);
 import App from './App.jsx';
 import Home from './pages/Homes/Home.jsx';
 import ErrorPage from './components/Headers/ErrorPage.jsx'
@@ -52,8 +64,7 @@ const router = createBrowserRouter([
       },
         {
           path: "/items/:id",
-          element : <SingleProduct/>,
-          loader : ({params}) => fetch(`http://localhost:8080/api/v1/recipes/${params.id}`)
+          element : <SingleProduct/>
         },
         
         {

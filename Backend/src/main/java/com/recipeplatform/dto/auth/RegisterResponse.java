@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.recipeplatform.domain.enums.DietType;
 import com.recipeplatform.domain.enums.SkillLevel;
 import com.recipeplatform.domain.enums.UserRole;
+import com.recipeplatform.domain.enums.UserStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,4 +26,5 @@ public class RegisterResponse {
     private String bio;
     private Boolean isProfileCompleted;
     private java.time.LocalDateTime createdAt;
+    private UserStatus status;
 }

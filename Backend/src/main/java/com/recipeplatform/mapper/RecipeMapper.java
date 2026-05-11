@@ -20,21 +20,21 @@ public interface RecipeMapper {
 
     @Mapping(target = "ingredients", ignore = true)
     @Mapping(target = "containsAllergens", ignore = true)
-    @Mapping(target = "safeForDiseases", ignore = true)
+    @Mapping(target = "healthAnalyses", ignore = true)
     Recipe toEntity(RecipeRequestDto dto);
 
     List<RecipeResponseDTO> toResponseDTOList(List<Recipe> recipes);
 
     @Mapping(target = "ingredients", ignore = true)
     @Mapping(target = "containsAllergens", ignore = true)
-    @Mapping(target = "safeForDiseases", ignore = true)
+    @Mapping(target = "healthAnalyses", ignore = true)
     void updateEntityFromDTO(RecipeRequestDto dto, @MappingTarget Recipe recipe);
 
     @Mapping(target = "author", source = "user", qualifiedByName = "getAuthor")
     @Mapping(target = "ingredients", qualifiedByName = "getDto")
     @Mapping(target = "coverImageUrl", source = "coverImageUrl", qualifiedByName = "resolveUrl")
     @Mapping(target = "containsAllergens", qualifiedByName = "mapAllergenNames")
-    @Mapping(target = "safeForDiseases", qualifiedByName = "mapDiseaseNames")
+    @Mapping(target = "healthInsights", source = "healthAnalyses", qualifiedByName = "mapHealthAnalyses")
     @Mapping(target = "averageRating", source = "averageRating")
     @Mapping(target = "reviewCount", source = "reviewCount")
     RecipeResponseDTO toResponseDTO(Recipe recipe);
@@ -78,9 +78,15 @@ public interface RecipeMapper {
         return allergens.stream().map(Allergy::getName).collect(Collectors.toSet());
     }
 
-    @Named("mapDiseaseNames")
-    default Set<String> mapDiseaseNames(Set<Disease> diseases) {
-        if (diseases == null) return Set.of();
-        return diseases.stream().map(Disease::getName).collect(Collectors.toSet());
+    @Named("mapHealthAnalyses")
+    default List<com.recipeplatform.dto.recipe.RecipeHealthAnalysisDTO> mapHealthAnalyses(List<com.recipeplatform.domain.RecipeHealthAnalysis> analyses) {
+        if (analyses == null) return List.of();
+        return analyses.stream().map(a -> com.recipeplatform.dto.recipe.RecipeHealthAnalysisDTO.builder()
+                .condition(a.getDisease().getName())
+                .compatibilityScore(a.getCompatibilityScore())
+                .riskLevel(a.getRiskLevel() != null ? a.getRiskLevel().name() : null)
+                .warnings(a.getWarnings())
+                .analysisReason(a.getAnalysisReason())
+                .build()).collect(Collectors.toList());
     }
 }
