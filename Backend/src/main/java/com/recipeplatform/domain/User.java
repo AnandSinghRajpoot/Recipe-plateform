@@ -64,7 +64,9 @@ public class User {
     @Column(name = "suspended_until")
     private LocalDateTime suspendedUntil;
 
-    @Column(name = "phone_number", length = 20, nullable = true)
+    @Column(name = "phone_number", length = 20, nullable = false)
+    @NotBlank(message = "Phone number is required")
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number format")
     private String phoneNumber;
 
     @Column(length = 255)
