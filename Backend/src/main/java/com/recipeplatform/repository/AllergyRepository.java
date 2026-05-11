@@ -13,6 +13,8 @@ public interface AllergyRepository extends JpaRepository<Allergy, Long> {
     List<Allergy> findByNameContainingIgnoreCase(String name);
 
     Optional<Allergy> findByName(String name);
+    
+    Optional<Allergy> findByNameIgnoreCase(String name);
 
     boolean existsByName(String name);
 }
