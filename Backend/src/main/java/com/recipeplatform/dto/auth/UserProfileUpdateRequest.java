@@ -10,7 +10,7 @@ public class UserProfileUpdateRequest {
     @jakarta.validation.constraints.Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number format (10-15 digits)")
     private String phoneNumber;
 
-    @jakarta.validation.constraints.Size(min = 50, max = 500, message = "Bio must be between 50 and 500 characters")
+    @jakarta.validation.constraints.Size(max = 500, message = "Bio must not exceed 500 characters")
     private String bio;
 
     private com.recipeplatform.domain.enums.DietType dietType;
