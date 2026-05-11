@@ -57,8 +57,8 @@ public class EmailService {
             String subject = "New Contact Message from " + request.getName();
             String htmlContent = buildContactEmailHtml(request);
             sendHtmlEmail(systemEmail, subject, htmlContent);
-        } catch (Exception e) {
-            System.err.println("Failed to send contact email: " + e.getMessage());
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to send email: " + e.getMessage());
         }
     }
 
