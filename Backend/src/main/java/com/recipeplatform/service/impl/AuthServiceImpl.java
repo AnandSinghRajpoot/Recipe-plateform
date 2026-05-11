@@ -91,8 +91,15 @@ public class AuthServiceImpl implements AuthService {
             }
         }
 
-        if (loginRequest.getRole() != null && user.getRole() != loginRequest.getRole()) {
-            throw new org.springframework.security.authentication.BadCredentialsException("Invalid credentials for the specified role.");
+        if (loginRequest.getRole() != null) {
+            // Admin can only login through the USER flow (not CHEF flow)
+            if (user.getRole() == UserRole.ADMIN && loginRequest.getRole() == UserRole.CHEF) {
+                throw new org.springframework.security.authentication.BadCredentialsException("Admins cannot login through the Chef portal.");
+            }
+            // Other role mismatch check
+            if (user.getRole() != loginRequest.getRole() && user.getRole() != UserRole.ADMIN) {
+                throw new org.springframework.security.authentication.BadCredentialsException("Invalid credentials for the specified role.");
+            }
         }
         return new LoginResponse(
                 accessToken, jwtUtill.extractClaims(accessToken).getIssuedAt().getTime(),
