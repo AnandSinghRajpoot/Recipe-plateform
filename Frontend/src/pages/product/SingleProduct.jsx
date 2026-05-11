@@ -21,6 +21,10 @@ const SingleProduct = () => {
     const userRole = localStorage.getItem('role');
     const [showReportModal, setShowReportModal] = useState(false);
     const [reportReason, setReportReason] = useState('');
+    const [reportError, setReportError] = useState('');
+    const [showModerateModal, setShowModerateModal] = useState(false);
+    const [moderateReason, setModerateReason] = useState('');
+    const [moderateError, setModerateError] = useState('');
 
     const fetchRecipe = async () => {
         try {
@@ -134,23 +138,34 @@ const SingleProduct = () => {
     };
 
     const handleReport = async () => {
-        if (!reportReason.trim()) { toast.error('Please provide a reason'); return; }
+        if (!reportReason.trim()) { setReportError('Please provide a reason for reporting'); return; }
         try {
             await apiClient.post(`/reports?type=RECIPE&targetId=${id}&reason=${encodeURIComponent(reportReason)}`);
             toast.success('Report submitted. Our team will review it.');
             setShowReportModal(false);
             setReportReason('');
+            setReportError('');
         } catch (err) { toast.error('Failed to submit report'); }
     };
 
-    const handleAdminModerate = async (moderated) => {
-        const reason = moderated ? prompt('Reason for taking down this recipe:') : '';
-        if (moderated && !reason) return;
+    const handleAdminModerateAction = async () => {
+        if (!moderateReason.trim()) { setModerateError('Please provide a moderation reason'); return; }
         try {
-            await apiClient.patch(`/admin/recipes/${id}/moderate?moderated=${moderated}&reason=${encodeURIComponent(reason || '')}`);
-            toast.success(moderated ? 'Recipe taken down' : 'Recipe restored');
+            await apiClient.patch(`/admin/recipes/${id}/moderate?moderated=true&reason=${encodeURIComponent(moderateReason)}`);
+            toast.success('Recipe taken down');
+            setShowModerateModal(false);
+            setModerateReason('');
+            setModerateError('');
             fetchRecipe();
         } catch (err) { toast.error('Moderation failed'); }
+    };
+
+    const handleRestore = async () => {
+        try {
+            await apiClient.patch(`/admin/recipes/${id}/moderate?moderated=false&reason=`);
+            toast.success('Recipe restored');
+            fetchRecipe();
+        } catch (err) { toast.error('Restore failed'); }
     };
 
     if (loading) return <div className="min-h-screen bg-surface flex items-center justify-center"><div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
@@ -173,6 +188,7 @@ const SingleProduct = () => {
         : [];
 
     return (
+        <>
         <div className="bg-surface font-body text-on-surface min-h-screen selection:bg-primary/20 py-12 md:py-20 px-4 md:px-8">
             
             <div className="max-w-4xl mx-auto bg-white rounded-[3.5rem] shadow-[0_40px_100px_rgba(0,110,28,0.08)] border border-white overflow-hidden">
@@ -384,12 +400,12 @@ const SingleProduct = () => {
                 <span className="text-xs font-black uppercase tracking-widest text-violet-300">Admin Control</span>
                 <div className="w-px h-5 bg-white/20 mx-1" />
                 {!item?.isModerated ? (
-                    <button onClick={() => handleAdminModerate(true)}
+                    <button onClick={() => setShowModerateModal(true)}
                         className="px-4 py-1.5 bg-red-600 text-white rounded-xl text-xs font-black hover:bg-red-700 transition-colors">
                         Take Down Recipe
                     </button>
                 ) : (
-                    <button onClick={() => handleAdminModerate(false)}
+                    <button onClick={handleRestore}
                         className="px-4 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-black hover:bg-emerald-700 transition-colors">
                         Restore Recipe
                     </button>
@@ -400,29 +416,63 @@ const SingleProduct = () => {
         {/* Report Modal */}
         {showReportModal && (
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-                    <h2 className="font-black text-xl mb-1">Report Recipe</h2>
-                    <p className="text-gray-500 text-sm mb-4">Describe the issue with this recipe. Our team will review it within 24 hours.</p>
-                    <textarea
-                        value={reportReason}
-                        onChange={e => setReportReason(e.target.value)}
-                        placeholder="E.g. Contains false nutritional info, inappropriate content..."
-                        rows={4}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary resize-none mb-4"
-                    />
+                <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl animate-fade-in-up">
+                    <h2 className="font-headline font-black text-2xl mb-1 text-on-surface">Report Recipe</h2>
+                    <p className="text-on-surface-variant font-medium text-sm mb-6">Describe the issue with this recipe. Our team will review it within 24 hours.</p>
+                    <div className="space-y-1 mb-6">
+                        <textarea
+                            value={reportReason}
+                            onChange={e => { setReportReason(e.target.value); setReportError(''); }}
+                            placeholder="E.g. Contains false nutritional info, inappropriate content..."
+                            rows={4}
+                            className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 text-sm focus:outline-none resize-none text-on-surface font-bold placeholder-on-surface-variant/40 ${reportError ? 'border-error/50' : 'border-transparent focus:border-primary/30'}`}
+                        />
+                        {reportError && <p className="text-[10px] font-black text-error uppercase tracking-widest ml-2">{reportError}</p>}
+                    </div>
                     <div className="flex gap-3">
                         <button onClick={handleReport}
-                            className="flex-1 py-3 bg-red-600 text-white rounded-xl font-black text-sm hover:bg-red-700 transition-colors">
+                            className="flex-1 py-4 bg-error text-white rounded-2xl font-black text-sm hover:scale-[1.02] transition-all shadow-lg shadow-error/20">
                             Submit Report
                         </button>
                         <button onClick={() => setShowReportModal(false)}
-                            className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-black text-sm hover:bg-gray-200 transition-colors">
+                            className="flex-1 py-4 bg-surface-container text-on-surface-variant rounded-2xl font-black text-sm hover:bg-surface-container-highest transition-all">
                             Cancel
                         </button>
                     </div>
                 </div>
             </div>
         )}
+
+        {/* Admin Moderation Modal */}
+        {showModerateModal && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl animate-fade-in-up">
+                    <h2 className="font-headline font-black text-2xl mb-1 text-error">Take Down Recipe</h2>
+                    <p className="text-on-surface-variant font-medium text-sm mb-6">Provide a reason for removing <span className="font-black text-on-surface">{title}</span> from the platform.</p>
+                    <div className="space-y-1 mb-6">
+                        <textarea
+                            value={moderateReason}
+                            onChange={e => { setModerateReason(e.target.value); setModerateError(''); }}
+                            placeholder="Reason for taking down..."
+                            rows={3}
+                            className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 text-sm focus:outline-none resize-none text-on-surface font-bold placeholder-on-surface-variant/40 ${moderateError ? 'border-error/50' : 'border-transparent focus:border-error/30'}`}
+                        />
+                        {moderateError && <p className="text-[10px] font-black text-error uppercase tracking-widest ml-2">{moderateError}</p>}
+                    </div>
+                    <div className="flex gap-3">
+                        <button onClick={handleAdminModerateAction}
+                            className="flex-1 py-4 bg-error text-white rounded-2xl font-black text-sm hover:scale-[1.02] transition-all shadow-lg shadow-error/20">
+                            Confirm Take Down
+                        </button>
+                        <button onClick={() => setShowModerateModal(false)}
+                            className="flex-1 py-4 bg-surface-container text-on-surface-variant rounded-2xl font-black text-sm hover:bg-surface-container-highest transition-all">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     );
 };
 
