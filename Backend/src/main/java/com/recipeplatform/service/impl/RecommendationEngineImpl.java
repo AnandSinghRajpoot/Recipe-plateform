@@ -76,6 +76,15 @@ public class RecommendationEngineImpl implements RecommendationEngine {
             }
         }
 
+        // Broad seafood expansion: If Fish is selected, also block Shellfish/Molluscs for safety
+        if (activeAllergyNames.stream().anyMatch(a -> a.contains("FISH") || a.contains("SEAFOOD"))) {
+            activeAllergyNames.add("FISH");
+            activeAllergyNames.add("SEAFOOD");
+            activeAllergyNames.add("SHELLFISH");
+            activeAllergyNames.add("MOLLUSCS");
+            activeAllergyNames.add("MOLLUSKS");
+        }
+
         // ============================================
         // Phase 1: Hard Filter (Exclude Allergens & Fetch Base List)
         // ============================================
@@ -86,8 +95,31 @@ public class RecommendationEngineImpl implements RecommendationEngine {
             candidateRecipes = recipeRepository.findByIsPublishedTrueAndDeletedAtIsNullAndIsModeratedFalse();
         }
 
-        log.info("Phase 1 complete: Found {} safe candidate recipes for user {} (Excluded {} allergens)",
-                candidateRecipes.size(), userId, userAllergyIds.size());
+        log.info("Phase 1 complete: Found {} initial candidate recipes for user {} (ID-based exclusion)",
+                candidateRecipes.size(), userId);
+
+        // Phase 1.1: Aggressive Name-based Intersection Exclusion (The "Fail-safe")
+        if (!activeAllergyNames.isEmpty()) {
+            final Set<String> normalizedUserAllergies = activeAllergyNames;
+            candidateRecipes = candidateRecipes.stream()
+                .filter(recipe -> {
+                    if (recipe.getContainsAllergens() == null || recipe.getContainsAllergens().isEmpty()) return true;
+                    
+                    Set<String> recipeAllergyNames = recipe.getContainsAllergens().stream()
+                        .map(a -> a.getName().toUpperCase().trim())
+                        .collect(Collectors.toSet());
+                    
+                    // If any user allergy name matches or is contained in a recipe allergy name, EXCLUDE
+                    boolean hasIntersection = normalizedUserAllergies.stream().anyMatch(ua -> 
+                        recipeAllergyNames.stream().anyMatch(ra -> ra.contains(ua) || ua.contains(ra))
+                    );
+                    
+                    return !hasIntersection;
+                })
+                .collect(Collectors.toList());
+            
+            log.info("Phase 1.1 complete: {} recipes remaining after name-based fail-safe filter.", candidateRecipes.size());
+        }
 
         final Set<Long> finalDiseaseIds = userDiseaseIds;
         final double finalTargetCalories = targetCalories;
@@ -114,66 +146,112 @@ public class RecommendationEngineImpl implements RecommendationEngine {
         // Base score simply for being in the candidate pool safely
         score += 20.0;
 
+        // --- Phase 1: Tag-based Hard Filter (Intersection check) ---
+        if (!activeAllergyNames.isEmpty()) {
+            Set<String> recipeAllergens = (recipe.getContainsAllergens() == null) ? Set.of() : 
+                    recipe.getContainsAllergens().stream()
+                    .map(a -> a.getName().toUpperCase().trim())
+                    .collect(Collectors.toSet());
+            
+            for (String userAllergy : activeAllergyNames) {
+                String ua = userAllergy.trim(); 
+                
+                // Direct match or partial match (e.g. "Fish" matches "Fish Allergy")
+                boolean tagMatch = recipeAllergens.stream().anyMatch(ra -> ra.contains(ua) || ua.contains(ra));
+                
+                if (tagMatch) {
+                    matchReasons.add("Excluded: Recipe tagged with restricted allergen: " + userAllergy);
+                    score -= 10000.0;
+                    return RecipeRecommendationDTO.builder().id(recipe.getId()).score(score).matchReasons(matchReasons).build();
+                }
+                
+                // Seafood expansion: If user has Fish allergy, block Shellfish and Molluscs
+                if (ua.contains("FISH") || ua.contains("SEAFOOD")) {
+                    boolean seafoodMatch = recipeAllergens.contains("SHELLFISH") || recipeAllergens.contains("MOLLUSCS");
+                    if (seafoodMatch) {
+                        matchReasons.add("Excluded: Contains Seafood derivative (Shellfish/Molluscs)");
+                        score -= 10000.0;
+                        return RecipeRecommendationDTO.builder().id(recipe.getId()).score(score).matchReasons(matchReasons).build();
+                    }
+                }
+            }
+        }
+
         // --- Phase 1.5: Keyword Fail-safes for critical allergens ---
         if (!activeAllergyNames.isEmpty() && recipe.getIngredients() != null) {
             for (com.recipeplatform.domain.RecipeIngredient ri : recipe.getIngredients()) {
                 if (ri.getIngredient() == null) continue;
                 String name = ri.getIngredient().getName().toLowerCase();
                 
-                // Check for Eggs
+                // 1. Eggs
                 boolean hasEggAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("EGG"));
-                if (hasEggAllergy && ((name.contains("egg") && !name.contains("eggplant")) || name.contains("mayo"))) {
-                    matchReasons.add("Excluded: Contains Egg-based ingredients");
+                if (hasEggAllergy && ((name.contains("egg") && !name.contains("eggplant")) || 
+                                       name.contains("omelette") || name.contains("mayo") || 
+                                       name.contains("tartar") || name.contains("custard") || name.contains("meringue"))) {
+                    matchReasons.add("Excluded: Contains Egg-based ingredients (" + name + ")");
                     score -= 10000.0;
-                    break;
+                    return RecipeRecommendationDTO.builder().id(recipe.getId()).score(score).matchReasons(matchReasons).build();
                 }
 
-                // Check for Dairy
+                // 2. Dairy
                 boolean hasDairyAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("DAIRY") || a.contains("MILK"));
-                if (hasDairyAllergy && (name.contains("milk") || name.contains("butter") || name.contains("cheese") || name.contains("cream") || name.contains("yogurt") || name.contains("paneer") || name.contains("ghee"))) {
-                    matchReasons.add("Excluded: Contains Dairy-based ingredients");
+                if (hasDairyAllergy && (name.contains("milk") || name.contains("butter") || name.contains("cheese") || 
+                                        name.contains("cream") || name.contains("yogurt") || name.contains("paneer") || 
+                                        name.contains("ghee") || name.contains("curd") || name.contains("mayonnaise") || 
+                                        name.contains("whey") || name.contains("margarine"))) {
+                    matchReasons.add("Excluded: Contains Dairy-based ingredients (" + name + ")");
                     score -= 10000.0;
-                    break;
+                    return RecipeRecommendationDTO.builder().id(recipe.getId()).score(score).matchReasons(matchReasons).build();
                 }
 
-                // Check for Wheat/Gluten
+                // 3. Wheat/Gluten
                 boolean hasGlutenAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("GLUTEN") || a.contains("WHEAT"));
-                if (hasGlutenAllergy && (name.contains("flour") || name.contains("wheat") || name.contains("maida") || name.contains("semolina") || name.contains("bread") || name.contains("pasta"))) {
-                    matchReasons.add("Excluded: Contains Gluten/Wheat ingredients");
+                if (hasGlutenAllergy && (name.contains("flour") || name.contains("wheat") || name.contains("maida") || 
+                                         name.contains("semolina") || name.contains("bread") || name.contains("pasta") || 
+                                         name.contains("noodle") || name.contains("couscous") || name.contains("barley") || 
+                                         name.contains("rye"))) {
+                    matchReasons.add("Excluded: Contains Gluten/Wheat ingredients (" + name + ")");
                     score -= 10000.0;
-                    break;
+                    return RecipeRecommendationDTO.builder().id(recipe.getId()).score(score).matchReasons(matchReasons).build();
                 }
                 
-                // Check for Fish
-                boolean hasFishAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("FISH"));
-                if (hasFishAllergy && (name.contains("fish") || name.contains("salmon") || name.contains("tuna") || name.contains("cod") || name.contains("tilapia") || name.contains("trout"))) {
-                    matchReasons.add("Excluded: Contains Fish");
+                // 4. Fish & Seafood (Broad check)
+                boolean hasFishAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("FISH") || a.contains("SEAFOOD"));
+                if (hasFishAllergy && (name.contains("fish") || name.contains("salmon") || name.contains("tuna") || 
+                                       name.contains("cod") || name.contains("tilapia") || name.contains("trout") || 
+                                       name.contains("sardine") || name.contains("anchov") || name.contains("dashi") ||
+                                       name.contains("shrimp") || name.contains("crab") || name.contains("lobster") ||
+                                       name.contains("prawn") || name.contains("oyster") || name.contains("mussel") || 
+                                       name.contains("clam") || name.contains("scallop") || name.contains("squid") || 
+                                       name.contains("octopus") ||
+                                       (name.contains("sauce") && (name.contains("fish") || name.contains("oyster"))))) {
+                    matchReasons.add("Excluded: Found Fish/Seafood keyword in ingredients: " + name);
                     score -= 10000.0;
-                    break;
+                    return RecipeRecommendationDTO.builder().id(recipe.getId()).score(score).matchReasons(matchReasons).build();
                 }
 
-                // Check for Shellfish
+                // 5. Shellfish
                 boolean hasShellfishAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("SHELLFISH"));
                 if (hasShellfishAllergy && (name.contains("shrimp") || name.contains("crab") || name.contains("lobster") || name.contains("prawn") || name.contains("scallop") || name.contains("oyster") || name.contains("mussel") || name.contains("clam"))) {
-                    matchReasons.add("Excluded: Contains Shellfish");
+                    matchReasons.add("Excluded: Contains Shellfish ingredients (" + name + ")");
                     score -= 10000.0;
-                    break;
+                    return RecipeRecommendationDTO.builder().id(recipe.getId()).score(score).matchReasons(matchReasons).build();
                 }
 
-                // Check for Peanuts & Tree Nuts
+                // 6. Peanuts & Tree Nuts
                 boolean hasNutAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("NUT") || a.contains("PEANUT"));
                 if (hasNutAllergy && (name.contains("peanut") || name.contains("almond") || name.contains("walnut") || name.contains("pecan") || name.contains("cashew") || name.contains("pistachio") || name.contains("macadamia"))) {
-                    matchReasons.add("Excluded: Contains Nuts/Peanuts");
+                    matchReasons.add("Excluded: Contains Nuts/Peanuts (" + name + ")");
                     score -= 10000.0;
-                    break;
+                    return RecipeRecommendationDTO.builder().id(recipe.getId()).score(score).matchReasons(matchReasons).build();
                 }
 
-                // Check for Soy
+                // 7. Soy
                 boolean hasSoyAllergy = activeAllergyNames.stream().anyMatch(a -> a.contains("SOY"));
                 if (hasSoyAllergy && (name.contains("soy") || name.contains("tofu") || name.contains("edamame") || name.contains("tempeh") || name.contains("miso"))) {
-                    matchReasons.add("Excluded: Contains Soy-based ingredients");
+                    matchReasons.add("Excluded: Contains Soy-based ingredients (" + name + ")");
                     score -= 10000.0;
-                    break;
+                    return RecipeRecommendationDTO.builder().id(recipe.getId()).score(score).matchReasons(matchReasons).build();
                 }
             }
         }
