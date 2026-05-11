@@ -15,7 +15,7 @@ public interface AdminService {
     void deleteUser(Long userId);
 
     // Recipe Moderation
-    List<Recipe> getAllRecipesForAdmin();
+    org.springframework.data.domain.Page<Recipe> getAllRecipesForAdmin(int page, int size, String query);
     List<Recipe> getModeratedRecipes();
     void moderateRecipe(Long recipeId, boolean moderated, String reason);
 

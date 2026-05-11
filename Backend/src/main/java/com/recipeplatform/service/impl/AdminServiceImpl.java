@@ -51,10 +51,12 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public List<Recipe> getAllRecipesForAdmin() {
-        return recipeRepository.findAll().stream()
-                .filter(r -> r.getDeletedAt() == null)
-                .toList();
+    public org.springframework.data.domain.Page<Recipe> getAllRecipesForAdmin(int page, int size, String query) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending());
+        if (query != null && !query.isBlank()) {
+            return recipeRepository.findByTitleContainingIgnoreCaseAndDeletedAtIsNull(query, pageable);
+        }
+        return recipeRepository.findByDeletedAtIsNull(pageable);
     }
 
     @Override

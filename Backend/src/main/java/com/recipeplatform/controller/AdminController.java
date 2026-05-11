@@ -45,8 +45,11 @@ public class AdminController {
     }
 
     @GetMapping("/recipes")
-    public ResponseEntity<ApiResponse<List<Recipe>>> getAllRecipesForAdmin() {
-        return ResponseEntity.ok(new ApiResponse<>("All recipes fetched", adminService.getAllRecipesForAdmin(), 200));
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<Recipe>>> getAllRecipesForAdmin(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String query) {
+        return ResponseEntity.ok(new ApiResponse<>("All recipes fetched", adminService.getAllRecipesForAdmin(page, size, query), 200));
     }
 
     @GetMapping("/recipes/moderated")

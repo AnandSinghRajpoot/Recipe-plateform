@@ -26,6 +26,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long>, JpaSpecif
     @Query("SELECT r FROM Recipe r WHERE r.deletedAt IS NULL AND r.isModerated = false ORDER BY r.createdAt DESC")
     List<Recipe> findAllOrderByCreatedAtDesc();
 
+    org.springframework.data.domain.Page<Recipe> findByDeletedAtIsNull(org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<Recipe> findByTitleContainingIgnoreCaseAndDeletedAtIsNull(String title, org.springframework.data.domain.Pageable pageable);
+
     // Published only — for public feeds
     List<Recipe> findByIsPublishedTrueAndDeletedAtIsNullAndIsModeratedFalse();
 
@@ -49,14 +53,4 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long>, JpaSpecif
     """)
     List<Recipe> findPublishedRecipesExcludingAllergens(@Param("allergenIds") Set<Long> allergenIds);
 
-    /**
-     * Find published recipes that have been explicitly vetted as safe
-     * for any of the given disease IDs.
-     */
-    @Query("""
-        SELECT DISTINCT r FROM Recipe r
-        JOIN r.safeForDiseases d
-        WHERE d.id IN :diseaseIds AND r.isPublished = true AND r.deletedAt IS NULL AND r.isModerated = false
-    """)
-    List<Recipe> findPublishedRecipesSafeForDiseases(@Param("diseaseIds") Set<Long> diseaseIds);
 }
