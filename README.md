@@ -1,10 +1,10 @@
-# RecipeHub - AI-Powered Personalized Recipe Platform
+# RecipeHub - Rule-Based Personalized Recipe Platform
 
-RecipeHub is a comprehensive web application designed to provide personalized meal recommendations based on user health profiles, allergies, and dietary preferences. It features a robust recommendation engine that strictly enforces allergen safety while providing tailored health insights for various medical conditions.
+RecipeHub is a comprehensive web application designed to provide personalized meal recommendations based on user health profiles, allergies, and dietary preferences. It features a robust, rule-based recommendation engine that strictly enforces allergen safety while providing tailored health insights for various medical conditions.
 
 ## 🚀 Features
 
-- **Personalized Recommendations**: AI-driven engine that scores recipes based on user health data.
+- **Personalized Recommendations**: Logic-driven engine that scores recipes based on user health data.
 - **Strict Allergen Filtering**: Two-layer defense (Tag-based & Keyword-based) to ensure 100% safety for users with allergies.
 - **Health Analysis**: Automated scanning of recipe ingredients to identify risks for conditions like Diabetes, Hypertension, and CKD.
 - **Meal Planning**: Multi-plan meal planner with calorie tracking and nutritional alignment.
