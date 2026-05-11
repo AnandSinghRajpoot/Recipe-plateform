@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Seeds the database with standard reference data (diseases, allergies, sample recipes).
@@ -38,6 +39,7 @@ public class DataSeeder implements ApplicationRunner {
     private final RecipeCollectionRepository recipeCollectionRepository;
     private final MealSlotRepository mealSlotRepository;
     private final ReviewRepository reviewRepository;
+    private final com.recipeplatform.service.HealthAnalysisEngine healthAnalysisEngine;
 
     @Override
     @Transactional
@@ -47,9 +49,9 @@ public class DataSeeder implements ApplicationRunner {
         seedIngredients();
         seedDiseases();
         seedAllergies();
+        seedAllergyRestrictions(); // Seed restrictions BEFORE recipes
         seedChefs();
         seedBulkRecipes();
-        seedAllergyRestrictions();
     }
 
     // ==============================
@@ -227,7 +229,9 @@ public class DataSeeder implements ApplicationRunner {
         long expectedCount = recipeDataMap.size();
 
         if (recipeRepository.count() == expectedCount) {
-            log.info("Bulk recipes already seeded ({} recipes) — skipping.", expectedCount);
+            log.info("Bulk recipes already seeded. Ensuring allergen metadata is populated...");
+            // Even if already seeded, we might need to run the analysis pass if it's new logic
+            runAnalysisPass();
             return;
         }
 
@@ -402,7 +406,28 @@ public class DataSeeder implements ApplicationRunner {
         }
 
         recipeRepository.saveAll(bulkRecipes);
+        runAnalysisPass();
         log.info("Seeded {} high-quality recipes assigned to {} chefs.", bulkRecipes.size(), chefs.size());
+    }
+
+    private void runAnalysisPass() {
+        // Only run if we actually have recipes but they seem unanalyzed
+        List<Recipe> unanalyzedRecipes = recipeRepository.findAll().stream()
+                .filter(r -> r.getContainsAllergens().isEmpty() && r.getHealthAnalyses().isEmpty())
+                .collect(Collectors.toList());
+
+        if (unanalyzedRecipes.isEmpty()) {
+            log.info("All recipes appear to be analyzed. Skipping full health scan.");
+            return;
+        }
+
+        log.info("Performing health and allergen analysis pass on {} unanalyzed recipes...", unanalyzedRecipes.size());
+        for (Recipe r : unanalyzedRecipes) {
+            healthAnalysisEngine.detectAllergens(r);
+            healthAnalysisEngine.performAnalysis(r);
+            recipeRepository.save(r);
+        }
+        log.info("Analysis pass completed.");
     }
 
     @SuppressWarnings("unchecked")
@@ -511,7 +536,8 @@ public class DataSeeder implements ApplicationRunner {
             slug.contains("gelato") || slug.contains("lasagna") || slug.contains("carbonara") ||
             slug.contains("alfredo")) return CuisineType.ITALIAN;
         if (slug.contains("tacos") || slug.contains("burritos") || slug.contains("nachos") || 
-            slug.contains("enchiladas") || slug.contains("quesadillas") ||
+
+                slug.contains("enchiladas") || slug.contains("quesadillas") ||
             slug.contains("guacamole")) return CuisineType.MEXICAN;
         if (slug.contains("noodles") || slug.contains("fried-rice") || slug.contains("manchurian") ||
             slug.contains("kung-pao") || slug.contains("spring-rolls") || slug.contains("miso") ||
@@ -571,6 +597,7 @@ public class DataSeeder implements ApplicationRunner {
         chef.setBio(bio);
         chef.setDietType(dietType);
         chef.setSkillLevel(skillLevel);
+        chef.setPhoneNumber("+9100000000" + (int)(Math.random() * 90 + 10));
         return userRepository.save(chef);
     }
 
@@ -584,12 +611,14 @@ public class DataSeeder implements ApplicationRunner {
         admin1.setEmail("admin1@recipe.com");
         admin1.setPassword(passwordEncoder.encode("Admin@123"));
         admin1.setRole(UserRole.ADMIN);
+        admin1.setPhoneNumber("+911111111111");
 
         User admin2 = new User();
         admin2.setName("Admin Two");
         admin2.setEmail("admin2@recipe.com");
         admin2.setPassword(passwordEncoder.encode("Admin@123"));
         admin2.setRole(UserRole.ADMIN);
+        admin2.setPhoneNumber("+912222222222");
 
         userRepository.saveAll(List.of(admin1, admin2));
         log.info("Seeded 2 admin users.");
@@ -606,6 +635,7 @@ public class DataSeeder implements ApplicationRunner {
         user.setPassword(passwordEncoder.encode("Admin@123"));
         user.setRole(UserRole.USER);
         user.setIsProfileCompleted(false);
+        user.setPhoneNumber("+919876543210");
 
         userRepository.save(user);
         log.info("Seeded normal user: Ahmad Raza");
