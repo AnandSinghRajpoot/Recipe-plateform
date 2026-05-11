@@ -221,7 +221,15 @@ const HorizontalCard = ({ item, isPersonalized }) => {
                             <span className={`material-symbols-outlined text-xl`} style={saved ? { fontVariationSettings: '"FILL" 1' } : {}}>{saving ? 'hourglass_empty' : (saved ? 'bookmark' : 'bookmark_border')}</span>
                         </button>
                         <button 
-                            onClick={(e) => { e.preventDefault(); toggleRecipeSelection(id); }}
+                            onClick={(e) => { 
+                                e.preventDefault(); 
+                                const token = localStorage.getItem('token');
+                                if (!token) {
+                                    toast.error("Please login to use the shopping bag");
+                                    return;
+                                }
+                                toggleRecipeSelection(id); 
+                            }}
                             className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all active:scale-90 duration-200 bg-surface-container-low ${isSelectedForShopping ? 'text-blue-600' : 'text-on-surface-variant hover:text-blue-600'}`}
                             title={isSelectedForShopping ? "Remove from Shopping Bag" : "Add to Shopping Bag"}
                         >
