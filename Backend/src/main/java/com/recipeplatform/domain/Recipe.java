@@ -23,6 +23,7 @@ import java.util.Set;
 @EqualsAndHashCode(exclude = {"user", "nutrition", "ingredients"})
 @NoArgsConstructor
 @AllArgsConstructor
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Recipe {
 
     @Id
@@ -92,13 +93,14 @@ public class Recipe {
     )
     private Set<Allergy> containsAllergens = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "recipe_safe_diseases",
-        joinColumns = @JoinColumn(name = "recipe_id"),
-        inverseJoinColumns = @JoinColumn(name = "disease_id")
-    )
-    private Set<Disease> safeForDiseases = new HashSet<>();
+    @ElementCollection
+    @CollectionTable(name = "recipe_dietary_goals", joinColumns = @JoinColumn(name = "recipe_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "goal")
+    private Set<com.recipeplatform.domain.enums.DietaryGoal> dietaryGoals = new HashSet<>();
+
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RecipeHealthAnalysis> healthAnalyses = new ArrayList<>();
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "nutrition_id", referencedColumnName = "id")

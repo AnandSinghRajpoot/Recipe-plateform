@@ -24,6 +24,7 @@ import java.util.Set;
 @EqualsAndHashCode(exclude = "recipes")
 @NoArgsConstructor
 @AllArgsConstructor
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User {
 
     @Id
@@ -102,6 +103,7 @@ public class User {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Recipe> recipes;
 
     @PrePersist

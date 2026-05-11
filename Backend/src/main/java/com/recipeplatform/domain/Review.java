@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 @Table(name = "reviews", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"user_id", "recipe_id"})
 })
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Review {
 
     @Id
@@ -31,6 +32,7 @@ public class Review {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recipe_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Recipe recipe;
 
     @NotNull(message = "Rating is required")

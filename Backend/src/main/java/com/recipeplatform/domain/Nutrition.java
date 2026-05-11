@@ -11,6 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Table(name = "nutrition")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Nutrition {
 
     @Id
@@ -39,5 +40,6 @@ public class Nutrition {
     private Double sodium;
 
     @OneToOne(mappedBy = "nutrition")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Recipe recipe;
 }

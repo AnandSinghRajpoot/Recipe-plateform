@@ -20,6 +20,7 @@ public class RecipeIngredient {
 
     @ManyToOne
     @JoinColumn(name = "recipe_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Recipe recipe;
 
     @ManyToOne
