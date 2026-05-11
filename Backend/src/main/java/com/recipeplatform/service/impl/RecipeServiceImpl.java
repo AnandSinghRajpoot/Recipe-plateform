@@ -299,7 +299,8 @@ public class RecipeServiceImpl implements RecipeService {
             recipe.setContainsAllergens(allergens);
         }
 
-        // Health Analysis will be computed by HealthAnalysisEngine
+        // Health Analysis and Allergen detection
+        healthAnalysisEngine.detectAllergens(recipe);
         healthAnalysisEngine.performAnalysis(recipe);
     }
 }

@@ -55,6 +55,7 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 app:
+  system-email: ${system_email:kuckkuch364@gmail.com}
   jwt:
     secret: ${JWT_SECRET:recipeHubSecretKey2024ThatIsAtLeast32Chars!}
     expiration: ${JWT_EXPIRATION:86400000}
