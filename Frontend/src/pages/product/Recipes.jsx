@@ -197,7 +197,6 @@ const Recipes = () => {
         { label: 'Vegetarian', value: 'VEG' },
         { label: 'Non-Vegetarian', value: 'NON_VEG' },
         { label: 'Vegan', value: 'VEGAN' },
-        { label: 'No Preference', value: 'NO_PREFERENCE' },
     ];
     const difficulties = ['Easy', 'Medium', 'Hard'];
     const categories = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];

@@ -234,7 +234,14 @@ const SingleProduct = () => {
                             <span className="text-[9px] font-black">Save</span>
                         </button>
                         <button 
-                            onClick={() => toggleRecipeSelection(parseInt(id))}
+                            onClick={() => {
+                                const token = localStorage.getItem('token');
+                                if (!token) {
+                                    toast.error("Please login to add recipes to your shopping list");
+                                    return;
+                                }
+                                toggleRecipeSelection(parseInt(id));
+                            }}
                             className={`w-14 h-14 rounded-3xl backdrop-blur-md flex flex-col items-center justify-center transition-all shadow-xl group/bag border border-white/40 active:scale-90 duration-200 ${isSelectedForShopping ? 'bg-white text-blue-600' : 'bg-white/20 text-white hover:bg-white hover:text-blue-600'}`}
                         >
                             <span className={`material-symbols-outlined text-2xl group-active/bag:scale-150 transition-transform`} style={isSelectedForShopping ? { fontVariationSettings: '"FILL" 1' } : {}}>

@@ -81,17 +81,14 @@ const Signup = () => {
       newErrors.email = "Please enter a valid email address";
     }
     
+    const simplePhoneRegex = /^\+?[\d\s-]{10,20}$/;
+    if (!formData.phoneNumber) {
+      newErrors.phoneNumber = "Phone number is required";
+    } else if (!simplePhoneRegex.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = "Invalid phone format (e.g. +1234567890)";
+    }
+    
     if (formData.role === 'CHEF') {
-      const phoneRegex = /^(\+?\d{1,4}[\s-])?\(?\d{3}\)?[\s-]\d{3}[\s-]\d{4}$/;
-      // Basic check for common formats like +1 234 567 8901, 123-456-7890, etc.
-      const simplePhoneRegex = /^\+?[\d\s-]{10,20}$/;
-      
-      if (!formData.phoneNumber) {
-        newErrors.phoneNumber = "Phone number is required for Chefs";
-      } else if (!simplePhoneRegex.test(formData.phoneNumber)) {
-        newErrors.phoneNumber = "Invalid phone format (e.g., +1234567890)";
-      }
-
       if (formData.specializations.length === 0) {
         newErrors.specializations = "Please select at least one specialization";
       }
@@ -99,8 +96,6 @@ const Signup = () => {
       if (!formData.bio || formData.bio.length < 50) {
         newErrors.bio = "Chef bio must be at least 50 characters for verification";
       }
-
-
     }
 
     const passwordRegex = /^(?=.*[0-9])(?=.*[a-zA-Z]).+$/;
@@ -138,7 +133,6 @@ const Signup = () => {
     } catch (err) {
       const errorMsg = extractErrorMessage(err);
       setErrors({ form: errorMsg });
-      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

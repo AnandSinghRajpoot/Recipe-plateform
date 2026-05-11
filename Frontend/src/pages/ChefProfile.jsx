@@ -4,9 +4,12 @@ import apiClient from '../utils/apiClient';
 import HorizontalCard from '../components/Headers/HorizontalCard';
 import { HorizontalRecipeListSkeleton } from '../components/common/LoadingSkeleton';
 import generalProfilePic from '../assets/general-profile-pic.png';
+import BackButton from '../components/common/BackButton';
+import { useNavigate } from 'react-router-dom';
 
 const ChefProfile = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [chef, setChef] = useState(null);
     const [recipes, setRecipes] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -59,7 +62,12 @@ const ChefProfile = () => {
 
     return (
         <div className="min-h-screen bg-white font-sans">
-            <div className="max-w-4xl mx-auto py-12 px-4">
+            <div className="max-w-4xl mx-auto py-8 px-4">
+                {/* Navigation */}
+                <div className="mb-8">
+                    <BackButton onClick={() => navigate(-1)} label="Back" />
+                </div>
+
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row gap-8 mb-8">
                     {/* Profile Picture */}
@@ -73,46 +81,56 @@ const ChefProfile = () => {
                     </div>
 
                     {/* Info Section */}
-                    <div className="flex-1">
-                        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
-                            <h1 className="text-2xl font-light">{chef.name}</h1>
-                            <button className="px-4 py-1.5 bg-primary text-white rounded-lg font-semibold text-sm hover:bg-primary/90 transition-colors">
-                                Follow
-                            </button>
+                    <div className="flex-1 pt-2">
+                        <div className="mb-6">
+                            <h1 className="text-3xl font-headline font-black text-on-surface tracking-tight">{chef.name}</h1>
                         </div>
 
                         {/* Stats */}
-                        <div className="flex gap-8 mb-4 text-sm">
-                            <div>
-                                <span className="font-semibold">{recipes.length}</span> posts
+                        <div className="flex gap-12 mb-8">
+                            <div className="flex flex-col items-start">
+                                <span className="text-xl font-headline font-black text-on-surface">{recipes.length}</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-50">Posts</span>
                             </div>
-                            <div>
-                                <span className="font-semibold">{totalLikes}</span> likes
+                            <div className="flex flex-col items-start">
+                                <span className="text-xl font-headline font-black text-on-surface">{totalLikes}</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-50">Likes</span>
                             </div>
-                            <div>
-                                <span className="font-semibold">{totalSaves}</span> saves
+                            <div className="flex flex-col items-start">
+                                <span className="text-xl font-headline font-black text-on-surface">{totalSaves}</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-50">Saves</span>
                             </div>
                         </div>
 
                         {/* Bio */}
-                        <div className="text-sm">
-                            <p className="font-semibold">{chef.name}</p>
-                            {chef.bio && <p className="mt-1 whitespace-pre-line">{chef.bio}</p>}
-                            {chef.websiteLink && (
-                                <a href={chef.websiteLink} target="_blank" rel="noreferrer" className="text-blue-900 hover:underline mt-1 block">
-                                    {chef.websiteLink}
-                                </a>
-                            )}
-                            {chef.instagramLink && (
-                                <a href={chef.instagramLink} target="_blank" rel="noreferrer" className="text-blue-900 hover:underline mt-1 block">
-                                    Instagram
-                                </a>
-                            )}
-                            {chef.youtubeLink && (
-                                <a href={chef.youtubeLink} target="_blank" rel="noreferrer" className="text-blue-900 hover:underline mt-1 block">
-                                    YouTube
-                                </a>
-                            )}
+                        <div className="space-y-4">
+                            <div>
+                                <p className="font-black text-sm text-primary uppercase tracking-widest mb-1">About the Chef</p>
+                                <p className="text-on-surface-variant font-medium leading-relaxed max-w-xl">
+                                    {chef.bio || "This botanical artisan hasn't shared their story yet."}
+                                </p>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-4">
+                                {chef.websiteLink && (
+                                    <a href={chef.websiteLink} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-bold text-primary hover:underline">
+                                        <span className="material-symbols-outlined text-sm">link</span>
+                                        Portfolio
+                                    </a>
+                                )}
+                                {chef.instagramLink && (
+                                    <a href={chef.instagramLink} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-bold text-[#E4405F] hover:underline">
+                                        <span className="material-symbols-outlined text-sm">photo_camera</span>
+                                        Instagram
+                                    </a>
+                                )}
+                                {chef.youtubeLink && (
+                                    <a href={chef.youtubeLink} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-bold text-[#FF0000] hover:underline">
+                                        <span className="material-symbols-outlined text-sm">play_circle</span>
+                                        YouTube
+                                    </a>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -123,17 +141,9 @@ const ChefProfile = () => {
                 {/* Tabs */}
                 <div className="flex justify-center mb-4">
                     <div className="flex gap-8">
-                        <button className="text-sm font-semibold border-t border-black pt-3 px-4">
-                            <span className="material-symbols-outlined text-sm">grid_view</span>
+                        <button className="text-sm font-semibold border-t border-black pt-3 px-4 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-base">grid_view</span>
                             POSTS
-                        </button>
-                        <button className="text-sm text-gray-500 pt-3 px-4">
-                            <span className="material-symbols-outlined text-sm">movie</span>
-                            REELS
-                        </button>
-                        <button className="text-sm text-gray-500 pt-3 px-4">
-                            <span className="material-symbols-outlined text-sm">bookmark</span>
-                            SAVED
                         </button>
                     </div>
                 </div>
@@ -152,9 +162,15 @@ const ChefProfile = () => {
                                     alt={recipe.title}
                                     className="w-full h-full object-cover"
                                 />
-                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
-                                    <span className="material-symbols-outlined">favorite</span>
-                                    <span className="text-sm font-semibold">{recipe.likesCount || 0}</span>
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white backdrop-blur-[2px]">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: '"FILL" 1' }}>favorite</span>
+                                        <span className="text-sm font-black tracking-tight">{recipe.likesCount || 0}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: '"FILL" 1' }}>bookmark</span>
+                                        <span className="text-sm font-black tracking-tight">{recipe.savedCount || 0}</span>
+                                    </div>
                                 </div>
                             </Link>
                         ))}
