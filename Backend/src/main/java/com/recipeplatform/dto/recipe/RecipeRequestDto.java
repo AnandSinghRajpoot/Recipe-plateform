@@ -54,6 +54,8 @@ public class RecipeRequestDto {
     private CuisineType cuisineType;
 
     // Nutritional info
+    @Valid
+    @NotNull(message = "Nutrition information is required")
     private NutritionDTO nutrition;
 
     // Health tagging — IDs of allergens this recipe contains

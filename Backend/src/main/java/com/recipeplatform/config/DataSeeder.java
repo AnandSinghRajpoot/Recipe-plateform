@@ -39,6 +39,7 @@ public class DataSeeder implements ApplicationRunner {
     private final RecipeCollectionRepository recipeCollectionRepository;
     private final MealSlotRepository mealSlotRepository;
     private final ReviewRepository reviewRepository;
+    private final RecipeViewRepository recipeViewRepository;
     private final com.recipeplatform.service.HealthAnalysisEngine healthAnalysisEngine;
 
     @Override
@@ -242,6 +243,7 @@ public class DataSeeder implements ApplicationRunner {
         commentRepository.deleteAll();
         likeRepository.deleteAll();
         savedRecipeRepository.deleteAll();
+        recipeViewRepository.deleteAll();
         recipeRepository.deleteAll();
         
         List<User> chefs = userRepository.findAllByRole(UserRole.CHEF);

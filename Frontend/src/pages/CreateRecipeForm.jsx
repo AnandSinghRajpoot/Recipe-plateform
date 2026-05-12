@@ -205,16 +205,16 @@ const CreateRecipeForm = ({ onSuccess, onCancel, recipeId }) => {
       }
       
       // Nutrition validation
-      if (!recipe.nutrition.protein || recipe.nutrition.protein <= 0) {
-          newErrors.protein = "Required";
+      if (recipe.nutrition.protein === "" || recipe.nutrition.protein < 0) {
+          newErrors.protein = recipe.nutrition.protein < 0 ? "Cannot be negative" : "Required";
           isValid = false;
       }
-      if (!recipe.nutrition.carbs || recipe.nutrition.carbs <= 0) {
-          newErrors.carbs = "Required";
+      if (recipe.nutrition.carbs === "" || recipe.nutrition.carbs < 0) {
+          newErrors.carbs = recipe.nutrition.carbs < 0 ? "Cannot be negative" : "Required";
           isValid = false;
       }
-      if (!recipe.nutrition.fat || recipe.nutrition.fat <= 0) {
-          newErrors.fat = "Required";
+      if (recipe.nutrition.fat === "" || recipe.nutrition.fat < 0) {
+          newErrors.fat = recipe.nutrition.fat < 0 ? "Cannot be negative" : "Required";
           isValid = false;
       }
     }
@@ -373,17 +373,17 @@ const CreateRecipeForm = ({ onSuccess, onCancel, recipeId }) => {
             <div className="grid grid-cols-3 gap-4 border-t border-outline-variant/10 pt-6">
               <div className="space-y-2">
                 <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.protein ? 'text-error' : 'text-on-surface-variant'}`}>Protein (g) *</label>
-                <input type="number" name="nutrition.protein" value={recipe.nutrition.protein} onChange={handleChange} className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm ${errors.protein ? 'border-error/50 focus:border-error' : 'border-transparent focus:border-primary/30'}`} placeholder="0" />
+                <input type="number" name="nutrition.protein" value={recipe.nutrition.protein} onChange={handleChange} min="0" className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm ${errors.protein ? 'border-error/50 focus:border-error' : 'border-transparent focus:border-primary/30'}`} placeholder="0" />
                 {errors.protein && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.protein}</p>}
               </div>
               <div className="space-y-2">
                 <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.carbs ? 'text-error' : 'text-on-surface-variant'}`}>Carbs (g) *</label>
-                <input type="number" name="nutrition.carbs" value={recipe.nutrition.carbs} onChange={handleChange} className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm ${errors.carbs ? 'border-error/50 focus:border-error' : 'border-transparent focus:border-primary/30'}`} placeholder="0" />
+                <input type="number" name="nutrition.carbs" value={recipe.nutrition.carbs} onChange={handleChange} min="0" className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm ${errors.carbs ? 'border-error/50 focus:border-error' : 'border-transparent focus:border-primary/30'}`} placeholder="0" />
                 {errors.carbs && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.carbs}</p>}
               </div>
               <div className="space-y-2">
                 <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${errors.fat ? 'text-error' : 'text-on-surface-variant'}`}>Fat (g) *</label>
-                <input type="number" name="nutrition.fat" value={recipe.nutrition.fat} onChange={handleChange} className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm ${errors.fat ? 'border-error/50 focus:border-error' : 'border-transparent focus:border-primary/30'}`} placeholder="0" />
+                <input type="number" name="nutrition.fat" value={recipe.nutrition.fat} onChange={handleChange} min="0" className={`w-full bg-surface-container-low border-2 rounded-2xl px-4 py-3 outline-none font-bold text-sm ${errors.fat ? 'border-error/50 focus:border-error' : 'border-transparent focus:border-primary/30'}`} placeholder="0" />
                 {errors.fat && <p className="text-[10px] text-error font-black mt-1 ml-1">{errors.fat}</p>}
               </div>
             </div>
