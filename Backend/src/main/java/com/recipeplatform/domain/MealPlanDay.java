@@ -16,6 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "meal_plan_days")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class MealPlanDay {
 
     @Id
@@ -28,6 +29,7 @@ public class MealPlanDay {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meal_plan_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private MealPlan mealPlan;
 
     @OneToMany(mappedBy = "day", cascade = CascadeType.ALL, orphanRemoval = true)

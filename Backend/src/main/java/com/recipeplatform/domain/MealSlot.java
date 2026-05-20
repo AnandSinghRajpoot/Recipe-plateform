@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "meal_slots")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class MealSlot {
 
     @Id
@@ -29,5 +30,6 @@ public class MealSlot {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "day_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private MealPlanDay day;
 }

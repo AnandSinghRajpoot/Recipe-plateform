@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class AllergyRestriction {
 
     @Id
@@ -20,6 +21,7 @@ public class AllergyRestriction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "allergy_id", nullable = false)
     @NotNull(message = "Allergy is required")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Allergy allergy;
 
     @ManyToOne(fetch = FetchType.LAZY)

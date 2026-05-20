@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class UserAllergy {
 
     @Id
@@ -23,6 +24,7 @@ public class UserAllergy {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_health_profile_id", nullable = false)
     @NotNull(message = "User health profile is required")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private UserHealthProfile userHealthProfile;
 
     @ManyToOne(fetch = FetchType.LAZY)

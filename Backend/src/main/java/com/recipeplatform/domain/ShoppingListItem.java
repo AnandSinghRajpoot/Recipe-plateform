@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ShoppingListItem {
 
     @Id
@@ -21,6 +22,7 @@ public class ShoppingListItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shopping_list_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private ShoppingList shoppingList;
 
     @Column(nullable = false)
